@@ -1,0 +1,308 @@
+@font-face {
+  font-family: "custom-icon"; /* Project id 5225351 */
+ src: url('~@/static/fonts/iconfont.woff2') format('woff2'),
+       url('~@/static/fonts/iconfont.woff') format('woff'),
+       url('~@/static/fonts/iconfont.ttf') format('truetype');
+}
+
+
+.custom-icon {
+  font-family: "custom-icon" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.custom-icon-order:before {
+  content: "\e713";
+}
+
+.custom-icon-sport:before {
+  content: "\eafb";
+}
+
+.custom-icon-shield:before {
+  content: "\e717";
+}
+
+.custom-icon-sport-shoe:before {
+  content: "\e6d3";
+}
+
+.custom-icon-wechat:before {
+  content: "\e888";
+}
+
+.custom-icon-wechat-fill:before {
+  content: "\e883";
+}
+
+.custom-icon-creditcard:before {
+  content: "\e7de";
+}
+
+.custom-icon-money-credit-card:before {
+  content: "\e830";
+}
+
+.custom-icon-notice:before {
+  content: "\e869";
+}
+
+.custom-icon-tongzhiNotice:before {
+  content: "\e7ce";
+}
+
+.custom-icon-help:before {
+  content: "\e677";
+}
+
+.custom-icon-help1:before {
+  content: "\e678";
+}
+
+.custom-icon-help2:before {
+  content: "\e83d";
+}
+
+.custom-icon-message:before {
+  content: "\e953";
+}
+
+.custom-icon-phone2:before {
+  content: "\e64d";
+}
+
+.custom-icon-phone1:before {
+  content: "\e603";
+}
+
+.custom-icon-info-circle:before {
+  content: "\e77e";
+}
+
+.custom-icon-user-check:before {
+  content: "\e6e2";
+}
+
+.custom-icon-user-check1:before {
+  content: "\e751";
+}
+
+.custom-icon-UserCheck:before {
+  content: "\e752";
+}
+
+.custom-icon-trending-up:before {
+  content: "\e6e1";
+}
+
+.custom-icon-trending-up1:before {
+  content: "\e8b4";
+}
+
+.custom-icon-trending-down:before {
+  content: "\e6b1";
+}
+
+.custom-icon-trending-down1:before {
+  content: "\ea97";
+}
+
+.custom-icon-navigation:before {
+  content: "\e6c5";
+}
+
+.custom-icon-navigation1:before {
+  content: "\e67a";
+}
+
+.custom-icon-logout:before {
+  content: "\e652";
+}
+
+.custom-icon-logout1:before {
+  content: "\ea1e";
+}
+
+.custom-icon-settings:before {
+  content: "\e840";
+}
+
+.custom-icon-settings1:before {
+  content: "\e615";
+}
+
+.custom-icon-shield-check:before {
+  content: "\e82f";
+}
+
+.custom-icon-shield-check1:before {
+  content: "\e6a2";
+}
+
+.custom-icon-calendar:before {
+  content: "\e74a";
+}
+
+.custom-icon-calendar1:before {
+  content: "\e7d3";
+}
+
+.custom-icon-briefcase-l:before {
+  content: "\e618";
+}
+
+.custom-icon-phone:before {
+  content: "\e860";
+}
+
+.custom-icon-clock:before {
+  content: "\e602";
+}
+
+.custom-icon-check-selected:before {
+  content: "\e634";
+}
+
+.custom-icon-lucide:before {
+  content: "\e60b";
+}
+
+.custom-icon-lucide1:before {
+  content: "\e621";
+}
+
+.custom-icon-message-circle:before {
+  content: "\e6c0";
+}
+
+.custom-icon-scale:before {
+  content: "\e62b";
+}
+
+.custom-icon-scales-line:before {
+  content: "\eb60";
+}
+
+.custom-icon-scales-01:before {
+  content: "\e6b2";
+}
+
+.custom-icon-moon:before {
+  content: "\e601";
+}
+
+.custom-icon-moon1:before {
+  content: "\ea26";
+}
+
+.custom-icon-pill:before {
+  content: "\e8f1";
+}
+
+.custom-icon-PillOutline:before {
+  content: "\e6b0";
+}
+
+.custom-icon-camerarotate:before {
+  content: "\e6f9";
+}
+
+.custom-icon-camera_light:before {
+  content: "\e7dd";
+}
+
+.custom-icon-camera:before {
+  content: "\e6e7";
+}
+
+.custom-icon-bell-ring-outline:before {
+  content: "\e651";
+}
+
+.custom-icon-stop_ringing:before {
+  content: "\e600";
+}
+
+.custom-icon-bell-ringing-01:before {
+  content: "\e606";
+}
+
+.custom-icon-bell-ring:before {
+  content: "\e619";
+}
+
+.custom-icon-Headset:before {
+  content: "\e661";
+}
+
+.custom-icon-Headset1:before {
+  content: "\e722";
+}
+
+.custom-icon-transgender:before {
+  content: "\e726";
+}
+
+.custom-icon-GenderTransgender:before {
+  content: "\e7cd";
+}
+
+.custom-icon-activity:before {
+  content: "\e644";
+}
+
+.custom-icon-activity1:before {
+  content: "\e69d";
+}
+
+.custom-icon-Activity:before {
+  content: "\e604";
+}
+
+.custom-icon-activity2:before {
+  content: "\e66b";
+}
+
+.custom-icon-stethoscope:before {
+  content: "\e6d2";
+}
+
+.custom-icon-stethoscope1:before {
+  content: "\e814";
+}
+
+.custom-icon-stethoscope2:before {
+  content: "\e8c2";
+}
+
+.custom-icon-stethoscope3:before {
+  content: "\e61a";
+}
+
+.custom-icon-a-36-stethoscope:before {
+  content: "\e60c";
+}
+
+.custom-icon-hospital:before {
+  content: "\e663";
+}
+
+.custom-icon-hospital1:before {
+  content: "\e6f2";
+}
+
+.custom-icon-hospital-line:before {
+  content: "\ed9c";
+}
+
+.custom-icon-hospital2:before {
+  content: "\e7c0";
+}
+
+.custom-icon-protect:before {
+  content: "\ea1c";
+}
+
