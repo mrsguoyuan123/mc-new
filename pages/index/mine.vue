@@ -3,9 +3,7 @@
 		<!-- 紫色头部 -->
 		<view class="header bg-linear-purple-dark">
 			<view class="avatar-wrap">
-				<text class="avatar-icon">
-					<u-icon name="account" color="white" :bold="true" size="80rpx"></u-icon>
-				</text>
+				<u-icon name="account" color="white" :bold="true" size="80rpx"></u-icon>
 			</view>
 			<view class="user-info">
 				<text class="username">陈驻点</text>
@@ -15,13 +13,11 @@
 				</view>
 			</view>
 		</view>
-
 		<!-- 功能菜单卡片 -->
 		<view class="menu-card">
 			<view class="menu-item" @click="routeTo('calendar')">
 				<u-icon name="calendar" color="#9333ea" size="45rpx"></u-icon>
 				<text class="menu-label">服务日历</text>
-
 				<u-icon class="arrow" name="arrow-right" color="#ddd" size="32rpx"></u-icon>
 			</view>
 			<view class="menu-item" @click="routeTo('records')">
@@ -30,7 +26,6 @@
 				<u-icon class="arrow" name="arrow-right" color="#ddd" size="32rpx"></u-icon>
 			</view>
 			<view class="menu-item" @click="routeTo('auth')">
-
 				<text class="custom-icon custom-icon-shield-check " style="font-size:45rpx;color:#9333ea;"></text>
 				<text class="menu-label">资质认证</text>
 				<u-icon class="arrow" name="arrow-right" color="#ddd" size="32rpx"></u-icon>
@@ -41,17 +36,13 @@
 				<u-icon class="arrow" name="arrow-right" color="#ddd" size="32rpx"></u-icon>
 			</view>
 		</view>
-
 		<!-- 退出登录按钮 -->
-		<view  class="logout-btn">
-			<u-button shape="circle" :hairline="false" @click="logOut()" type="error"
-				text="退出登录"></u-button>
+		<view class="logout-btn">
+			<u-button shape="circle" :hairline="false" @click="logOut()" type="error" text="退出登录"></u-button>
 		</view>
-
 		<custom-tabbar :current="2"></custom-tabbar>
 	</view>
 </template>
-
 <script>
 	import customTabbar from "@/components/custom-tabbar/custom-tabbar.vue";
 	export default {
@@ -59,7 +50,7 @@
 			customTabbar
 		},
 		data() {
-			return {}  // ✅ 必须 return
+			return {}
 		},
 		methods: {
 			routeTo(res) {
@@ -79,7 +70,7 @@
 						if (res.confirm) {
 							uni.clearStorageSync()
 							uni.reLaunch({
-								url: '/pages/index/index'
+								url: '/pages/index/login'
 							})
 						}
 					}
@@ -88,7 +79,6 @@
 		}
 	}
 </script>
-
 <style scoped>
 	.page-my {
 		background-color: #f9fafb;
@@ -96,19 +86,15 @@
 		min-height: calc(100vh - 100px);
 		max-width: 500px;
 		margin: 0 auto;
-		/* min-height: 100vh; */
 	}
-
 	/* 紫色头部 */
 	.header {
-		/* background: #9b31f4; */
 		padding: 80rpx 40rpx 60rpx;
 		display: flex;
 		align-items: center;
 		border-bottom-left-radius: 40rpx;
 		border-bottom-right-radius: 40rpx;
 	}
-
 	.avatar-wrap {
 		width: 140rpx;
 		height: 140rpx;
@@ -120,12 +106,6 @@
 		justify-content: center;
 		margin-right: 30rpx;
 	}
-
-	.avatar-icon {
-		font-size: 60rpx;
-		color: #fff;
-	}
-
 	.user-info .username {
 		font-size: 48rpx;
 		color: #fff;
@@ -133,7 +113,6 @@
 		display: block;
 		margin-bottom: 16rpx;
 	}
-
 	.tag {
 		display: flex;
 		align-items: center;
@@ -141,7 +120,6 @@
 		border-radius: 99rpx;
 		padding: 8rpx 20rpx;
 	}
-
 	.tag-dot {
 		width: 12rpx;
 		height: 12rpx;
@@ -149,13 +127,11 @@
 		border-radius: 50%;
 		margin-right: 12rpx;
 	}
-
 	.tag-text {
 		color: #fff;
 		font-size: 24rpx;
 		opacity: 0.8;
 	}
-
 	/* 菜单卡片 */
 	.menu-card {
 		margin: -30rpx 30rpx 40rpx;
@@ -164,50 +140,34 @@
 		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
 		overflow: hidden;
 	}
-
 	.menu-item {
 		display: flex;
 		align-items: center;
 		padding: 36rpx 32rpx;
-		/* border-bottom: 1rpx solid #f2f2f2; */
 	}
-
 	.menu-item:last-child {
 		border-bottom: none;
 	}
-
 	.menu-icon {
 		font-size: 44rpx;
 		width: 70rpx;
 		margin-right: 24rpx;
 	}
-
 	.menu-label {
 		flex: 1;
 		font-size: 30rpx;
 		margin-left: 5px;
 		line-height: 45rpx;
 	}
-
-
-
 	/* 退出登录 */
 	.logout-btn {
 		padding: 0 30rpx;
-		/* border: 2rpx solid #ffdddd; */
-		/* border-radius: 99rpx; */
-		/* padding: 28rpx; */
-		/* display: flex;
-		align-items: center;
-		justify-content: center; */
 	}
-
 	.logout-icon,
 	.logout-text {
 		color: #e53935;
 		font-size: 34rpx;
 	}
-
 	.logout-icon {
 		margin-right: 12rpx;
 	}

@@ -164,10 +164,7 @@
 			</view>
 			<view class="radius-1 bg-white margin-top-1 padding-1 border-blue bg-linear-purple">
 				<view class="u-flex space-start">
-					<text class="custom-icon custom-icon-trending-up icon-bold" :style="{
-								color: '#155DFC',
-								fontSize: fontSize1
-							}"></text>
+					<text class="custom-icon custom-icon-trending-up icon-bold" :style="{color: '#155DFC',fontSize: fontSize1}"></text>
 
 					<text class=" font-bold font-s margin-left-5">
 						运动建议
@@ -222,9 +219,7 @@
 				</view>
 				<view class="radius-1 badge-green-bg  padding-1 card-green">
 					<view class="u-flex space-start">
-						<text class="custom-icon custom-icon-trending-down icon-bold"
-							style="font-size:20rpx;color:#009689;"></text>
-
+						<text class="custom-icon custom-icon-trending-down icon-bold" :style="{fontSize: fontSize1,color:'#009689'}"></text>
 						<text class=" font-green font-s margin-left-5">
 							较初始减重 1.7 kg
 						</text>
@@ -361,10 +356,7 @@
 			</view>
 			<view class="radius-1 bg-white margin-top-1 padding-1 border-pink bg-linear-pink">
 				<view class="u-flex space-start">
-					<text class="custom-icon custom-icon-PillOutline icon-bold" :style="{
-								color: '#9810fa',
-								fontSize: fontSize1
-							}"></text>
+					<text class="custom-icon custom-icon-PillOutline icon-bold" :style="{color: '#9810fa',fontSize: fontSize1}"></text>
 					<text class=" font-bold font-s margin-left-5">
 						用药提醒设置
 					</text>
@@ -387,7 +379,7 @@
 						睡眠评估
 					</view>
 					<view class="u-flex space-start">
-						<u-icon name="checkmark-circle" color="#00a63e" :style="{fontSize: fontSize1}"></u-icon>
+						<u-icon name="checkmark-circle" color="#00a63e"  :size="fontSize1"></u-icon>
 						<text class="  font-s margin-left-5">
 							睡眠质量良好
 						</text>
@@ -459,8 +451,8 @@
 		data() {
 			return {
 				show: false,
-				iconSize1: "30rpx",
-				iconSize2: "40rpx",
+				fontSize1: "30rpx",
+				fontSize2: "40rpx",
 				activeTab: 1,
 				activeTab2: 1,
 				medicationList: [{
@@ -482,12 +474,12 @@
 					id: 1,
 					title: "术后焦虑怎么办？专业医生为您解答专业医生为您解答",
 					type: "文章",
-					duration: "分钟"
+					duration: "5分钟"
 				}, {
 					id: 1,
 					title: "术后焦虑怎么办？专业医生为您解答",
 					type: "文章",
-					duration: "分钟"
+					duration: "10分钟"
 				}, ],
 				useState: [{
 						id: 1,
