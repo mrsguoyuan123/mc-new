@@ -45,7 +45,7 @@
 		<!-- 协议提示 -->
 		<view class="protocol">
 			<u-checkbox-group v-model="isAgree" shape="circle">
-				<u-checkbox :customStyle="{marginBottom: '8px'}" v-for="(item, index) in checkboxList1" :key="index"
+				<u-checkbox  v-for="(item, index) in checkboxList1" :key="index"
 					:label="item.name" :name="item.name">
 				</u-checkbox>
 			</u-checkbox-group>
@@ -58,118 +58,137 @@
 		</view>
 	</view>
 </template>
-
 <script>
-	export default {
-		data() {
-			return {
-				phone: '',
-				code: '',
-				codeCountDown: 0,
-				isAgree: [],
-				timer: null,
-				checkboxList1: [{
-					name: ' ',
-					disabled: false
-				}]
-			}
+export default {
+	data() {
+		return {
+			phone: '',
+			code: '',
+			codeCountDown: 0,
+			isAgree: [],
+			timer: null,
+			checkboxList1: [{
+				name: ' ',
+				disabled: false
+			}]
+		}
+	},
+	computed: {
+		validPhone() {
+			return /^1[3-9]\d{9}$/.test(this.phone)
 		},
-		computed: {
-			validPhone() {
-				return /^1[3-9]\d{9}$/.test(this.phone)
-			},
-			canLogin() {
-				return this.validPhone && this.code.length === 6 && this.isAgree
-			}
-		},
-		methods: {
-			// 获取验证码
-			getCode() {
-				if (!this.validPhone) {
-					return uni.showToast({
-						title: '请输入正确手机号',
-						icon: 'none'
-					})
-				}
-				console.log('发送验证码', this.phone)
-				uni.showToast({
-					title: '验证码已发送',
-					icon: 'success'
-				})
-				this.codeCountDown = 60
-				this.timer = setInterval(() => {
-					this.codeCountDown--
-					if (this.codeCountDown <= 0) {
-						clearInterval(this.timer)
-					}
-				}, 1000)
-			},
-			// 验证码登录
-			async handleCodeLogin() {
-				if (!this.isAgree) {
-					return uni.showToast({
-						title: '请同意协议',
-						icon: 'none'
-					})
-				}
-				uni.showLoading({
-					title: '登录中...'
-				})
-				try {
-					// const res = await api.login.codeLogin({phone:this.phone,code:this.code})
-					// uni.setStorageSync('token', res.token)
-					await new Promise(resolve => setTimeout(resolve, 800))
-					uni.setStorageSync('token', 'mock-token-123456')
-					uni.showToast({
-						title: '登录成功',
-						icon: 'success'
-					})
-					setTimeout(() => {
-						uni.reLaunch({
-							url: '/pages/mine/mine'
-						})
-					}, 600)
-				} catch (err) {
-					uni.showToast({
-						title: '登录失败，请检查验证码',
-						icon: 'none'
-					})
-				} finally {
-					uni.hideLoading()
-				}
-			},
-			// 一键登录
-			handleOneKeyLogin() {
-				if (!this.isAgree) {
-					return uni.showToast({
-						title: '请同意协议',
-						icon: 'none'
-					})
-				}
-				uni.reLaunch({
-					url: '/pages/index/loginFirst'
-				})
-			},
-			// 跳注册
-			goRegister() {
-				uni.navigateTo({
-					url: '/pages/index/register'
-				})
-			}
-		},
-		// 页面销毁清除定时器（对应vue3 onUnmounted）
-		beforeDestroy() {
+		canLogin() {
+			return this.validPhone && this.code.length === 6 && this.isAgree.length > 0
+		}
+	},
+	methods: {
+		// 统一清除定时器
+		clearTimer() {
 			if (this.timer) {
 				clearInterval(this.timer)
+				this.timer = null
 			}
+		},
+		// 获取验证码
+		getCode() {
+			if (!this.validPhone) {
+				return uni.showToast({
+					title: '请输入正确手机号',
+					icon: 'none'
+				})
+			}
+			console.log('发送验证码', this.phone)
+			uni.showToast({
+				title: '验证码已发送',
+				icon: 'success'
+			})
+			this.codeCountDown = 60
+			this.clearTimer() // 先清除旧定时器，避免叠加
+			this.timer = setInterval(() => {
+				this.codeCountDown--
+				if (this.codeCountDown <= 0) {
+					this.clearTimer()
+				}
+			}, 1000)
+		},
+		// 验证码登录
+		async handleCodeLogin() {
+			if (!this.isAgree.length) {
+				return uni.showToast({
+					title: '请同意协议',
+					icon: 'none'
+				})
+			}
+			// reLaunch跳转前手动清定时器
+			this.clearTimer()
+
+			uni.showLoading({
+				title: '登录中...'
+			})
+			try {
+				// const res = await api.login.codeLogin({phone:this.phone,code:this.code})
+				// uni.setStorageSync('token', res.token)
+				await new Promise(resolve => setTimeout(resolve, 800))
+				uni.setStorageSync('token', 'mock-token-123456')
+				uni.showToast({
+					title: '登录成功',
+					icon: 'success'
+				})
+				setTimeout(() => {
+					uni.reLaunch({
+						url: '/pages/mine/mine'
+					})
+				}, 600)
+			} catch (err) {
+				uni.showToast({
+					title: '登录失败，请检查验证码',
+					icon: 'none'
+				})
+			} finally {
+				uni.hideLoading()
+			}
+		},
+		// 一键登录
+		handleOneKeyLogin() {
+			if (!this.isAgree.length) {
+				return uni.showToast({
+					title: '请同意协议',
+					icon: 'none'
+				})
+			}
+			// 跳转前清除定时器
+			this.clearTimer()
+			uni.reLaunch({
+				url: '/pages/index/loginFirst'
+			})
+		},
+		// 跳注册
+		goRegister() {
+			this.clearTimer()
+			uni.navigateTo({
+				url: '/pages/index/register'
+			})
 		}
+	},
+	// H5/App端销毁
+	beforeDestroy() {
+		this.clearTimer()
+	},
+	// ✨小程序原生页面卸载钩子，uni.reLaunch也会触发，必清定时器
+	onUnload() {
+		this.clearTimer()
 	}
+}
 </script>
+
+
 <style scoped>
 	.login-page {
 		padding: 80rpx 60rpx;
-		min-height: 100vh;
-		background-color: #f7f8fa;
+		/* background-color: #f7f8fa; */
+		max-width: 500px;
+		min-width: 300px;
+		margin: 0 auto;
 	}
 
 	.login-page .u-input {
@@ -180,24 +199,23 @@
 		color: #999;
 	}
 
-	/deep/ .my-input {
-		color: #666 !important;
-	}
+
 
 	.login-header {
 		margin-bottom: 80rpx;
 	}
 
 	.title {
-		font-size: 48rpx;
+		font-size: 40rpx;
 		font-weight: bold;
 		color: #333;
 		display: block;
-		margin-bottom: 16rpx;
+		margin-bottom: 15rpx;
 	}
-
+ 
+ 
 	.desc {
-		font-size: 32rpx;
+		font-size: 25rpx;
 		color: #999;
 		display: block;
 	}

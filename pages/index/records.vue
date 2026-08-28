@@ -5,13 +5,13 @@
 		<!-- 自定义导航栏 -->
 		<view class="custom-nav">
 			<!-- 返回按钮 -->
-			<view class="nav-back" @click="handleBack">
+			<view class="nav-back" @click="handleBack()">
 				<u-icon name="arrow-left" color="" size="36rpx"></u-icon>
 			</view>
 			<!-- 中间标题 -->
-			<view class="nav-title">术后病历详情</view>			
+			<view class="nav-title">术后病历详情</view>
 		</view>
-		<view class="page-content">
+		<view class="page-content1">
 			<view
 				class="radius-15 card-top margin-bottom-2 card-border card-border-gray  u-flex space-between border-blue bg-blue">
 
@@ -22,7 +22,7 @@
 					<view class="">
 						<view class="margin-bottom-5 u-flex align-center">
 							<view class="font-l font-bold margin-right-5">{{record.name}}</view>
-							 <u-badge style="padding: 10rpx 20rpx;" type="primary"  :value="record.status"></u-badge>
+							<u-badge style="padding: 10rpx 20rpx;" type="primary" :value="record.status"></u-badge>
 						</view>
 						<view class="view-text2 u-flex flex-start">
 							<view>登记证号</view>
@@ -55,8 +55,9 @@
 					</view>
 					<view class="records-wrapper u-flex space-between">
 						<view class="u-flex flex-start">
-							<u-icon name="map" color="#155DFC" :bold="true" size="30rpx" class="margin-right-5"></u-icon>
-							
+							<u-icon name="map" color="#155DFC" :bold="true" size="30rpx"
+								class="margin-right-5"></u-icon>
+
 							<view class="font-s font-info">手术地区</view>
 						</view>
 						<view class="font-bold font-s">{{record.surgeryRegion}}</view>
@@ -71,7 +72,8 @@
 					</view>
 					<view class="records-wrapper u-flex space-between">
 						<view class="u-flex flex-start">
-							<u-icon name="info-circle" color="#155DFC" :bold="true" size="30rpx" class="margin-right-5"></u-icon>
+							<u-icon name="info-circle" color="#155DFC" :bold="true" size="30rpx"
+								class="margin-right-5"></u-icon>
 							<view class="font-s font-info">所属科室</view>
 						</view>
 						<view class="font-bold font-s">{{record.department}}</view>
@@ -100,7 +102,7 @@
 			<view class="radius-15  bg-white card-border card-border-gray ">
 				<view class="header-text">
 					<view class="header-icon ">
-						
+
 						<text class="custom-icon custom-icon-shield-check1 icon-bold margin-right-5"
 							style="font-size:40rpx;color:#00a63e;"></text>
 						<view class="header-name font-bold font-m">
@@ -138,12 +140,10 @@
 				</view>
 			</view>
 
-
-			<u-button class="width-100 margin-top-2" shape="circle" :hairline="false" @click="routeTo('consultation')"
-				text="对此病历有疑问？立即咨询"></u-button>
+			<view class="my-btn" @click="routeTo('consultation')">对此病历有疑问？立即咨询</view>
+			<!-- <u-button class="width-100 margin-top-2 my-btn" shape="circle" :hairline="false" @click="routeTo('consultation')"
+				text="对此病历有疑问？立即咨询"></u-button> -->
 		</view>
-
-
 	</view>
 </template>
 
@@ -156,7 +156,7 @@
 				record: {
 					id: "p1",
 					name: "张三",
-					status:"已实名",
+					status: "已实名",
 					gender: "男",
 					age: 45,
 					surgeryRegion: "杭州",
@@ -203,7 +203,11 @@
 
 <style scoped lang="scss">
 	.page-records {
-		padding-bottom: calc(120rpx + env(safe-area-inset-bottom));
+		overflow: hidden;
+		// padding-bottom: calc(120rpx + env(safe-area-inset-bottom));
+	}
+	.page-content1{
+		padding: 30rpx 60rpx;
 	}
 
 	.page-records .records-wrapper {
@@ -215,7 +219,15 @@
 		color: white;
 	}
 
-	.page-profile {}
+	.my-btn {
+		width: 100%;
+		background: #000;
+		color: #fff;
+		text-align: center;
+		line-height: 88rpx;
+		border-radius: 100rpx;
+		margin-top: 50rpx;
+	}
 
 	/* 状态栏高度，自动适配各手机 */
 	.status-bar {
@@ -246,6 +258,7 @@
 		text-align: right;
 
 	}
+
 	.short-avatar {
 		width: 100rpx;
 		height: 100rpx;
@@ -258,6 +271,6 @@
 		color: #447dfd;
 		margin-right: 24rpx;
 		font-weight: bold;
-		
+
 	}
 </style>

@@ -56,7 +56,8 @@
             "urlCheck" : false
         },
 		"optimization": {
-		    "subPackages": true
+		    "subPackages": true,
+			"subPackageUseMainPath": true
 		  },
         "usingComponents" : true,
         "permission" : {

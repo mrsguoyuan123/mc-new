@@ -11,7 +11,7 @@
 	   </page-meta> -->
 	<page-meta :root-font-size="fontsize+'px'"></page-meta>
 	<view class="page-content page-home	">
-	
+
 
 		<view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between"
 			@click="routeTo('profile')">
@@ -36,7 +36,7 @@
 
 		</view>
 		<view class="button-wrapper">
-			<view class="radius-15 card-top card-bg card-blue">
+			<view class="radius-15 card-top card-bg card-blue" @click="routeTo('consultation')">
 				<view class="view-icon bg-blue">
 					<u-icon name="chat" color="white" :bold="true" size="40rpx"></u-icon>
 				</view>
@@ -49,7 +49,7 @@
 					</view>
 				</view>
 			</view>
-			<view class="radius-15 card-top card-bg  card-green">
+			<view class="radius-15 card-top card-bg  card-green" @click="routeTo('healthCenter')">
 				<view class="view-icon">
 					<u-icon name="heart" color="white" :bold="true" size="40rpx"></u-icon>
 				</view>
@@ -76,16 +76,17 @@
 		</view>
 		<view class="my-team bg-white radius-15 card-top card-border card-border-gray">
 			<view class="team-icon view-icon">
-			  <text class="custom-icon custom-icon-stethoscope icon-bold" style="font-size:90rpx;color:white;"></text>
+				<text class="custom-icon custom-icon-stethoscope icon-bold" style="font-size:90rpx;color:white;"></text>
 			</view>
-			
+
 			<view class="team-content">
 				<view class="font-bold text-center">医生团队</view>
 				<view class="my-badge-center">
-					<u-tag text="心内科" type="primary" size="mini" plain ></u-tag>
-					<u-tag text="副主任医师" type="primary" size="mini" plain ></u-tag>
-					<u-tag bgColor="#faf5ff" color="#b110fa" borderColor="#faf5ff" text="三甲"  size="mini" plain plainFill></u-tag>
-					
+					<u-tag class="margin-right-5" text="心内科" type="primary" size="mini" plain></u-tag>
+					<u-tag class="margin-right-5" text="副主任医师" type="primary" size="mini" plain></u-tag>
+					<u-tag bgColor="#faf5ff" color="#b110fa" borderColor="#faf5ff" text="三甲" size="mini" plain
+						plainFill></u-tag>
+
 					<!-- <view class="badge badge-purple">副主任医师</view> -->
 				</view>
 				<view class=" text-center font-info font-s">温州医科大学附属第一医院</view>
@@ -113,11 +114,12 @@
 				实时健康监测看板
 			</view>
 			<view class="chart-content">
-				<view>
+				<view class="chart-item">
 					<view class="chart-title">
 						<view class="header-icon ">
-							<text class="custom-icon custom-icon-activity icon-bold" style="font-size:30rpx;color:#155DFC;"></text>
-						
+							<text class="custom-icon custom-icon-activity icon-bold"
+								style="font-size:30rpx;color:#155DFC;"></text>
+
 							<view class="header-name font-bold font-s">
 								血压点位
 							</view>
@@ -141,11 +143,12 @@
 						</view>
 					</view>
 				</view>
-				<view>
+				<view class="chart-item">
 					<view class="chart-title">
 						<view class="header-icon ">
-							<text class="custom-icon custom-icon-activity icon-bold" style="font-size:30rpx;color:#00c950;"></text>
-							
+							<text class="custom-icon custom-icon-activity icon-bold"
+								style="font-size:30rpx;color:#00c950;"></text>
+
 							<view class="header-name font-bold  font-s">
 								血糖体征
 							</view>
@@ -166,15 +169,16 @@
 			<view class=" bg-pink radius-15">
 				<view class="chart-title">
 					<view class="header-icon ">
-						<text class="custom-icon custom-icon-trending-down icon-bold" style="font-size:30rpx;color:#f6339a;"></text>
-	
+						<text class="custom-icon custom-icon-trending-down icon-bold"
+							style="font-size:30rpx;color:#f6339a;"></text>
+
 						<view class="header-name font-bold font-s">
 							体重运动趋势
 						</view>
 					</view>
 				</view>
 				<view class="u-flex space-between align-center">
-					<u-line-progress :percentage="60" height="8" activeColor="#f6339a"  inactiveColor="#fccee8"
+					<u-line-progress :percentage="60" height="8" activeColor="#f6339a" inactiveColor="#fccee8"
 						:showText="false"></u-line-progress>
 					<view class="font-bold font-pink font-s" style="margin-left: 10px;">
 						-1.2kg
@@ -194,13 +198,14 @@
 					<u-tag text="本品+钙剂" type="primary" size="mini" plain plainFill></u-tag>
 					<u-tag text="钙片促吸收" type="primary" size="mini" plain plainFill></u-tag>
 					<u-tag text="降压药" type="primary" size="mini" plain plainFill></u-tag>
-					
+
 				</view>
 			</view>
 		</view>
 		<view class="header-text">
 			<view class="header-icon ">
-				<text class="custom-icon custom-icon-user-check icon-bold" style="font-size:40rpx;color:#155DFC;"></text>
+				<text class="custom-icon custom-icon-user-check icon-bold"
+					style="font-size:40rpx;color:#155DFC;"></text>
 				<view class="header-name font-bold font-m">
 					健康护照师申请
 				</view>
@@ -209,7 +214,7 @@
 				上门服务
 			</view>
 		</view>
-		<view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between">
+		<view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between" @click="routeTo('caregiverApply')">
 			<view class="view-icon bg-blue-dark margin-right-5">
 				<text class="custom-icon custom-icon-shield icon-bold" style="font-size:40rpx;color:white;"></text>
 			</view>
@@ -219,7 +224,7 @@
 					<view class=" font-m font-bold">
 						专业照护人员上门服务
 					</view>
-					<view class="view-text2">
+					<view class="font-xs margin-15">
 						术后康复专项指导 · 居家生活护理 · 24h全天候陪伴
 					</view>
 				</view>
@@ -243,33 +248,28 @@
 				为您精选
 			</view>
 		</view>
-		<view v-for="item in articles" :key="item.id"
-			class="my-article bg-white radius-15 card-border card-border-gray"
-			@click="goArticleDetail(item)">
+		<view v-for="item in articles" :key="item.id" class="my-article bg-white radius-15 card-border card-border-gray">
 			<view class="u-flex align-center">
 				<view class="img-wrapper">
-					<img :src="item.image" mode="aspectFill" :alt="item.desc" style="width:100%;height:100%;">
+					<image class="img-inner" :src="item.image" :alt="item.desc" mode="aspectFit"></image>
 				</view>
 				<!-- 重点：flex:1 占剩余空间；min‑width:0 允许flex子项收缩，防止文字把盒子撑开 -->
 				<view class="img-text" style="flex: 1; min-width: 0; margin-left:20rpx;">
 					<view>
-						<u-tag
-							bgColor="#fef2f2" 
-							color="#fb2c36" 
-							borderColor="#fef2f2" 
-							:text="item.dept"  
-							size="mini" 
-							plain-fill
-						></u-tag>
+						<u-tag bgColor="#fef2f2" color="#fb2c36" borderColor="#fef2f2" :text="item.dept" size="mini"
+							plain-fill></u-tag>
 					</view>
 					<view class="font-bold font-s" style="margin: 10rpx 0;">{{item.title}}</view>
-					<view class="font-info font-s" style="overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">{{item.desc}}</view>
+					<view class="font-info font-s"
+						style="overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">
+						{{item.desc}}
+					</view>
 				</view>
 			</view>
 		</view>
 
 
-		
+
 		<main-tabbar :current="0"></main-tabbar>
 	</view>
 
@@ -296,13 +296,13 @@
 				nbBackgroundColor: '#ffffff',
 				fontsize: 12,
 				activeTab: 0,
-				
+
 				articles: [{
 						id: "h1",
 						dept: "支架手术",
 						title: "支架手术术后常见护理方案",
 						desc: "术后48小时是关键期，注意用药与活动量控制...",
-						image: "https://images.unsplash.com/photo-1576091160550-2173dad999ef?w=400&q=80"
+						image: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&q=80"
 					},
 					{
 						id: "h2",
@@ -367,18 +367,33 @@
 
 		methods: {
 			routeTo(res) {
-				uni.showLoading()
-				uni.hideLoading()
+				console.log(res)
 
 				let data = {
-					title: 'hello',
 					id: 1
 				}
-
-
+				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(data))
 				uni.navigateTo({
-					url: `../index/` + res + `?data=` + encodeURIComponent(JSON.stringify(data))
+					url: routeUrl,
+					fail: (err) => {
+						console.error('跳转失败', err) //打印失败原因
+					}
 				})
+				// if (res == 'healthCenter' || res == 'home' || res == 'chat' || res == 'account') {
+				// 	uni.switchTab({
+				// 		url: routeUrl,
+				// 		fail: (err) => {
+				// 			console.error('跳转失败', err) //打印失败原因
+				// 		}
+				// 	})
+				// } else {
+				// 	uni.navigateTo({
+				// 		url: routeUrl,
+				// 		fail: (err) => {
+				// 			console.error('跳转失败', err) //打印失败原因
+				// 		}
+				// 	})
+				// }
 
 			}
 		},
@@ -389,35 +404,29 @@
 
 <style scoped lang="scss">
 	.page-home {
-		padding-bottom: 70px;
+		// padding-bottom: 70px;
 	}
 
 	.page-home .view-icon {
 		padding: 10px;
 		border-radius: 15px;
 		float: left;
-
-
 	}
 
-	
 	.bg-chart .font-info {
 		margin: 6px auto;
 	}
 
 	.my-article {
 		padding: 20rpx;
-		margin: 20rpx auto // border: 1px solid red;
+		margin: 20rpx auto;
 	}
-
 
 	.bg-chart .bg-pink,
 	.bg-chart .bg-yellow {
 		padding: 20rpx;
 		margin: 20rpx auto;
 	}
-
-
 
 	.chart-title .header-icon {
 		justify-content: start;
@@ -430,14 +439,16 @@
 		flex-wrap: nowrap;
 		align-items: start;
 		margin: 10px 0;
+
+
+	}
+
+	.chart-content .chart-item {
+		width: calc(50% - 10px);
 	}
 
 	.chart-content .space-between {
 		margin: 10px auto;
-	}
-
-	.chart-content>view {
-		width: calc(50% - 10px)
 	}
 
 	.bg-chart {
@@ -445,17 +456,19 @@
 		padding: 30rpx;
 	}
 
+	.my-badge-center {
+		display: flex;
+		justify-content: center;
+		flex-wrap: nowrap;
+		align-items: center;
+		margin: 10px 0;
 
-.my-badge-center{
-	display: flex;
-	justify-content: center;
-	flex-wrap: nowrap;
-	align-items: center;
-	margin: 10px 0;
-}
-.my-badge-center .u-transition {
-	margin-right: 10rpx;
-}
+
+	}
+
+	.my-badge-center ::v-deep .u-transition {
+		margin-right: 6px !important;
+	}
 
 	.my-badge {
 		display: flex;
@@ -463,16 +476,17 @@
 		flex-wrap: nowrap;
 		align-items: center;
 		margin: 10px 0;
+
+
 	}
-.my-badge .u-transition {
-	margin-right: 10rpx;
-}
 
-
+	.my-badge ::v-deep .u-transition {
+		margin-right: 6px !important;
+	}
 
 	.team-content {
 		margin-top: 60rpx;
-		width: 100%
+		width: 100%;
 	}
 
 	.my-team {
@@ -484,24 +498,18 @@
 	.team-icon.view-icon {
 		background-color: #155dfc;
 		border: 3px solid white;
-
 		position: absolute;
 		left: 50%;
-
 		top: 0;
 		transform: translate(-50%, -50%);
-
 	}
-
-
-
 
 	.card-green .view-icon {
 		background-color: #33b865;
 	}
 
 	.card-blue .view-icon {
-		background-color: #447dfd
+		background-color: #447dfd;
 	}
 
 	.card-green {
@@ -528,35 +536,39 @@
 		height: 20rpx;
 		padding: 16rpx;
 	}
-	.my-article{
-		padding:24rpx;
+
+	.my-article {
+		padding: 24rpx;
 	}
+
 	.img-wrapper {
 		overflow: hidden;
 		width: 150rpx;
 		height: 150rpx;
 		border-radius: 20rpx;
 		margin-right: 10px;
-		position:relative;
-		flex-shrink:0; /*图片禁止压缩*/
+		position: relative;
+		flex-shrink: 0;
+
+
 	}
-	.img-text{
-		width:calc(100% - 160rpx) ;
-		flex: 1;
-	}
-	
-	.img-wrapper img {
-		// object-fit: cover;
+
+	.img-wrapper .img-inner {
 		width: 100%;
 		height: 100%;
 		max-height: 100%;
 		position: absolute;
 		left: 50%;
 		top: 50%;
-		transform: translate(-50%, -50%); 
-	
+		transform: translate(-50%, -50%);
 	}
-	
-	
 
+	.img-text {
+		width: calc(100% - 160rpx);
+		flex: 1;
+	}
+
+	.img-text ::v-deep .u-tag--mini {
+		width: fit-content;
+	}
 </style>

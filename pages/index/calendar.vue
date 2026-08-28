@@ -1,7 +1,7 @@
 <template>
 	<view class="page">
 		<view class="nav">
-			<u-icon name="arrow-left" @click="handleBack"></u-icon>
+			<u-icon name="arrow-left" @click="handleBack()"></u-icon>
 			<view class="nav-title">服务日历</view>
 			<view></view>
 		</view>

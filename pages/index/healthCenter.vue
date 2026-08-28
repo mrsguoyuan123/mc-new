@@ -3,7 +3,7 @@
 		<view class="margin-bottom-1">
 			<view class="font-bold font-l margin-bottom-5">健康管理中心</view>
 			<view class="u-flex ">
-				<u-icon name="info-circle" color="#ff6900" :size="iconSize1"></u-icon>
+				<u-icon name="info-circle" color="#ff6900" :size="fontSize1"></u-icon>
 				<view class="font-s font-info margin-left-5">数据监测连续更新 · 术后第 12 天</view>
 			</view>
 
@@ -162,9 +162,29 @@
 				</view>
 
 			</view>
+			<view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between u-flex-column ">
+				<view class="header-text">
+					<view class="header-icon ">
+						<view class="header-name font-bold font-m">
+							实时心率监测 (运动中)
+						</view>
+					</view>
+
+				</view>
+				<view class="chart-wrap">
+					<qiun-data-charts type="column" :opts="chartOpts" :chartData="chartData" canvas2d />
+				</view>
+
+				<view class="heart-bottom">
+					<view class="heart-desc font-info font-s">当前平均心率</view>
+					<view class="heart-val">82 <text class="unit">bpm</text></view>
+				</view>
+
+			</view>
 			<view class="radius-1 bg-white margin-top-1 padding-1 border-blue bg-linear-purple">
 				<view class="u-flex space-start">
-					<text class="custom-icon custom-icon-trending-up icon-bold" :style="{color: '#155DFC',fontSize: fontSize1}"></text>
+					<text class="custom-icon custom-icon-trending-up icon-bold"
+						:style="{color: '#155DFC',fontSize: fontSize1}"></text>
 
 					<text class=" font-bold font-s margin-left-5">
 						运动建议
@@ -188,8 +208,8 @@
 
 				</view>
 				<view class="u-flex space-between align-center weight-wrapper">
-					<u--input placeholder="请输入体重" type="number" class="margin-right-5"></u--input>
-					<view class="font-bold font-info">kg</view>
+					<u--input placeholder="请输入体重" type="number"></u--input>
+					<view class="font-bold font-info margin-left-5">kg</view>
 				</view>
 				<view class="button-wrapper-fill u-flex flex-center margin-top-1">
 					保存记录
@@ -219,7 +239,8 @@
 				</view>
 				<view class="radius-1 badge-green-bg  padding-1 card-green">
 					<view class="u-flex space-start">
-						<text class="custom-icon custom-icon-trending-down icon-bold" :style="{fontSize: fontSize1,color:'#009689'}"></text>
+						<text class="custom-icon custom-icon-trending-down icon-bold"
+							:style="{fontSize: fontSize1,color:'#009689'}"></text>
 						<text class=" font-green font-s margin-left-5">
 							较初始减重 1.7 kg
 						</text>
@@ -232,7 +253,7 @@
 
 			<view class="radius-1 bg-white margin-top-1 padding-1 border-orange bg-linear-orange">
 				<view class="u-flex space-start align-center">
-					<u-icon name="info-circle" color="#ff6900" :bold="true" :size="iconSize1"></u-icon>
+					<u-icon name="info-circle" color="#ff6900" :bold="true" :size="fontSize1"></u-icon>
 					<text class=" font-bold font-s margin-left-5">
 						医学监测预警
 					</text>
@@ -264,7 +285,7 @@
 				<view class="u-flex space-between align-center weight-wrapper">
 					<u--input placeholder="请输入血糖" type="number"></u--input>
 				</view>
-				<view class="button-wrapper-fill u-flex flex-center margin-top-1">
+				<view class="button-wrapper-fill u-flex flex-center margin-top-15">
 					保存数据
 				</view>
 
@@ -356,7 +377,8 @@
 			</view>
 			<view class="radius-1 bg-white margin-top-1 padding-1 border-pink bg-linear-pink">
 				<view class="u-flex space-start">
-					<text class="custom-icon custom-icon-PillOutline icon-bold" :style="{color: '#9810fa',fontSize: fontSize1}"></text>
+					<text class="custom-icon custom-icon-PillOutline icon-bold"
+						:style="{color: '#9810fa',fontSize: fontSize1}"></text>
 					<text class=" font-bold font-s margin-left-5">
 						用药提醒设置
 					</text>
@@ -379,7 +401,7 @@
 						睡眠评估
 					</view>
 					<view class="u-flex space-start">
-						<u-icon name="checkmark-circle" color="#00a63e"  :size="fontSize1"></u-icon>
+						<u-icon name="checkmark-circle" color="#00a63e" :size="fontSize1"></u-icon>
 						<text class="  font-s margin-left-5">
 							睡眠质量良好
 						</text>
@@ -404,22 +426,19 @@
 				<view
 					class="card-list  radius-1 card-top  card-border card-border-gray no-shadow bg-gray margin-bottom-1"
 					v-for="item in articleList" :key="item.id">
-					<view class="massage-list heath-6 u-flex space-between">
+					<view class="massage-list heath-6 u-flex space-between align-center">
 
 						<view class="massage-icon-left view-icon badge-blue-bg">
 							<u-icon name="file-text" color="#155DFC" :bold="true" size="40rpx"></u-icon>
 						</view>
 
 						<view class="article-list ">
-
-							<u--text size="28rpx" :bold="true" class=" font-s  font-black font-bold "
-								lines="1" :text="item.title"></u--text>
-							<view class="u-flex space-start margin-top-1">
-								<view class="badge-bg  badge-blue-bg margin-right-5">
-									{{item.type}}
-								</view>
-								<u--text size="16rpx" class="font-info font-s" :lines="1"
-									:text="item.duration"></u--text>
+							<u--text size="28rpx" :bold="true" class=" font-s  font-black font-bold " lines="1"
+								:text="item.title"></u--text>
+							<!-- 这里加自定义class tag-row -->
+							<view class="u-flex space-start margin-top-1 tag-row">
+								<u-tag plain plainFill size="mini" :text="item.type"></u-tag>
+								<u--text size="22rpx" class="font-info " :lines="1" :text="item.duration"></u--text>
 							</view>
 						</view>
 
@@ -450,6 +469,50 @@
 		},
 		data() {
 			return {
+				chartData: {
+					categories: ['', '', '', '', '', '', '', '', '', '', ''],
+					series: [{
+						name: '心率',
+						data: [42, 65, 48, 80, 52, 68, 95, 64, 45, 76, 83]
+					}]
+				},
+				chartOpts: {
+					color: ['#dbeafe'], //柱子浅蓝色
+					dataLabel: false,
+					extra: {
+						column: {
+							barWidth: 20, //柱子宽度
+							categoryGap: 2,
+							barBorderRadius: [6, 6, 0, 0] //顶部圆角，底部直角
+						},
+						tooltip: {
+							show: false
+						} //关闭悬浮提示
+					},
+					xAxis: {
+						disableGrid: true,
+						axisLine: false,
+						label: {
+							show: false
+						} //隐藏x轴文字
+					},
+					yAxis: {
+						disabled: true,
+						disableGrid: true,
+						axisLine: false,
+						label: {
+							show: false
+						}
+					},
+					legend: {
+						show: false
+					}, //隐藏图例
+					padding: [0, 0, 0, 0],
+					label: {
+						show: false,
+					}
+
+				},
 				show: false,
 				fontSize1: "30rpx",
 				fontSize2: "40rpx",
@@ -463,7 +526,7 @@
 						taken: true
 					},
 					{
-						id: 1,
+						id: 2,
 						name: "阿托伐他汀钙片阿托伐他汀钙片阿托伐他汀钙片阿托伐他汀钙片阿托伐他汀钙片",
 						time: "早餐后",
 						dosage: "100mg",
@@ -476,7 +539,7 @@
 					type: "文章",
 					duration: "5分钟"
 				}, {
-					id: 1,
+					id: 2,
 					title: "术后焦虑怎么办？专业医生为您解答",
 					type: "文章",
 					duration: "10分钟"
@@ -595,7 +658,7 @@
 				console.log(this.activeTab2)
 			},
 			showToast(params) {
-
+				// this.$u.toast('提示文本')
 				// this.$refs.uToast.show({
 				// 	...params,
 				// 	complete() {
@@ -604,23 +667,16 @@
 				// 			});
 				// 	},
 				// });
-				this.$refs.uToast.show({
-					title: '',
-					position: 'top',
-					message: "数据已加密发送至我的私人医生团队,已生成健康卡片同步至聊天窗口",
-					// 如果不传此type参数，默认为default，也可以手动写上 type: 'default'
-					type: 'success',
-					// 如果不需要图标，请设置为false
-					icon: 'checkmark-circle'
-				})
 				// this.$refs.uToast.show({
-				// 	title: '操作成功',
-				// 	url: '/pages/user/index',
-				// 	params: {
-				// 		id: 1,
-				// 		menu: 3
-				// 	}
+				// 	title: '',
+				// 	position: 'top',
+				// 	message: "数据已加密发送至我的私人医生团队,已生成健康卡片同步至聊天窗口",
+				// 	// 如果不传此type参数，默认为default，也可以手动写上 type: 'default'
+				// 	type: 'success',
+				// 	// 如果不需要图标，请设置为false
+				// 	icon: 'checkmark-circle'
 				// })
+
 			},
 			routeTo(res) {
 
@@ -650,6 +706,34 @@
 			display: none !important;
 		}
 	} */
+	.chart-wrap {
+		height: 200rpx !important;
+		width: 100% !important;
+	}
+
+	.heart-bottom {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-end;
+		/* margin-top:24rpx; */
+		width: 100%;
+	}
+
+	.heart-desc {
+		font-size: 26rpx;
+		color: #666;
+	}
+
+	.heart-val {
+		font-size: 48rpx;
+		color: #2563eb;
+		font-weight: bold;
+	}
+
+	.unit {
+		font-size: 28rpx;
+	}
+
 	.page-heathCenter .card-list {
 		padding: 30rpx
 	}
@@ -672,6 +756,17 @@
 		flex: 1;
 		margin-left: 20rpx;
 	}
+
+	.tag-row {
+		gap: 10rpx;
+		align-items: center;
+	}
+
+	.heath-6 .massage-icon-left {
+		width: 40rpx;
+		height: 40rpx;
+	}
+
 
 	/* 左边图标 */
 	/* .page-heathCenter .massage-list .massage-icon-left {
@@ -703,7 +798,7 @@
 		/* width: calc(100% - 220rpx); */
 		/* border: 1px solid; */
 		/* padding: 0 150rpx 0 90rpx; */
-		height: 80rpx;
+		/* height: 80rpx; */
 
 		/* flex: 1; */
 	}
@@ -757,6 +852,7 @@
 		color: #155DFC;
 		border-radius: 10px;
 		padding: 10px;
+		margin-top: 50rpx
 	}
 
 	.page-heathCenter .button-wrapper-fill {
@@ -772,10 +868,6 @@
 		margin: 0 0 30rpx 0;
 	}
 
-	.page-heathCenter {
-		padding-bottom: 120rpx;
-		/* width: 100%; */
-	}
 
 	.page-heathCenter .float-wrapper .u-icon {
 		position: relative;

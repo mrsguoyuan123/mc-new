@@ -8,10 +8,10 @@
 			<view class="">
 
 				<view class="view-text">
-					<view class="font-bold font-xl margin-bottom-1 text-center">
+					<view class="font-bold font-l margin-bottom-1 text-center">
 						首次登录
 					</view>
-					<view class="font-info font-m margin-bottom-2 text-center">
+					<view class="font-info font-s margin-bottom-3 text-center">
 						由于您是首次登录系统，请先选择您的角色以进入对应的服务空间
 					</view>
 				</view>
@@ -84,10 +84,7 @@
 				uni.showLoading()
 				uni.hideLoading()
 
-				let data = {
-					title: 'hello',
-					id: 1
-				}
+				
 				console.log(item.routeto)
 				if(item.routeto == 'onsite'){
 					uni.switchTab({
@@ -95,7 +92,7 @@
 					})
 				}else{
 					uni.navigateTo({
-						url: `../index/`+ item.routeto+`?data=` + encodeURIComponent(JSON.stringify(data))
+						url: `../index/`+ item.routeto+`?data=` + encodeURIComponent(JSON.stringify(item))
 					})
 				}
 				
@@ -103,9 +100,19 @@
 			
 			},
 			logOut(){
-				uni.navigateTo({
-					url: `../index/login`
+				uni.showModal({
+					title: '提示',
+					content: '确认退出登录？',
+					success(res) {
+						if (res.confirm) {
+							uni.clearStorageSync()
+							uni.reLaunch({
+								url: '/pages/index/login'
+							})
+						}
+					}
 				})
+				
 			}
 			
 		},

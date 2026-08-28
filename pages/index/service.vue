@@ -1,14 +1,13 @@
 <template>
-	<view class="container">
+	<view class="page-content">
 		<!--顶部提交成功提示-->
 		<view v-if="showSubmitTip" class="tip-box">
 			<u-icon name="checkmark-circle" color="#27ae60" size="36rpx"></u-icon>
 			<text class="tip-text">陪诊记录已提交</text>
 			<view class="close-tip" @click="showSubmitTip=false">✕</view>
 		</view>
-
 		<!--患者信息卡片-->
-		<view class="patient-card">
+		<view class="patient-card card-border-gray">
 			<view class="card-header">
 				<view class="avatar">
 					<u-icon name="account" color="#9c27b0" size="60rpx"></u-icon>
@@ -41,7 +40,7 @@
 		</view>
 
 		<!--陪诊任务卡片-->
-		<view class="task-card">
+		<view class="task-card card-border-gray">
 			<view class="card-title">陪诊任务</view>
 			<view class="timeline">
 				<!--任务1：到院签到-->
@@ -96,12 +95,13 @@
 							<view class="form-label">当前进展描述</view>
 							<textarea class="textarea" v-model="submitForm.progressDesc" placeholder=""></textarea>
 							<view class="form-label">异常反馈</view>
-					
+
 							<picker mode="selector" :value="submitForm.abnormalIdx" :range="abnormalList"
 								@change="onAbnormalChange">
 								<view class="picker-box">{{abnormalList[submitForm.abnormalIdx]}}</view>
 							</picker>
-							<button :disabled="!btnDisabled1"  class="purple-btn  radius-15 margin-top-10" @click="submitTask2">下一步</button>
+							<button :disabled="!btnDisabled1" class="purple-btn  radius-15 margin-top-10"
+								@click="submitTask2">下一步</button>
 						</view>
 					</view>
 				</view>
@@ -117,7 +117,8 @@
 						</view>
 						<view v-if="currentTask===3 && !task3Done" class="task-form">
 							<view class="form-label">陪诊总结</view>
-							<textarea class="textarea" v-model="submitForm.summaryText" placeholder="请对本次陪诊服务进行总结..."></textarea>
+							<textarea class="textarea" v-model="submitForm.summaryText"
+								placeholder="请对本次陪诊服务进行总结..."></textarea>
 							<view class="form-label">服务是否达成</view>
 							<view class="radio-group">
 								<view class="radio-item radius-15" :class="{active:submitForm.serviceResult===1}"
@@ -127,7 +128,8 @@
 									@click="submitForm.serviceResult=0">
 									未达成</view>
 							</view>
-							<button  :disabled="!btnDisabled2"   class="submit-btn  radius-15 margin-top-10" @click="submitAllRecord">提交陪诊记录</button>
+							<button :disabled="!btnDisabled2" class="submit-btn  radius-15 margin-top-10"
+								@click="submitAllRecord">提交陪诊记录</button>
 						</view>
 					</view>
 				</view>
@@ -146,16 +148,10 @@
 		components: {
 			customTabbar
 		},
-		// onReady() {
-		//   // 动态require，不要写在顶部import，解决vite找不到模块
-		//   const AMapWX = require("@/static/amap‑wx.130.js").AMapWX;
-		//   this.amap = new AMapWX({
-		//     key: "73bfdddf9bc61ffba8add1e4afdb1247"
-		//   });
-		// },
+
 		data() {
 			return {
-				
+
 				showSubmitTip: false,
 				user: {
 					name: "孙患者",
@@ -172,17 +168,17 @@
 				currentTask: 1,
 				task1Done: false,
 				task2Done: false,
-				submitForm:{
+				submitForm: {
 					progressDesc: "",
 					abnormalIdx: '',
 					summaryText: "",
 					serviceResult: '',
 				},
-				
-			
+
+
 				abnormalList: ["突发状况", "排队过久", "其他"],
 				task3Done: false,
-			
+
 				task1Finished: false,
 
 			}
@@ -191,18 +187,18 @@
 			task1AllDone() {
 				return this.locDone && this.photoDone
 			},
-			btnDisabled1(){
+			btnDisabled1() {
 				// console.log(this.submitForm.progressDesc!= '',this.submitForm.abnormalIdx!== '')
-				return this.submitForm.progressDesc!== '' && this.submitForm.abnormalIdx!== ''
+				return this.submitForm.progressDesc !== '' && this.submitForm.abnormalIdx !== ''
 			},
-			btnDisabled2(){
-				return this.submitForm.summaryText!== '' && this.submitForm.serviceResult!== ''
+			btnDisabled2() {
+				return this.submitForm.summaryText !== '' && this.submitForm.serviceResult !== ''
 			},
 		},
 		methods: {
 			// 导航
 			goNav() {
-				
+
 				uni.openLocation({
 					latitude: 30.2741,
 					longitude: 120.1550,
@@ -218,43 +214,47 @@
 			},
 			// 定位打卡
 			locationCheck() {
-				uni.chooseLocation({
-					success: (res) => {
-						console.log('选点结果', res)
-						uni.showModal({
-							title: "定位打卡成功",
-							content: `地址：${res.name}\n经纬度：${res.latitude},${res.longitude}`,
-							showCancel: false,
-							success: () => {
-								this.task1Finished = true;
-								this.locDone = true;
-							}
-						})
-					},
-					fail: (err) => {
-						console.error(err)
-						if (err.errMsg.includes("auth")) {
-							uni.showModal({
-								title: "需要位置权限",
-								content: "请开启位置权限才能定位打卡",
-								confirmText: "去设置",
-								success: (res) => {
-									if (res.confirm) uni.openSetting()
-								}
-							})
-						} else if (err.errMsg.includes('cancel')) {
-							uni.showToast({
-								title: "已取消定位打卡",
-								icon: "none"
-							})
-						} else {
-							uni.showToast({
-								title: "打开地图失败",
-								icon: "none"
-							})
-						}
-					}
-				})
+				this.task1Finished = true;
+				this.locDone = true;
+				// 		uni.chooseLocation({
+				// 			success: (res) => {
+				// 				console.log('选点结果', res)
+				// 				uni.showModal({
+				// 					title: "定位打卡成功",
+				// 					content: `地址：${res.name}\n经纬度：${res.latitude},${res.longitude}`,
+				// 					showCancel: false,
+				// 					success: () => {
+				// 						this.task1Finished = true;
+				// 						this.locDone = true;
+				// 					}
+				// 				})
+				// 			},
+				// 			fail: (err) => {
+				// 				console.error(err)
+				// 				if (err.errMsg.includes("auth")) {
+				// 					uni.showModal({
+				// 						title: "需要位置权限",
+				// 						content: "请开启位置权限才能定位打卡",
+				// 						confirmText: "去设置",
+				// 						success: (res) => {
+				// 							if (res.confirm) uni.openSetting()
+				// 						}
+				// 					})
+				// 				} else if (err.errMsg.includes('cancel')) {
+				// 					uni.showToast({
+				// 						title: "已取消定位打卡",
+				// 						icon: "none"
+				// 					})
+				// 				} else {
+				// 					uni.showToast({
+				// 						title: "打开地图失败",
+				// 						icon: "none"
+				// 					})
+				// 				}
+				// 			}
+				// 		})
+
+
 			},
 			// 拍照打卡
 			photoCheck() {
@@ -367,7 +367,7 @@
 					})
 				})
 			},
-			
+
 			/**
 			 * 2、唤起高德导航App 【App端】
 			 * mode: 0驾车，1公交，2步行，3骑行
@@ -390,7 +390,7 @@
 					})
 				})
 			},
-			
+
 			async goNav() {
 				try {
 					uni.showLoading({
@@ -410,19 +410,22 @@
 					})
 				}
 			}
-					
+
 
 		}
 	}
 </script>
 
 <style scoped>
-	page {
+	/* page {
 		background: #f4f6fa;
-	}
+	} */
 
-	.container {
+	/* .container {
 		padding: 30rpx;
+	} */
+	.page-content{
+		position: relative;
 	}
 
 	.tip-box {
@@ -433,6 +436,10 @@
 		border-radius: 16rpx;
 		margin-bottom: 24rpx;
 		border: 1rpx solid #b2e8c4;
+		position: absolute;
+		top: 20rpx;
+		left:60rpx ;
+		right:60rpx ;
 	}
 
 	.tip-text {
@@ -528,6 +535,7 @@
 		background: #fff;
 		border-radius: 24rpx;
 		padding: 40rpx;
+		
 	}
 
 	.card-title {
@@ -582,27 +590,15 @@
 	}
 
 	.task-title {
-		font-size: 34rpx;
+		font-size: 30rpx;
 		font-weight: 600;
 		color: #111;
 		margin-bottom: 16rpx;
 	}
 
 	.text-gray {
-		color: #999;
+		color: #909399;
 	}
-
-	.done-row {
-		display: flex;
-		align-items: center;
-	}
-
-	.done-text {
-		color: #27ae60;
-		font-size: 30rpx;
-		margin-left: 10rpx;
-	}
-
 	.btn-group {
 		display: flex;
 		gap: 20rpx;
@@ -639,7 +635,7 @@
 	.picker-box {
 		background: #f7f8fa;
 		border-radius: 20rpx;
-		padding:0 24rpx;
+		padding: 0 24rpx;
 		height: 80rpx;
 		line-height: 80rpx;
 		font-size: 30rpx;
@@ -657,7 +653,8 @@
 		text-align: center;
 		padding: 18rpx 0;
 		border: 2rpx solid #ddd;
-		font-size: 32rpx;
+		font-size: 25rpx;
+		font-weight: bold;
 	}
 
 	.radio-item.active {
@@ -672,9 +669,49 @@
 		color: #fff;
 		/* border-radius: 20rpx; */
 		/* padding: 22rpx 0; */
-		font-size: 34rpx;
+		font-size: 25rpx;
 		border: none;
+		font-weight: bold;
+		height: 80rpx;
+		line-height: 80rpx;
+		/* border: 2px solid #27ae60; */
 		/* margin-top: 20rpx; */
+	}
+	.purple-btn {
+		background: #9333ea;
+		color: #fff;
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 25rpx;
+		border: none;
+		font-weight: bold;
+		height: 80rpx;
+		line-height: 80rpx;
+		/* border: 2px solid #9333ea; */
+	}
+	.done-row {
+		display: flex;
+		align-items: center;
+		height: calc(80rpx - 4px);
+		line-height: 80rpx;
+		padding:0 10px ;
+	}
+	.done-text {
+		color: #27ae60;
+		font-size: 25rpx;
+		margin-left: 10rpx;
+	}
+	.purple-btn[disabled] {
+		background-color: #d4a0ff !important; //禁用浅紫色
+		color: #fff !important;
+		border: 0 !important;
+	}
+	.submit-btn[disabled] {
+		background-color: #7fe2a7 !important; //禁用浅紫色
+		color: #fff !important;
+		border: 0 !important;
 	}
 
 	.tab-bar {
@@ -705,16 +742,7 @@
 		gap: 24rpx;
 	}
 
-	.purple-btn {
-		background: #9333ea;
-		color: #fff;
-		width: 100%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 32rpx;
-		border: none;
-	}
+
 
 	.purple-btn .u-icon {
 		margin-right: 5px;

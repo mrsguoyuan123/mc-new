@@ -6,7 +6,7 @@
 			<!-- 自定义导航栏 -->
 			<view class="custom-nav">
 				<!-- 返回按钮 -->
-				<view class="nav-back" @click="handleBack">
+				<view class="nav-back" @click="handleBack()">
 					<u-icon name="arrow-left" color="#222" size="36rpx"></u-icon>
 				</view>
 				<!-- 中间标题 -->

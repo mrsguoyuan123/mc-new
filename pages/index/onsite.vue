@@ -392,13 +392,13 @@
 	}
 
 	.name {
-		font-size: 40rpx;
+		font-size: 30rpx;
 		font-weight: bold;
 		color: #111;
 	}
 
 	.age {
-		font-size: 30rpx;
+		font-size: 25rpx;
 		color: #888;
 	}
 
@@ -409,7 +409,7 @@
 	}
 
 	.time-text {
-		font-size: 30rpx;
+		font-size: 22rpx;
 		color: #9810fa;
 	}
 
@@ -418,7 +418,7 @@
 	}
 
 	.detail-text {
-		font-size: 30rpx;
+		font-size: 25rpx;
 		color: #9810fa;
 		font-weight: bold;
 	}
@@ -434,7 +434,7 @@
 	}
 
 	.bottom-text {
-		font-size: 30rpx;
+		font-size: 25rpx;
 		color: #444;
 	}
 </style>

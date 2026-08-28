@@ -71,7 +71,7 @@
 		{
 			"path": "pages/index/calendar",
 			"style": {
-				"navigationBarTitleText": ""
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -104,6 +104,34 @@
 			"style": {
 				"navigationStyle": "custom"
 			}
+		},
+		{
+			"path": "pages/index/caregiverApply",
+			"style": {
+			    "navigationBarTitleText": "选择健康照护师",
+			    "navigationBarBackgroundColor": "#ffffff"
+			  }
+		},
+		{
+			"path": "pages/index/caregiverDetail",
+			"style": {
+			    "navigationBarTitleText": "选择照护套餐",
+			    "navigationBarBackgroundColor": "#ffffff"
+			  }
+		},
+		{
+			"path": "pages/index/caregiverBooking",
+			"style": {
+			    "navigationBarTitleText": "预约上门时间",
+			    "navigationBarBackgroundColor": "#ffffff"
+			  }
+		},
+		{
+			"path": "pages/index/caregiverOrder",
+			"style": {
+			    "navigationBarTitleText": "服务详情",
+			    "navigationBarBackgroundColor": "#ffffff"
+			  }
 		}
 
 
