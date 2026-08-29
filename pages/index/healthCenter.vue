@@ -458,6 +458,8 @@
 			同步到我的私人医生团队
 		</view>
 		<main-tabbar :current="1"></main-tabbar>
+		<u-toast ref="uToast"></u-toast>
+
 	</view>
 </template>
 <script>
@@ -658,24 +660,32 @@
 				console.log(this.activeTab2)
 			},
 			showToast(params) {
-				// this.$u.toast('提示文本')
-				// this.$refs.uToast.show({
-				// 	...params,
-				// 	complete() {
-				// 		params.url &&uni.navigateTo({
-				// 				url: params.url,
-				// 			});
-				// 	},
-				// });
-				// this.$refs.uToast.show({
-				// 	title: '',
-				// 	position: 'top',
-				// 	message: "数据已加密发送至我的私人医生团队,已生成健康卡片同步至聊天窗口",
-				// 	// 如果不传此type参数，默认为default，也可以手动写上 type: 'default'
-				// 	type: 'success',
-				// 	// 如果不需要图标，请设置为false
-				// 	icon: 'checkmark-circle'
-				// })
+				
+				const name = this.tabList2[this.activeTab2-1].name;
+				const data = {
+					value1:'1',
+					value2:'2',
+					healthType:name
+					
+				}
+				let routeUrl = "/pages/index/consultation" + `?data=` + encodeURIComponent(JSON.stringify(data))
+				this.$refs.uToast.show({
+					title: '',
+					position: 'top',
+					message: `${name}数据已加密发送至我的私人医生团队,已生成健康卡片同步至聊天窗口`,
+					// 如果不传此type参数，默认为default，也可以手动写上 type: 'default'
+					type: 'success',
+					// 如果不需要图标，请设置为false
+					icon: 'checkmark-circle',
+					complete() {
+						uni.navigateTo({
+							url: routeUrl,
+							fail: (err) => {
+								console.error('跳转失败', err) //打印失败原因
+							}
+						});
+					},
+				})
 
 			},
 			routeTo(res) {
@@ -706,6 +716,9 @@
 			display: none !important;
 		}
 	} */
+	::v-deep .u-toast__content__text {
+		line-height: 1.4 !important;
+	}
 	.chart-wrap {
 		height: 200rpx !important;
 		width: 100% !important;

@@ -1,8 +1,8 @@
 @font-face {
   font-family: "custom-icon"; /* Project id 5225351 */
- src: url('~@/static/css/fonts/iconfont.woff2') format('woff2'),
-       url('~@/static/css/fonts/iconfont.woff') format('woff'),
-       url('~@/static/css/fonts/iconfont.ttf') format('truetype');
+ src: url('~@/static/fonts/iconfont.woff2') format('woff2'),
+       url('~@/static/fonts/iconfont.woff') format('woff'),
+       url('~@/static/fonts/iconfont.ttf') format('truetype');
 }
 
 .custom-icon {
@@ -12,7 +12,34 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-/* <u-icon name="help" custom-prefix="custom-icon" size="30" color="#888888"></u-icon> */
+
+.custom-icon-user:before {
+  content: "\e60d";
+}
+
+.custom-icon-medal:before {
+  content: "\e65d";
+}
+
+.custom-icon-save:before {
+  content: "\e67c";
+}
+
+.custom-icon-order:before {
+  content: "\e713";
+}
+
+.custom-icon-sport:before {
+  content: "\eafb";
+}
+
+.custom-icon-shield:before {
+  content: "\e717";
+}
+
+.custom-icon-sport-shoe:before {
+  content: "\e6d3";
+}
 
 .custom-icon-wechat:before {
   content: "\e888";
@@ -126,14 +153,6 @@
   content: "\e6a2";
 }
 
-.custom-icon-file-text:before {
-  content: "\e6b5";
-}
-
-.custom-icon-filetext:before {
-  content: "\e671";
-}
-
 .custom-icon-calendar:before {
   content: "\e74a";
 }
@@ -154,16 +173,8 @@
   content: "\e602";
 }
 
-.custom-icon-check-circle:before {
-  content: "\e77d";
-}
-
 .custom-icon-check-selected:before {
   content: "\e634";
-}
-
-.custom-icon-download_check_select:before {
-  content: "\e778";
 }
 
 .custom-icon-lucide:before {
@@ -180,10 +191,6 @@
 
 .custom-icon-scale:before {
   content: "\e62b";
-}
-
-.custom-icon-scale1:before {
-  content: "\e878";
 }
 
 .custom-icon-scales-line:before {
@@ -280,10 +287,6 @@
 
 .custom-icon-stethoscope2:before {
   content: "\e8c2";
-}
-
-.custom-icon-stethoscope3:before {
-  content: "\e61a";
 }
 
 .custom-icon-a-36-stethoscope:before {

@@ -202,41 +202,78 @@
 				</view>
 			</view>
 		</view>
-		<view class="header-text">
-			<view class="header-icon ">
-				<text class="custom-icon custom-icon-user-check icon-bold"
-					style="font-size:40rpx;color:#155DFC;"></text>
-				<view class="header-name font-bold font-m">
-					健康护照师申请
-				</view>
-			</view>
-			<view class="font-blue font-s font-bold">
-				上门服务
-			</view>
-		</view>
-		<view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between" @click="routeTo('caregiverApply')">
-			<view class="view-icon bg-blue-dark margin-right-5">
-				<text class="custom-icon custom-icon-shield icon-bold" style="font-size:40rpx;color:white;"></text>
-			</view>
-			<view>
 
-				<view class="view-text">
-					<view class=" font-m font-bold">
-						专业照护人员上门服务
-					</view>
-					<view class="font-xs margin-15">
-						术后康复专项指导 · 居家生活护理 · 24h全天候陪伴
+		<view
+			v-if="!this.caregiverOption || Object.keys(this.caregiverOption).length ===0 || this.caregiverOption.applyforRefund">
+			<view class="header-text">
+				<view class="header-icon ">
+					<text class="custom-icon custom-icon-user-check icon-bold"
+						style="font-size:40rpx;color:#155DFC;"></text>
+					<view class="header-name font-bold font-m">
+						健康护照师申请
 					</view>
 				</view>
-				<view class="badge-bg  badge-blue-bg">
-					已有 1000+ 患者选择
+				<view class="font-blue font-s font-bold">
+					上门服务
 				</view>
 			</view>
-			<view class="">
-				<u-icon name="arrow-right" color="#909399" size="20rpx"></u-icon>
+			<view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between"
+				@click="routeTo('caregiverApply')">
+				<view class="view-icon bg-blue-dark margin-right-5">
+					<text class="custom-icon custom-icon-shield icon-bold" style="font-size:40rpx;color:white;"></text>
+				</view>
+				<view>
+
+					<view class="view-text">
+						<view class=" font-m font-bold">
+							专业照护人员上门服务
+						</view>
+						<view class="font-xs margin-15">
+							术后康复专项指导 · 居家生活护理 · 24h全天候陪伴
+						</view>
+					</view>
+					<view class="badge-bg  badge-blue-bg">
+						已有 1000+ 患者选择
+					</view>
+				</view>
+				<view class="">
+					<u-icon name="arrow-right" color="#909399" size="20rpx"></u-icon>
+				</view>
+
 			</view>
 
 		</view>
+		<view v-else>
+			<view class="header-text">
+				<view class="header-icon ">
+					<text class="custom-icon custom-icon-user-check icon-bold"
+						style="font-size:40rpx;color:#155DFC;"></text>
+					<view class="header-name font-bold font-m">
+						当前照护服务
+					</view>
+				</view>
+				<view class="font-blue font-s font-bold">
+					执行中
+				</view>
+			</view>
+			<view class="staff-card radius-15 card-top bg-white card-border card-border-gray "
+				@click="routeTo('caregiverOrder')">
+				<image class="avatar" :src="caregiverOption.avatar" mode="aspectFill"></image>
+				<view class="info-wrap">
+					<view class=" font-m font-bold">照护师: {{caregiverOption.name}}</view>
+					<view class="time-row  ">
+						<u-icon name="clock" color="#08b852" size="30rpx"></u-icon>
+						<text>首日: {{caregiverOption.date}} {{caregiverOption.timeSlot}}</text>
+					</view>
+					<view class="tag">
+						<u-icon name="checkmark-circle" color="#08b852" size="26rpx"></u-icon>
+						<text>专业级保障中</text>
+					</view>
+				</view>
+				<u-icon name="arrow-right" color="#999" size="34rpx"></u-icon>
+			</view>
+		</view>
+
 		<view class="header-text">
 			<view class="header-icon ">
 				<u-icon name="heart" color="#fb2c36" :bold="true" size="40rpx"></u-icon>
@@ -248,7 +285,8 @@
 				为您精选
 			</view>
 		</view>
-		<view v-for="item in articles" :key="item.id" class="my-article bg-white radius-15 card-border card-border-gray">
+		<view v-for="item in articles" :key="item.id"
+			class="my-article bg-white radius-15 card-border card-border-gray">
 			<view class="u-flex align-center">
 				<view class="img-wrapper">
 					<image class="img-inner" :src="item.image" :alt="item.desc" mode="aspectFit"></image>
@@ -285,6 +323,7 @@
 		},
 		data() {
 			return {
+				caregiverOption: {},
 				bgTextStyle: 'dark',
 				scrollTop: '200rpx',
 				bgColor: '#ff0000',
@@ -344,56 +383,46 @@
 
 			};
 		},
-		onLoad() {
-			let srceenNunber = 19.2; //因设计图是1920所有把设计图分为19.2份，所以html字体大小为100px
-			let that = this;
-
-			//窗体改变大小触发事件
-			uni.onWindowResize((res) => {
-				console.log('变化后的窗口宽度=', res.size.windowWidth);
-				that.fontsize = parseFloat(res.size.windowWidth) / srceenNunber;
-				console.log('字体大小：', that.fontsize);
-			})
-
-			//打开获取屏幕大小
-			uni.getSystemInfo({
-				success(res) {
-					console.log('设备信息：', res);
-					that.fontsize = res.screenWidth / srceenNunber;
-					console.log('字体大小：', that.fontsize);
+		onLoad(options) {
+			// 1.先判断 data 是否存在，并且不是字符串"undefined"
+			if (options.data && options.data !== "undefined") {
+				try {
+					const raw = decodeURIComponent(options.data)
+					const obj = JSON.parse(raw);
+					if(obj.dataName){
+					this.caregiverOption = obj	
+					}
+				} catch (e) {
+					console.error('JSON解析失败', e)
 				}
-			})
+			}
 		},
 
 		methods: {
-			routeTo(res) {
-				console.log(res)
+			routeTo1(res) {
 
-				let data = {
-					id: 1
-				}
-				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(data))
+				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(this
+					.caregiverOption))
 				uni.navigateTo({
 					url: routeUrl,
 					fail: (err) => {
 						console.error('跳转失败', err) //打印失败原因
 					}
-				})
-				// if (res == 'healthCenter' || res == 'home' || res == 'chat' || res == 'account') {
-				// 	uni.switchTab({
-				// 		url: routeUrl,
-				// 		fail: (err) => {
-				// 			console.error('跳转失败', err) //打印失败原因
-				// 		}
-				// 	})
-				// } else {
-				// 	uni.navigateTo({
-				// 		url: routeUrl,
-				// 		fail: (err) => {
-				// 			console.error('跳转失败', err) //打印失败原因
-				// 		}
-				// 	})
-				// }
+				});
+			},
+			routeTo(res) {
+				console.log(res)
+
+
+				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(this
+					.caregiverOption))
+				uni.navigateTo({
+					url: routeUrl,
+					fail: (err) => {
+						console.error('跳转失败', err) //打印失败原因
+					}
+				});
+
 
 			}
 		},
@@ -403,6 +432,52 @@
 </script>
 
 <style scoped lang="scss">
+	.staff-card {
+		display: flex;
+		align-items: center;
+		padding: 36rpx 32rpx;
+		background: #ffffff;
+		border-radius: 40rpx;
+		background-image: radial-gradient(circle at 95% 10%, #ecfcf0 0%, transparent 40%);
+
+		.avatar {
+			width: 140rpx;
+			height: 140rpx;
+			border-radius: 28rpx;
+			margin-right: 28rpx;
+		}
+
+		.info-wrap {
+			flex: 1;
+		}
+
+		.name-row {
+			font-size: 42rpx;
+			font-weight: bold;
+			color: #111;
+			margin-bottom: 12rpx;
+		}
+
+		.time-row {
+			display: flex;
+			align-items: center;
+			font-size: 25rpx;
+			color: #089944;
+			margin: 16rpx 0;
+		}
+
+		.tag {
+			display: flex;
+			align-items: center;
+			background: #ecfcf0;
+			color: #089944;
+			font-size: 28rpx;
+			padding: 12rpx 20rpx;
+			border-radius: 16rpx;
+			width: fit-content;
+		}
+	}
+
 	.page-home {
 		// padding-bottom: 70px;
 	}

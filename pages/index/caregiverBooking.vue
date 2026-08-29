@@ -1,6 +1,6 @@
 <template>
 	<view class="page-booking-time">
-	
+
 
 		<view class="page-content">
 			<!--支付成功提示卡片-->
@@ -48,24 +48,25 @@
 
 			<!--底部按钮-->
 			<view class="bottom-btn-wrap">
-				<button class="submit-btn" @click="routeTo('caregiverOrder')">完成预约</button>
+				<button class="submit-btn" @click="onComplete()">完成预约</button>
 			</view>
 		</view>
-		<main-tabbar :current="1"></main-tabbar>
+		<main-tabbar :current="0"></main-tabbar>
+		<u-toast ref="uToast"></u-toast>
 	</view>
 </template>
-
 <script>
 	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
-	
 	export default {
 		components: {
 			mainTabbar
 		},
 		data() {
 			return {
-				selectDateIndex: 0,
-				slotIndex: 0,
+				caregiverName: 'xxx',
+				selectDateIndex: null,
+				slotIndex: null,
+				caregiverOption: {},
 				dateList: [],
 				slotList: [{
 						text: "上午 09:00‑12:00"
@@ -76,71 +77,91 @@
 				]
 			};
 		},
+	onLoad(options) {
+	if (options.data && options.data !== "undefined") {
+		try {
+			const raw = decodeURIComponent(options.data)
+			const obj = JSON.parse(raw)
+			this.caregiverOption = obj
+		} catch (e) {
+			console.error('JSON解析失败', e)
+		}
+	}
+	},
 		created() {
 			this.getNext7DaysFromTomorrow();
 		},
 		methods: {
-			 getNext7DaysFromTomorrow() {
-			  const weekText = ['周日','周一','周二','周三','周四','周五','周六'];
-			  const list = [];
-			  const now = new Date();
-			
-			  // 明天时间戳
-			  const tomorrow = new Date(now);
-			  tomorrow.setDate(now.getDate() + 1);
-			
-			  for(let i = 0; i < 7; i++) {
-			    const d = new Date(tomorrow);
-			    d.setDate(tomorrow.getDate() + i);
-			    const m = d.getMonth() + 1;
-			    const day = d.getDate();
-			    const week = weekText[d.getDay()];
-			    list.push({
-			      week,
-			      day: `${m}/${day}`
-			    })
-			  }
-			  this.dateList = list
-			},
-		routeTo(res) {
-				let data = {
-					id: '1'
+			getNext7DaysFromTomorrow() {
+				const weekText = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+				const list = [];
+				const now = new Date();
+				const tomorrow = new Date(now);
+				tomorrow.setDate(now.getDate() + 1);
+				for (let i = 0; i < 7; i++) {
+					const d = new Date(tomorrow);
+					d.setDate(tomorrow.getDate() + i);
+					const m = d.getMonth() + 1;
+					const day = d.getDate();
+					const week = weekText[d.getDay()];
+					list.push({
+						week,
+						day: `${m}/${day}`
+					})
 				}
-				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(data))
-				uni.navigateTo({
-					url: routeUrl,
-					fail: (err) => {
-						console.error('跳转失败', err) //打印失败原因
-					}
-				})
-
+				this.dateList = list
 			},
 			onComplete() {
-				const selectedDate = this.dateList[this.selectDateIndex];
-				const selectedSlot = this.slotList[this.slotIndex];
-				console.log("提交预约", {
-					selectedDate,
-					selectedSlot
-				});
-				// uni.navigateTo({url:"xxx"})
-			},
-			handleBack() {
-				uni.navigateBack({
-					delta: 1
+				if (this.selectDateIndex === null) {
+					this.$refs.uToast.show({
+						message: `请选择日期`,
+						type: "error",
+					});
+					return
+				}
+				if (this.slotIndex === null) {
+					this.$refs.uToast.show({
+						message: `请选择时段`,
+						type: "error",
+					});
+					return
+				}
+
+				this.caregiverOption.date = this.dateList[this.selectDateIndex].day
+				this.caregiverOption.timeSlot = this.slotList[this.slotIndex].text
+				console.log(this.caregiverOption)
+				let routeUrl = "/pages/index/caregiverOrder" + `?data=` + encodeURIComponent(JSON.stringify(this
+					.caregiverOption))
+				// const url =`/pages/index/caregiverOrder?date=${encodeURIComponent(dateItem.day)}&timeSlot=${encodeURIComponent(slotItem.text)}&caregiverName=${encodeURIComponent(this.caregiverName)}`
+				this.$refs.uToast.show({
+					message: `已选定：${this.caregiverOption.name},预约上门：${this.caregiverOption.date} ${this.caregiverOption.timeSlot}成功`,
+					type: "success",
+					duration: 1500,
+					// position: "top",
+					complete() {
+						uni.navigateTo({
+							url: routeUrl,
+							fail: (err) => {
+								console.error('跳转失败', err) //打印失败原因
+							}
+						});
+					},
 				})
+
+
 			},
 		}
 	};
 </script>
 
 <style scoped>
-	
-
-	
+	::v-deep .u-toast__content__text {
+		line-height: 1.4 !important;
+	}
 
 	/*成功卡片*/
 	.success-card {
-	/* 	background-color: #ecfcf0;
+		/* 	background-color: #ecfcf0;
 		border-radius: 24rpx; */
 		padding: 48rpx 32rpx;
 		text-align: center;
@@ -252,9 +273,9 @@
 	}
 
 	.slot-item.active {
-		    background: #eff6ff;
-		    color: #155dfc;
-		    border: 1px solid #155dfc;
+		background: #eff6ff;
+		color: #155dfc;
+		border: 1px solid #155dfc;
 	}
 
 	.tip-row {

@@ -1,12 +1,12 @@
 <template>
-	<view class="page-package">
+	<view class="page-content ">
 
 		<!-- 照护师信息卡片 -->
 		<view class="staff-card">
-			<image class="avatar" :src="staffInfo.avatar" mode="aspectFill"></image>
+			<image class="avatar" :src="caregiverOption.avatar" mode="aspectFill"></image>
 			<view class="staff-info">
 				<view class="name-row">
-					<text class="name">{{staffInfo.name}}</text>
+					<text class="name">{{caregiverOption.name}}</text>
 					<text class="tip-text">为您服务</text>
 				</view>
 				<view class="cert-row">
@@ -60,7 +60,8 @@
 			</button>
 			<view class="bottom-desc">支付成功后即可预约首日上门时间</view>
 		</view>
-		<main-tabbar :current="1"></main-tabbar>
+		<main-tabbar :current="0"></main-tabbar>
+
 	</view>
 </template>
 
@@ -73,11 +74,8 @@
 		},
 		data() {
 			return {
-				staffInfo: {
-					id: "cg1",
-					name: "王晓芳",
-					avatar: "https://images.unsplash.com/photo-1758691462615-beafbf50bf3c?w=200&q=80",
-				},
+				caregiverOption: {},
+
 				packageList: [{
 						period: '1个礼拜',
 						price: 1800,
@@ -108,6 +106,17 @@
 				]
 			}
 		},
+		onLoad(options) {
+		if (options.data && options.data !== "undefined") {
+			try {
+				const raw = decodeURIComponent(options.data)
+				const obj = JSON.parse(raw)
+				this.caregiverOption = obj
+			} catch (e) {
+				console.error('JSON解析失败', e)
+			}
+		}
+		},
 		computed: {
 			currentSelect() {
 				return this.packageList.find(item => item.selected)
@@ -120,10 +129,8 @@
 				})
 			},
 			routeTo(res) {
-				let data = {
-					id: '1'
-				}
-				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(data))
+
+				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(this.caregiverOption))
 				uni.navigateTo({
 					url: routeUrl,
 					fail: (err) => {
@@ -144,9 +151,9 @@
 
 <style scoped>
 	.page-package {
-		background-color: #f7f8fa;
+	/* 	background-color: #f7f8fa;
 		min-height: 100vh;
-		padding: 30rpx 32rpx;
+		padding: 30rpx 32rpx; */
 	}
 
 	.nav-bar {

@@ -132,6 +132,12 @@
 			    "navigationBarTitleText": "服务详情",
 			    "navigationBarBackgroundColor": "#ffffff"
 			  }
+		},
+		{
+			"path": "pages/index/chat",
+			"style": {
+				"navigationStyle": "custom"
+			}
 		}
 
 

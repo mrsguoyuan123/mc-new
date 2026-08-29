@@ -1,12 +1,15 @@
 <template>
 	<view class="page-workbench page-content">
 		<view v-if="topTip.show" class="top-tip">
-			<view class="tip-close" @click="topTip.show=false">✕</view>
-			<view class="tip-icon">ℹ️</view>
-			<view class="tip-text">{{topTip.text1}}</view>
-			<view class="tip-text">{{topTip.text2}}</view>
+			<!-- <view class="tip-close" @click="topTip.show=false">✕</view> -->
+			<view class="tip-icon">
+				<u-icon name="info-circle" color="#0052cc" size="40rpx"></u-icon>
+			</view>
+			<view>
+				<view class="tip-text">{{topTip.text1}}</view>
+				<view class="tip-text">{{topTip.text2}}</view>
+			</view>
 		</view>
-
 		<!-- 头部标题 + 头像 -->
 		<view class="page-header">
 			<view>
@@ -15,244 +18,242 @@
 			</view>
 			<view class="avatar-box">
 				<text class="avatar-icon">
-					<u-icon name="account" color="#909399" bold="true" size="50rpx"></u-icon>
+					<u-icon name="account" color="#909399" :bold="true" size="50rpx"></u-icon>
 				</text>
 				<view class="dot"></view>
 			</view>
 		</view>
-
 		<!-- 搜索框 -->
 		<view class="margin-30 ">
 			<u--input placeholder="搜索患者姓名、意向、手机号" shape="" prefixIcon="search"
 				prefixIconStyle="font-size: 22px;color: #909399"></u--input>
 		</view>
-
 		<!-- 统计数字卡片组 -->
 		<view class="stat-row">
 			<view class="stat-item">
 				<view class="dot red"></view>
-				<u-badge class="badge" bgColor="#f53f3f" max="99" value="3"></u-badge>
+				<view class="badge-num">
+					<u-badge bgColor="#f53f3f" max="99" value="3"></u-badge>
+				</view>
 				<text class="num">8</text>
 				<text class="stat-label">高意向</text>
 			</view>
 			<view class="stat-item">
 				<view class="dot orange"></view>
-				<u-badge class="badge" bgColor="#f53f3f" max="99" value="8"></u-badge>
+				<view class="badge-num">
+					<u-badge bgColor="#f53f3f" max="99" value="143"></u-badge>
+				</view>
 				<text class="num">15</text>
 				<text class="stat-label">待电话沟通</text>
 			</view>
 			<view class="stat-item">
 				<view class="dot green"></view>
-				<u-badge class="badge" bgColor="#f53f3f" max="99" value="143"></u-badge>
+				<view class="badge-num">
+					<u-badge bgColor="#f53f3f" max="99" value="143"></u-badge>
+				</view>
 				<text class="num">23</text>
 				<text class="stat-label">待信息回复</text>
 			</view>
 		</view>
-
 		<!-- 沟通记录标题 -->
 		<view class="record-head">
 			<text class="font-m font-bold">沟通记录 (6)</text>
 			<text class="tip font-s font-info">实时同步意向</text>
 		</view>
-
 		<!-- 沟通记录列表 -->
-		<scroll-view scroll-y class="list-scroll">
-			<view v-for="(item, idx) in list" :key="idx">
-				<view class="record-item">
-					<!-- 左侧竖条标记 -->
-					<view class="left-bar" :class="{active: item.highlight}"></view>
-					<!-- 头像缩写 -->
-					<view class="short-avatar">{{ item.name.charAt(0) }}</view>
-					<view class="info">
-						<view class="name-row">
-							<text class="name">{{ item.name }}</text>
-							<view class="intent-tag-wrapper">
-								<text class="intent-tag" :class="item.intentClass">{{ item.intent }}</text>
-							</view>
-							<text class="custom-icon custom-icon-message" style="font-size:45rpx;color:#1ec76f;"></text>
+		<!-- 	<scroll-view scroll-y class="list-scroll">
+</scroll-view> -->
+		<view v-for="(item, idx) in list" :key="idx">
+			<view class="record-item">
+				<!-- 左侧竖条标记 -->
+				<view class="left-bar" :class="{active: item.highlight}"></view>
+				<!-- 头像缩写 -->
+				<view class="short-avatar">{{ item.name.charAt(0) }}</view>
+				<view class="info">
+					<view class="name-row">
+						<text class="name">{{ item.name }}</text>
+						<view class="intent-tag-wrapper">
+							<text class="intent-tag" :class="item.intentClass">{{ item.intent }}</text>
 						</view>
-						<view class="desc-line">
-							<text class="desc">{{ item.operation }} | {{ item.hospital }}</text>
-						</view>
-						<view class="sub-desc">
-							<text>主刀: {{ item.doctor }} | 地区: {{ item.area }}</text>
-						</view>
+						<text class="custom-icon custom-icon-message" style="font-size:45rpx;color:#1ec76f;"
+							@click="routeTo(item)"></text>
 					</view>
-					<view class="btn-group">
-
-						<u-button class="call-btn" :class="item.btnClass" type="primary" icon="phone-fill"
-							@click="openStepPanel(item)" text="拨打"></u-button>
-						<!-- <button icon="phone" class="call-btn" :class="item.btnClass">
-						
-						</button> -->
-						<text class="btn-tip">{{ item.btnTip }}</text>
+					<view class="desc-line">
+						<text class="desc">{{ item.operation }} | {{ item.hospital }}</text>
 					</view>
-
+					<view class="sub-desc">
+						<text>主刀: {{ item.doctor }} | 地区: {{ item.area }}</text>
+					</view>
 				</view>
-				<!-- ========== 多步骤向导面板 ========== -->
-				<view v-if="item.showStepPanel" class="step-panel">
-					<!-- 步骤条 -->
-					<view class=" bg-blue bar-top">
-						<view class="step-bar">
-							<view class="step-item" v-for="(s,si) in stepList" :key="si">
-								<view class="step-circle" :class="{done:currentStep>si+1,active:currentStep===si+1}">
-									<text v-if="currentStep>si+1">✓</text>
-									<text v-else>{{si+1}}</text>
-								</view>
-								<view class="step-line" :class="{done:currentStep>si+1}"></view>
-							</view>
-						</view>
-						<view class="step-title">{{stepList[currentStep-1].title}}</view>
+				<view class="btn-group">
+					<view class="call-btn" :class="item.btnClass" @click="openStepPanel(item)">
+						<u-icon class="" name="phone-fill" color="white" :bold="true" size="32rpx"></u-icon>
+						<view class="margin-left-5">拨打</view>
 					</view>
+				
+					<text class="btn-tip">{{ item.btnTip }}</text>
+				</view>
+			</view>
 
-					<!-- step1 第一步：电话沟通 -->
-					<view v-if="currentStep===1" class="step-content">
-						<view v-if="callLoading" class="call-loading-box radius-15 bg-blue border-blue">
-							<u-icon class="call-icon" name="phone-fill" color="white" bold="true" size="80rpx"></u-icon>
-							<text class="call-text">正在为您呼叫患者...</text>
-							<text class="call-en">SECURE LINE CONNECTING</text>
-						</view>
-						<view v-else class="call-connected bg-blue border-blue radius-15">
-							<view class="call-state-row">
-								<view class="state-label">
-									<u-icon class="margin-right-5" name="phone" color="#0052cc" bold="true"
-										size="40rpx"></u-icon>
-									<view>沟通线路状态</view>
-								</view>
-								<text class="state-tag">●线路已接通</text>
+
+			<view v-if="item.showStepPanel" class="step-panel">
+				<!-- 步骤条 -->
+				<view class=" bg-blue bar-top">
+					<view class="step-bar">
+						<view class="step-item" v-for="(s,si) in stepList" :key="si">
+							<view class="step-circle" :class="{done:currentStep>si+1,active:currentStep===si+1}">
+								<text v-if="currentStep>si+1">✓</text>
+								<text v-else>{{si+1}}</text>
 							</view>
-							<view class="call-row">
-								<view class="phone-box">
-									<u-icon name="phone" color="#00a63e" bold="true" size="50rpx"></u-icon>
-									<view>
-										{{form1.phone}}
-									</view>
+							<!-- 加判断：si !== stepList.length‑1，最后一项不输出线条 -->
+							<view v-if="si !== stepList.length - 1" class="step-line" :class="{done:currentStep>si+1}">
+							</view>
+						</view>
+					</view>
+					<view class="step-title">{{stepList[currentStep-1].title}}</view>
+				</view>
+				<!-- step1 第一步：电话沟通 -->
+				<view v-if="currentStep===1" class="step-content">
+					<view v-if="callLoading" class="call-loading-box radius-15 bg-blue border-blue">
+						<view class="call-icon">
+							<u-icon name="phone-fill" color="white" :bold="true" size="80rpx"></u-icon>
+						</view>
+						<text class="call-text">正在为您呼叫患者...</text>
+						<text class="call-en">SECURE LINE CONNECTING</text>
+					</view>
+					<view v-else class="call-connected bg-blue border-blue radius-15">
+						<view class="call-state-row">
+							<view class="state-label">
+								<u-icon class="margin-right-5" name="phone" color="#0052cc" :bold="true"
+									size="40rpx"></u-icon>
+								<view>沟通线路状态</view>
+							</view>
+							<text class="state-tag">线路已接通</text>
+						</view>
+						<view class="call-row">
+							<view class="phone-box">
+								<u-icon name="phone" color="#00a63e" :bold="true" size="50rpx"></u-icon>
+								<view>
+									{{form1.phone}}
 								</view>
+							</view>
+							<view class="picker-wrapper">
 								<picker :value="form1.statusIndex" :range="callStatusList" @change="onCallStatusChange">
 									<view class="picker-btn">{{callStatusList[form1.statusIndex]}}</view>
 								</picker>
 							</view>
-							<view class="reconnect-tip">
-								<text>呼叫失败？</text>
-								<text class="link">重新连接云端线路</text>
-							</view>
 						</view>
-						<view v-show="form1.statusIndex == 1">
-							<view class="form-item">
-								<text class="label">沟通失败原因:</text>
-								<picker :value="formCall.failReason" :range="failOptions"
-									@change="e=>formCall.failReason=e.detail.value">
-									<view class="picker-input">{{failOptions[formCall.failReason]}}</view>
-								</picker>
-							</view>
-							<view class="form-item">
-								<text class="label">备注:</text>
-								<textarea class="textarea" v-model="formCall.failRemark"
-									placeholder="如漏服原因、调整用药具体操作等..."></textarea>
-							</view>
+						<view class="reconnect-tip">
+							<text>呼叫失败？</text>
+							<text class="link" @click="openStepPanel"> 重新连接云端线路</text>
 						</view>
-						<button class="next-btn" @click="nextStep">下一步 </button>
 					</view>
-
-					<!-- step2 第二步：记录信息 -->
-					<view v-if="currentStep===2" class="step-content">
+					<view v-show="form1.statusIndex == 1">
 						<view class="form-item">
-							<text class="label">用药情况:</text>
-							<picker mode="selector" :value="formCall.medicationStatus" :range="medicOptions"
-								@change="e=>formCall.medicationStatus=e.detail.value">
-								<view class="picker-input">{{medicOptions[formCall.medicationStatus]}}</view>
-							</picker>
-
-						</view>
-						<view class="form-item">
-							<text class="label">身体恢复情况:</text>
-							<picker :value="formCall.recoveryStatus" :range="recoverOptions"
-								@change="e=>formCall.recoveryStatus=e.detail.value">
-								<view class="picker-input">{{recoverOptions[formCall.recoveryStatus]}}</view>
-							</picker>
-						</view>
-						<view class="form-item">
-							<text class="label">遵医嘱情况:</text>
-							<picker :value="formCall.complianceStatus" :range="followOptions"
-								@change="e=>formCall.complianceStatus=e.detail.value">
-								<view class="picker-input">{{followOptions[formCall.complianceStatus]}}</view>
+							<text class="label">沟通失败原因:</text>
+							<picker :value="formCall.failReason" :range="failOptions"
+								@change="e=>formCall.failReason=e.detail.value">
+								<view class="picker-input">{{failOptions[formCall.failReason]}}</view>
 							</picker>
 						</view>
 						<view class="form-item">
 							<text class="label">备注:</text>
-							<textarea class="textarea margin-bottom-1" v-model="formCall.suggestion"
+							<textarea class="textarea" v-model="formCall.failRemark"
 								placeholder="如漏服原因、调整用药具体操作等..."></textarea>
-							<text class="orange-hint">如身体较差需说明具体症状: 伤口红肿、头晕等</text>
 						</view>
-						<button class="next-btn" @click="nextStep">下一步 </button>
 					</view>
-
-					<!-- step3 第三步：服务包记录 -->
-					<view v-if="currentStep===3" class="step-content">
-						<view class="form-item">
-							<text class="label">当前服务包反馈:</text>
-							<picker :value="formCall.pkgFeedIndex" :range="pkgFeedOptions"
-								@change="e=>formCall.pkgFeedIndex=e.detail.value">
-								<view class="picker-input">{{pkgFeedOptions[formCall.pkgFeedIndex]}}</view>
-							</picker>
-						</view>
-						<view class="form-item">
-							<text class="label">二次购买意向:</text>
-							<picker :value="formCall.buyIndex" :range="buyOptions"
-								@change="e=>formCall.buyIndex=e.detail.value">
-								<view class="picker-input">{{buyOptions[formCall.buyIndex]}}</view>
-							</picker>
-						</view>
-						<view class="form-item">
-							<text class="label">备注:</text>
-							<textarea class="textarea" v-model="formCall.demand"
-								placeholder="备注未使用原因、购意向购买时间、顾虑点等..."></textarea>
-						</view>
-						<button class="next-btn" @click="nextStep">下一步 ></button>
-					</view>
-
-					<!-- step4 第四步：评价满意度 -->
-					<view v-if="currentStep===4" class="step-content">
-						<view class="eval-box">
-							<view class="eval-left">
-								<text class="eval-title">电话评价结果</text>
-								<text class="eval-sub">患者已通过电话按键/语音确认</text>
-							</view>
-							<view class="eval-tag">
-								<u-icon class="margin-right-5" name="checkmark-circle" color="#008833" bold="true"
-									size="25rpx"></u-icon>
-								<view>非常满意</view>
-							</view>
-
-						</view>
-						<view class="form-item">
-							<text class="label">改进建议:</text>
-							<textarea class="textarea" v-model="formCall.suggest" placeholder="患者反馈的改进建议..."></textarea>
-						</view>
-						<view class="form-item">
-							<text class="label">其他需求记录:</text>
-							<textarea class="textarea" v-model="formCall.demand2"
-								placeholder="记录患者的其他相关需求..."></textarea>
-						</view>
-						<view class="btn-row-two">
-							<button class="btn-cancel" @click="closeStepPanel(item)">取消</button>
-							<button class="btn-save" @click="handleSave">保存</button>
-						</view>
-						<button class="btn-save-push" @click="handleSavePush">️ 保存并推送至沟通群</button>
-					</view>
+					<view class="next-btn" @click="nextStep"> 下一步</view>
 				</view>
-
-
+				
+				<!-- step2 第二步：记录信息 -->
+				<view v-if="currentStep===2" class="step-content">
+					<view class="form-item">
+						<text class="label">用药情况:</text>
+						<picker mode="selector" :value="formCall.medicationStatus" :range="medicOptions"
+							@change="e=>formCall.medicationStatus=e.detail.value">
+							<view class="picker-input">{{medicOptions[formCall.medicationStatus]}}</view>
+						</picker>
+					</view>
+					<view class="form-item">
+						<text class="label">身体恢复情况:</text>
+						<picker :value="formCall.recoveryStatus" :range="recoverOptions"
+							@change="e=>formCall.recoveryStatus=e.detail.value">
+							<view class="picker-input">{{recoverOptions[formCall.recoveryStatus]}}</view>
+						</picker>
+					</view>
+					<view class="form-item">
+						<text class="label">遵医嘱情况:</text>
+						<picker :value="formCall.complianceStatus" :range="followOptions"
+							@change="e=>formCall.complianceStatus=e.detail.value">
+							<view class="picker-input">{{followOptions[formCall.complianceStatus]}}</view>
+						</picker>
+					</view>
+					<view class="form-item">
+						<text class="label">备注:</text>
+						<textarea class="textarea margin-bottom-1" v-model="formCall.suggestion"
+							placeholder="如漏服原因、调整用药具体操作等..."></textarea>
+						<text class="orange-hint">如身体较差需说明具体症状: 伤口红肿、头晕等</text>
+					</view>
+					<view class="next-btn" @click="nextStep"> 下一步</view>
+					<!-- <button> </button> -->
+				</view>
+				<!-- step3 第三步：服务包记录 -->
+				<view v-if="currentStep===3" class="step-content">
+					<view class="form-item">
+						<text class="label">当前服务包反馈:</text>
+						<picker :value="formCall.pkgFeedIndex" :range="pkgFeedOptions"
+							@change="e=>formCall.pkgFeedIndex=e.detail.value">
+							<view class="picker-input">{{pkgFeedOptions[formCall.pkgFeedIndex]}}</view>
+						</picker>
+					</view>
+					<view class="form-item">
+						<text class="label">二次购买意向:</text>
+						<picker :value="formCall.buyIndex" :range="buyOptions"
+							@change="e=>formCall.buyIndex=e.detail.value">
+							<view class="picker-input">{{buyOptions[formCall.buyIndex]}}</view>
+						</picker>
+					</view>
+					<view class="form-item">
+						<text class="label">备注:</text>
+						<textarea class="textarea" v-model="formCall.demand"
+							placeholder="备注未使用原因、购意向购买时间、顾虑点等..."></textarea>
+					</view>
+					<view class="next-btn" @click="nextStep"> 下一步</view>
+				</view>
+				<!-- step4 第四步：评价满意度 -->
+				<view v-if="currentStep===4" class="step-content">
+					<view class="eval-box">
+						<view class="eval-left">
+							<text class="eval-title">电话评价结果</text>
+							<text class="eval-sub">患者已通过电话按键/语音确认</text>
+						</view>
+						<view class="eval-tag">
+							<u-icon class="margin-right-5" name="checkmark-circle" color="#008833" :bold="true"
+								size="25rpx"></u-icon>
+							<view>非常满意</view>
+						</view>
+					</view>
+					<view class="form-item">
+						<text class="label">改进建议:</text>
+						<textarea class="textarea" v-model="formCall.suggest" placeholder="患者反馈的改进建议..."></textarea>
+					</view>
+					<view class="form-item">
+						<text class="label">其他需求记录:</text>
+						<textarea class="textarea" v-model="formCall.demand2" placeholder="记录患者的其他相关需求..."></textarea>
+					</view>
+					<view class="btn-row-two">
+						<button class="btn-cancel" @click="closeStepPanel(item)">取消</button>
+						<button class="btn-save" @click="handleSave(item)">保存</button>
+					</view>
+					<button class="btn-save-push" @click="handleSavePush(item)">️ 保存并推送至沟通群</button>
+				</view>
 			</view>
-
-		</scroll-view>
+		</view>
 		<my-tabbar :current="0"></my-tabbar>
 	</view>
 </template>
-
 <script>
 	import myTabbar from '@/components/my‑tabbar/my‑tabbar.vue'
-
 	export default {
 		components: {
 			myTabbar
@@ -271,6 +272,10 @@
 						area: '杭州',
 						btnClass: 'btn-green',
 						btnTip: '首次触达 (强制记录)',
+						sex:'男',
+						age:"63",
+						tag:"常规",
+						value:"心外科",
 						showStepPanel: false
 					},
 					{
@@ -374,49 +379,61 @@
 			}
 		},
 		methods: {
+			routeTo(res) {
+				console.log(res)
+				let routeUrl = "/pages/index/chat" + `?data=` + encodeURIComponent(JSON.stringify(res))
+				uni.navigateTo({
+					url: routeUrl,
+					fail: (err) => {
+						console.error('跳转失败', err) //打印失败原因
+					}
+				})
+			},
 			onCallStatusChange(e) {
 				this.form1.statusIndex = Number(e.detail.value)
 			},
 			openStepPanel(item) {
 				console.log(item)
+				this.list.forEach(el => {
+					el.showStepPanel = false
+				})
 				item.showStepPanel = true
 				this.currentStep = 1
 				this.callLoading = true
 				this.topTip.show = true
 				setTimeout(() => {
-					this.callLoading = false
+					this.callLoading = false;
+					this.topTip.show = false
 				}, 2000)
 			},
 			closeStepPanel(item) {
 				console.log(this.formCall)
 				item.showStepPanel = false
 				this.currentStep = 1
-				this.topTip.show = false
+				setTimeout(() => {
+					this.topTip.show = false
+				}, 2000)
 			},
 			nextStep() {
 				if (this.currentStep < 4) {
 					this.currentStep++
 				}
 			},
-			handleSave() {
+			handleSave(item) {
 				uni.showToast({
 					title: "保存成功"
 				})
-				this.closeStepPanel()
+				this.closeStepPanel(item)
 			},
-			handleSavePush() {
-				this.topTip.show = true
+			handleSavePush(item) {
 				this.topTip.text1 = "已成功推送至患者沟通群"
 				this.topTip.text2 = "康复进度记录已同步，点击患者详情可查看完整对话。"
-				uni.showToast({
-					title: "推送完成"
-				})
-				this.closeStepPanel()
+				this.topTip.show = true
+				this.closeStepPanel(item)
 			}
 		}
 	}
 </script>
-
 <style scoped>
 	/*顶部提示框*/
 	.top-tip {
@@ -424,34 +441,27 @@
 		border-radius: 20rpx;
 		padding: 30rpx;
 		margin-bottom: 24rpx;
-		position: relative;
-	}
-
-	.tip-close {
 		position: absolute;
-		top: 16rpx;
-		right: 20rpx;
-		font-size: 32rpx;
+		top: 0;
+		left: 60rpx;
+		right: 60rpx;
+		z-index: 99;
+		display: flex;
+		align-items: center;
 	}
 
 	.tip-icon {
-		font-size: 36rpx;
-		position: absolute;
-		left: 20rpx;
-		top: 32rpx;
+		margin-right: 10rpx;
+		/* font-size: 36rpx; */
 	}
 
 	.tip-text {
 		display: block;
 		font-size: 30rpx;
 		color: #0052cc;
-		margin-left: 70rpx;
+		/* margin-left: 70rpx; */
 		line-height: 1.8;
 	}
-
-
-
-
 
 	/* ========== 步骤面板 ========== */
 	.step-panel {
@@ -470,13 +480,22 @@
 	.step-bar {
 		display: flex;
 		align-items: center;
-
+		width: 100%;
 	}
 
 	.step-item {
-		flex: 1;
 		display: flex;
 		align-items: center;
+		flex‑grow: 0;
+		flex‑shrink: 0;
+		// ✅ 每个圆圈占均等可用宽度
+		flex‑basis: 0;
+		flex: 1;
+	}
+
+	.step-item:last-child {
+		flex: 0 0 auto;
+		/* 最后一项宽度自适应内容，不瓜分容器宽度 */
 	}
 
 	.step-circle {
@@ -489,6 +508,7 @@
 		align-items: center;
 		justify-content: center;
 		font-size: 32rpx;
+		flex‑shrink: 0;
 	}
 
 	.step-circle.active {
@@ -507,6 +527,7 @@
 		flex: 1;
 		height: 4rpx;
 		background: #ccd8f0;
+		margin: 0 16rpx;
 	}
 
 	.step-line.done {
@@ -521,12 +542,13 @@
 		text-align: center;
 		font-size: 25rpx;
 		color: #2152e7;
-		margin: 20rpx 0 30rpx;
+		/* margin: 20rpx 0 30rpx; */
 		padding: 10rpx 30rpx;
 		border-radius: 20rpx;
 		font-weight: bold;
 		background-color: #e8f2fe;
-
+		width: fit-content;
+		margin: 20rpx auto;
 	}
 
 	.step-content {
@@ -600,20 +622,29 @@
 		flex: 1;
 		border: 4rpx solid #00a63e;
 		border-radius: 20rpx;
-		padding: 20rpx;
+		/* padding: 20rpx; */
+		text-align: center;
 		font-size: 30rpx;
 		color: #00a63e;
 		font-weight: bold;
 		display: flex;
+		height: 80rpx;
+		line-height: 80rpx;
+	}
+
+	.picker-wrapper {
+		height: 80rpx;
+		line-height: 80rpx;
 	}
 
 	.picker-btn {
 		background: #fff;
 		border: 2rpx solid #ccd8f0;
 		border-radius: 16rpx;
-		padding: 24rpx 10rpx;
+		padding: 0 30rpx;
 		font-size: 20rpx;
-
+		height: 80rpx;
+		line-height: 80rpx;
 	}
 
 	.reconnect-tip {
@@ -667,11 +698,14 @@
 	.next-btn {
 		/* width: 100%; */
 		background: #fff;
-		/* border: 2rpx solid #e4e7ed; */
+		border: 1rpx solid #e4e7ed;
 		border-radius: 20rpx;
 		/* padding: 28rpx; */
 		font-size: 34rpx;
 		margin-top: 20rpx;
+		text-align: center;
+		height: 80rpx;
+		line-height: 80rpx;
 	}
 
 	/* step4 评价 */
@@ -747,8 +781,6 @@
 		font-size: 30rpx;
 	}
 
-
-
 	/* 头部 */
 	.page-header {
 		display: flex;
@@ -771,7 +803,7 @@
 
 	.avatar-box {
 		/*  width:110rpx;
-  height:110rpx; */
+height:110rpx; */
 		background: #fff;
 		padding: 30rpx;
 		border-radius: 24rpx;
@@ -818,10 +850,6 @@
 		transform: translate(-50%, -50%);
 	}
 
-
-
-
-
 	.dot.red {
 		background: #f53f3f;
 	}
@@ -834,19 +862,24 @@
 		background: #28c76f;
 	}
 
-	.page-workbench .badge {
+	.page-workbench .badge-num {
 		position: absolute;
 		top: 0;
 		right: -25%;
-		padding: 10rpx 20rpx;
+		/* padding: 10rpx 20rpx; */
 		transform: translate(-50%, -50%);
 		z-index: 999;
+		width: fit-content;
 		/* background: #f53f3f;
-		color: #fff;
-		border-radius: 100%;
-		 */
+color: #fff;
+border-radius: 100%;
+*/
 		/* font-size: 24rpx; */
 		/* line-height: 44rpx; */
+	}
+
+	.badge-num ::v-deep .u-badge {
+		padding: 8rpx 20rpx;
 	}
 
 	.num {
@@ -990,9 +1023,10 @@
 		border: none;
 		color: #fff;
 		border-radius: 20rpx;
-		padding: 16rpx 40rpx;
-		font-size: 32rpx;
+		padding: 16rpx 30rpx;
+		font-size: 30rpx;
 		margin-bottom: 8rpx;
+		display: flex;
 	}
 
 	.page-workbench .btn-green {

@@ -1,5 +1,5 @@
 <template>
-	<view class="page-service-detail">
+	<view class="page-content">
 
 
 		<!--顶部蓝色状态卡片-->
@@ -15,11 +15,11 @@
 				<view class="info-item">
 					<text class="custom-icon custom-icon-calendar1  margin-right-5"
 						style="font-size:30rpx;color:#fff;"></text>
-					<text>{{orderInfo.date}}</text>
+					<text>{{caregiverOption.date}}</text>
 				</view>
 				<view class="info-item">
 					<u-icon name="clock" color="#fff" size="30rpx"></u-icon>
-					<text>{{orderInfo.timeSlot}}</text>
+					<text>{{caregiverOption.timeSlot}}</text>
 				</view>
 			</view>
 		</view>
@@ -30,13 +30,13 @@
 		<!--照护师卡片-->
 		<view class="staff-card">
 			<view class="staff-head">
-				<image class="avatar" :src="staff.avatar" mode="aspectFill"></image>
+				<image class="avatar" :src="caregiverOption.avatar" mode="aspectFill"></image>
 				<view class="staff-meta">
 					<view class="name-line">
-						<text class="name">{{staff.name}}</text>
+						<text class="name">{{caregiverOption.name}}</text>
 						<view class="level-tag">专业级</view>
 					</view>
-					<view class="desc">{{staff.exp}}年从业经验 · 已认证</view>
+					<view class="desc">{{caregiverOption.exp}}年从业经验 · 已认证</view>
 				</view>
 				<u-icon name="star-fill" color="#ff8800" size="30rpx"></u-icon>
 			</view>
@@ -59,7 +59,14 @@
 			<view class="btn-refund" @click="handleRefund">申请退单</view>
 			<view class="btn-aftersale" @click="handleAfterSale">售后处理</view>
 		</view>
-		<main-tabbar :current="1"></main-tabbar>
+		<u-tabbar :value="0" :placeholder="false" @change="name => activeTab = name" :fixed="true"
+			activeColor="rgb(21, 93, 252)" inactiveColor="#d2d6dd">
+			<u-tabbar-item v-for="item in tabList" :key="item.id" :text="item.text" :icon="item.icon"
+				:badge="item.badge" @click="routeTo(item.route)"></u-tabbar-item>
+
+		</u-tabbar>
+		<!-- <main-tabbar :current="0"></main-tabbar> -->
+		<u-toast ref="uToast"></u-toast>
 	</view>
 </template>
 
@@ -72,26 +79,61 @@
 		},
 		data() {
 			return {
-				orderInfo: {
-					date: "2026‑09‑01",
-					timeSlot: "下午 (14:00‑18:00)"
-				},
-				staff: {
-					id: "cg4",
-					name: "陈美琳",
-					age: 35,
-					exp: 6,
-					phone: 13800138000,
-					rating: 5.0,
-					tags: ["五星好评", "细致入微", "营养指导"],
-					desc: "持有高级康复护理员证及公共营养师证。专注于术后功能性恢复训练与精准营养配餐。她以极度的耐心和温柔著称，能够有效缓解患者术后焦虑，陪护过程深受中老年患者及其家属的喜爱。",
-					avatar: "https://images.unsplash.com/photo-1765896387387-0538bc9f997e?w=200&q=80",
-					count: 86,
-					busySlots: ["2026-05-13", "2026-05-14"]
+				caregiverOption: {},
+				color: "#c0c4cc",
+				selectedColor: "rgb(21, 93, 252)",
+				tabList: [{
+					id: 1,
+					text: "首页",
+					icon: "home",
+					badge: "",
+					route: "home"
+				}, {
+					id: 2,
+					text: "健康",
+					icon: "heart",
+					badge: "",
+					route: "healthCenter"
+				}, {
+					id: 3,
+					text: "消息",
+					icon: "chat",
+					badge: "3",
+					route: "messages"
+				}, {
+					id: 4,
+					text: "我的",
+					icon: "account",
+					badge: "",
+					route: "profile"
+				}],
+
+			}
+		},
+		onLoad(options) {
+			if (options.data && options.data !== "undefined") {
+				try {
+					const raw = decodeURIComponent(options.data)
+					const obj = JSON.parse(raw)
+					this.caregiverOption = obj
+				} catch (e) {
+					console.error('JSON解析失败', e)
 				}
 			}
 		},
-		methods:{
+		methods: {
+			routeTo(res) {
+				// uni.setStorageSync('tempOrderInfo', this.caregiverOption)
+				console.log(res)
+				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(this
+					.caregiverOption))
+				uni.navigateTo({
+					url: routeUrl,
+					fail: (err) => {
+						console.error('跳转失败', err) //打印失败原因
+					}
+				});
+			},
 			handleCall() {
 				// #ifdef H5
 				window.location.href = `tel:${this.staff.phone}`
@@ -110,64 +152,67 @@
 				// #endif
 
 			},
-		handleRemind() {
-			console.log("一键催单");
-		},
-		handleRefund() {
-			console.log("申请退单");
-			// 请求接口 然后弹出提示  跳回home页面
-			let data = {
-				id: '1'
-			}
-			let routeUrl = "/pages/index/home"  + `?data=` + encodeURIComponent(JSON.stringify(data))
-			uni.navigateTo({
-				url: routeUrl,
-				fail: (err) => {
-					console.error('跳转失败', err) //打印失败原因
-				}
-			})
-		},
-		handleAfterSale() {
-			console.log("售后处理");
-			// #ifdef H5
-			window.location.href = `tel:${this.staff.phone}`
-			// #endif
-			
-			// #ifndef H5
-			uni.makePhoneCall({
-				phoneNumber: this.staff.phone,
-				success() {
-					console.log('成功唤起拨号')
-				},
-				fail(err) {
-					console.error('唤起失败', err)
-				}
-			})
-			// #endif
-		},
-		handleBack() {
-			uni.navigateBack({
-				delta: 1
-			})
-		},
-		routeTo(res) {
-			let data = {
-				id: '1'
-			}
-			let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(data))
-			uni.navigateTo({
-				url: routeUrl,
-				fail: (err) => {
-					console.error('跳转失败', err) //打印失败原因
-				}
-			})
+			handleRemind() {
+				this.$refs.uToast.show({
+					message: `已发送催单提醒，照护师将尽快与您联系`,
+					type: "success",
+				});
+			},
+			handleRefund() {
+				console.log("申请退单");
+				this.caregiverOption.applyforRefund = true
+				let routeUrl = "/pages/index/home" + `?data=` + encodeURIComponent(JSON.stringify(this.caregiverOption))
+				this.$refs.uToast.show({
+					message: `退单申请已提交，照护关系已解绑`,
+					type: "success",
+					duration: 1500,
+					complete() {
+						uni.redirectTo({
+							url: routeUrl,
+							fail: (err) => {
+								console.error('跳转失败', err) //打印失败原因
+							}
+						});
+					},
 
-		},
-	}
+				});
+
+				console.log(JSON.stringify(this.caregiverOption))
+
+			},
+			handleAfterSale() {
+				console.log("售后处理");
+				// #ifdef H5
+				window.location.href = `tel:${this.staff.phone}`
+				// #endif
+
+				// #ifndef H5
+				uni.makePhoneCall({
+					phoneNumber: this.staff.phone,
+					success() {
+						console.log('成功唤起拨号')
+					},
+					fail(err) {
+						console.error('唤起失败', err)
+					}
+				})
+				// #endif
+			},
+			handleBack() {
+				uni.navigateBack({
+					delta: 1
+				})
+			},
+
+		}
 	}
 </script>
 
 <style scoped>
+	::v-deep .u-toast__content__text {
+		line-height: 1.4 !important;
+	}
+
 	.page-service-detail {
 		background: #f7f8fa;
 		min-height: 100vh;
@@ -215,7 +260,7 @@
 	}
 
 	.main-title {
-		font-size: 44rpx;
+		font-size: 40rpx;
 		font-weight: bold;
 		margin-top: 16rpx;
 	}

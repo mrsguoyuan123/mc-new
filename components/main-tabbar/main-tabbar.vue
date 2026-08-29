@@ -59,17 +59,14 @@
 				}
 				uni.navigateTo({
 					// url: item.pagePath,
-					url: `../index/` + res
+					url: `/pages/index/` + res
 				});
 				// uni.navigateTo({
 				// 	url: `../index/` + res + `?data=` + encodeURIComponent(JSON.stringify(data))
 				// })
 
 			},
-			onTabClick(index) {
-				const item = this.tabList[index];
-
-			}
+			
 		}
 	};
 </script>

@@ -1,3 +1,30 @@
+
+
+.answer-wrapper{
+	border: 1px solid #ddd;
+	border-radius: 20rpx;
+	padding:30rpx;
+	box-shadow: inset 0 2rpx 14rpx 0 rgba(0,120,70,0.1);
+	background-color: #f9fafb;
+	margin-bottom: 30rpx;
+}
+.answer-title{
+	color: #008855;
+	font-weight: bold;
+	margin-bottom: 20rpx;
+	/* fongsize:co */
+	
+}
+	
+.answer-item{
+	font-size: 20rpx;
+	padding: 20rpx;
+	border-radius: 20rpx;
+	background-color: #fff;
+	margin-bottom: 20rpx;
+	box-shadow: 0 1px 4px 0 #dddd;
+}
+/* 22222222222 */
 .radius-1 {
 	border-radius: 16rpx;
 }
@@ -19,14 +46,16 @@
 .no-shadow {
 	box-shadow: none;
 }
-.uni-body{
+
+.uni-body {
 	background-color: #f9fafb;
 	min-height: 100vh;
-	
+
 }
 
 .page-content {
 	padding: 60rpx;
+	background-color: #f9fafb;
 	/* min-height: calc(100vh - 100px); */
 	max-width: 500px;
 	min-width: 300px;
@@ -40,9 +69,11 @@
 .font-bold {
 	font-weight: bold;
 }
-.font-white{
+
+.font-white {
 	color: white;
 }
+
 .font-blue {
 	color: #447dfd;
 }
@@ -50,9 +81,11 @@
 .font-green {
 	color: #00a63e;
 }
+
 .font-purple {
 	color: #9810fa;
 }
+
 .font-red {
 	color: #f54a00;
 }
@@ -76,9 +109,11 @@
 .font-pink {
 	color: #f6339a;
 }
+
 .font-xs {
 	font-size: 20rpx;
 }
+
 .font-s {
 	font-size: 25rpx;
 }
@@ -102,6 +137,9 @@
 .text-left {
 	text-align: left;
 }
+.text-right {
+	text-align: right;
+}
 
 .badge {
 	font-size: 14px;
@@ -115,16 +153,19 @@
 	border: 1px solid #447dfd;
 	color: #447dfd;
 }
+
 .badge-blue-fill {
 	border: 0;
 	background: #447dfd;
 	color: white;
 }
+
 .badge-green-fill {
 	border: 0;
 	background: #00a63e;
 	color: white;
 }
+
 .badge-purple {
 	background-color: #faf5ff;
 	color: #b110fa;
@@ -202,10 +243,11 @@
 .bg-green {
 	background-color: #f0fdf7;
 }
-	
-.bg-purple{
+
+.bg-purple {
 	background-color: #9810fa
 }
+
 .bg-blue-dark {
 	background-color: #447dfd;
 }
@@ -254,9 +296,11 @@
 .bg-linear-blue {
 	background: linear-gradient(to bottom right, #eff6fe, #f0fdfb);
 }
+
 .bg-linear-purple-dark {
 	background: linear-gradient(to bottom right, #9914fb, #ac45ff);
 }
+
 .bg-linear-purple {
 	background: linear-gradient(to bottom right, #eff5fe, #eef2ff);
 }
@@ -276,6 +320,7 @@
 .flex-row {
 	display: flex;
 }
+
 .u-flex-column {
 	flex-direction: column;
 }
@@ -328,21 +373,27 @@
 .align-center {
 	align-items: center;
 }
-.margin-15{
+
+.margin-15 {
 	margin: 15rpx 0;
 }
-.margin-20{
+
+.margin-20 {
 	margin: 20rpx 0;
 }
-.margin-30{
+
+.margin-30 {
 	margin: 30rpx 0;
 }
+
 .margin-top-1 {
 	margin-top: 15rpx;
 }
+
 .margin-top-15 {
 	margin-top: 30rpx;
 }
+
 .margin-top-2 {
 	margin-top: 60rpx;
 }
@@ -594,15 +645,18 @@
 	border-color: #155dfc;
 }
 
-.tab-icons .custom-icon{
+.tab-icons .custom-icon {
 	color: #a1a5af;
 }
-.activeTab .custom-icon{
+
+.activeTab .custom-icon {
 	color: white;
 }
+
 .activeTab .tab-font {
 	color: white;
 }
+
 /* /deep/ .u-icon__label {
   display: none !important;
 } */
@@ -628,7 +682,7 @@
 	top: calc(50% - 20rpx);
 } */
 /* 右边小点  */
-.massage-time{
+.massage-time {
 	position: absolute;
 	right: 0;
 	top: 0;
@@ -636,17 +690,19 @@
 	/* border: 1px solid ; */
 	width: 90rpx;
 }
-.view-text{
+
+.view-text {
 	/* display: flex;
 	    flex-direction: column; */
-	    /* height: 60rpx; */
+	/* height: 60rpx; */
 }
+
 /* 主要内容 */
 .page-message .view-text {
-		overflow: hidden;
-		width: calc(100% - 100rpx);
-		
-	}
+	overflow: hidden;
+	width: calc(100% - 100rpx);
+
+}
 
 .massage-content {
 	position: relative;
@@ -655,10 +711,11 @@
 }
 
 
-.badge-wrapper{
+.badge-wrapper {
 	overflow: hidden;
 }
-.badge-wrapper .font-info{
+
+.badge-wrapper .font-info {
 	float: left;
 	width: inherit;
 	margin-right: 10rpx;
@@ -670,6 +727,7 @@
 	border-radius: 100%;
 	float: left;
 }
-.page-records .header-text{
+
+.page-records .header-text {
 	margin: 20rpx 0;
 }

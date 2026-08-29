@@ -1,7 +1,5 @@
 <template>
 	<view class="page-caregiver">
-	
-
 		<view class="page-content">
 			<!-- 平台专业保障卡片 -->
 			<view class="guarantee-card">
@@ -17,7 +15,7 @@
 			<!-- 照护师列表 -->
 			<scroll-view scroll-y class="list-wrap">
 				<view class="item-card radius-15 card-top bg-white card-border card-border-gray"
-					v-for="(item,idx) in caregiverList" :key="idx">
+					v-for="(item,idx) in caregiverList" :key="idx" @click="routeTo(item)">
 					<view class="item-left">
 						<image class="avatar" :src="item.avatar" mode="aspectFill"></image>
 					</view>
@@ -32,14 +30,12 @@
 						</view>
 						<!-- 标签 -->
 						<view class="tag-wrap">
-							<u-tag v-for="(tag,i) in item.tags" :key="i" :text="tag" :type="item.tagType"
-								size="mini"></u-tag>
-							<!-- <text class="tag" v-for="(tag,i) in item.tags" :key="i">{{tag}}</text> -->
+							<u-tag v-for="(tag,i) in item.tags" :key="i" :text="tag" size="mini"></u-tag>
 						</view>
 						<u--text size="12" class="font-info font-s" :lines="3" :text="item.desc"></u--text>
 						<view class="row-bottom">
 							<text class="service-count">已服务 {{item.count}} 人次</text>
-							<view class="select-btn" @click="routeTo(item)">
+							<view class="select-btn">
 								<text>选择</text>
 								<u-icon name="arrow-right" color="#447dfd" :bold="true" size="25rpx"></u-icon>
 							</view>
@@ -49,7 +45,7 @@
 			</scroll-view>
 
 		</view>
-		<main-tabbar :current="1"></main-tabbar>
+		<main-tabbar :current="0"></main-tabbar>
 	</view>
 </template>
 
@@ -116,19 +112,20 @@
 			}
 		},
 		methods: {
-	
-	routeTo(res) {
-		console.log(res)
-		
-		let routeUrl = "/pages/index/caregiverDetail"  + `?data=` + encodeURIComponent(JSON.stringify(res))
-		uni.navigateTo({
-			url: routeUrl,
-			fail: (err) => {
-				console.error('跳转失败', err) //打印失败原因
-			}
-		})
-	
-	},
+
+			routeTo(res) {
+				console.log(res)
+
+				res.dataName = 'caregiverOption'
+				let routeUrl = "/pages/index/caregiverDetail" + `?data=` + encodeURIComponent(JSON.stringify(res))
+				uni.navigateTo({
+					url: routeUrl,
+					fail: (err) => {
+						console.error('跳转失败', err) //打印失败原因
+					}
+				})
+
+			},
 		}
 	}
 </script>
