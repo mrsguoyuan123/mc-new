@@ -45,7 +45,10 @@
 
 					</view>
 				</view>
-				<view class="badge-normal">{{healthOption.tag}}</view>
+				<view class="intent-tag-wrapper">
+					<text class="intent-tag" :class="healthOption.intentClass">{{ healthOption.intent }}</text>
+				</view>
+				<!-- <view class="badge-normal">{{healthOption.tag}}</view> -->
 
 			</view>
 			<!-- 沟通预判气泡 -->
@@ -923,5 +926,28 @@
 
 	.dot {
 		font-size: 36rpx;
+	}
+	
+	
+	
+	.intent-tag {
+		font-size: 24rpx;
+		padding: 4rpx 14rpx;
+		border-radius: 12rpx;
+	}
+	
+	.tag-high {
+		background: #ffe9e9;
+		color: #e53935;
+	}
+	
+	.tag-mid {
+		background: #fff3e0;
+		color: #f57c00;
+	}
+	
+	.tag-low {
+		background: #f0f1f3;
+		color: #666;
 	}
 </style>
