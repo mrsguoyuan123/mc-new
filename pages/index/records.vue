@@ -1,16 +1,6 @@
 <template>
 	<view class=" page-records">
-		<!-- 状态栏占位 -->
-		<view class="status-bar"></view>
-		<!-- 自定义导航栏 -->
-		<view class="custom-nav">
-			<!-- 返回按钮 -->
-			<view class="nav-back" @click="handleBack()">
-				<u-icon name="arrow-left" color="" size="36rpx"></u-icon>
-			</view>
-			<!-- 中间标题 -->
-			<view class="nav-title">术后病历详情</view>
-		</view>
+
 		<view class="page-content1">
 			<view
 				class="radius-15 card-top margin-bottom-2 card-border card-border-gray  u-flex space-between border-blue bg-blue">
@@ -177,24 +167,29 @@
 				this.model1.userInfo.sex = e.name
 				this.$refs.uForm.validateField('userInfo.sex')
 			},
-			handleBack(e) {
-				uni.navigateBack({
-					delta: 1
-				})
+			handleBack() {
+				const pages = getCurrentPages()
+				console.log('页面栈长度', pages.length)
+				if (pages.length > 1) {
+					uni.navigateBack({
+						delta: 1
+					})
+				} else {
+					// 栈只有1，不能回退，改成跳首页
+					uni.reLaunch({
+						url: '/pages/index/home'
+					})
+				}
 			},
 			routeTo(res) {
-
 				let data = {
 					title: 'hello',
 					id: 1
 				}
-
-
-				uni.navigateTo({
-					url: `../index/` + res + `?data=` + encodeURIComponent(JSON.stringify(data))
-				})
-
+				let routeUrl = `/pages/index/` + res + `?data=` + encodeURIComponent(JSON.stringify(data))
+				this.$safeJump(routeUrl)
 			},
+
 
 		},
 		onReady() {},
@@ -206,7 +201,8 @@
 		overflow: hidden;
 		// padding-bottom: calc(120rpx + env(safe-area-inset-bottom));
 	}
-	.page-content1{
+
+	.page-content1 {
 		padding: 30rpx 60rpx;
 	}
 

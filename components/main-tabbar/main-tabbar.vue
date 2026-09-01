@@ -57,53 +57,42 @@
 					title: 'hello',
 					id: 1
 				}
-				uni.navigateTo({
-					// url: item.pagePath,
-					url: `/pages/index/` + res
-				});
-				// uni.navigateTo({
-				// 	url: `../index/` + res + `?data=` + encodeURIComponent(JSON.stringify(data))
-				// })
+				const pages = getCurrentPages()
+				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(data))
+				this.$safeJump(routeUrl)
 
 			},
-			
+
 		}
 	};
 </script>
 
 <style scoped>
-.custom-tabbar {
-	position: fixed;
-	left: 0;
-	bottom: 0;
-	width: 100%;
-	background-color: #ffffff;
-	display: flex;
-	border-top: 1rpx solid #eeeeee;
-	z-index: 999;
-	/* height: 120rpx; */
-	padding-bottom: env(safe-area-inset-bottom);
-}
-/* 深度穿透，加上 !important 对抗组件自带样式 */
-/deep/ .u-tabbar,
-/deep/ .u-tabbar__content,
-/deep/ .u-tabbar__content__item-wrapper {
-	/* height: 120rpx !important; */
-}
->
-
-.tab-item {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	height: 120rpx;
-}
-.tab-text {
-	font-size: 24rpx;
-	margin-top: 8rpx;
-}
+	.custom-tabbar {
+		position: fixed;
+		left: 0;
+		bottom: 0;
+		width: 100%;
+		background-color: #ffffff;
+		display: flex;
+		border-top: 1rpx solid #eeeeee;
+		z-index: 999;
+		/* height: 120rpx; */
+		padding-bottom: env(safe-area-inset-bottom);
+	}
 
 
+	.tab-item {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		height: 120rpx;
+	}
+
+	.tab-text {
+		font-size: 24rpx;
+		margin-top: 8rpx;
+	}
 </style>

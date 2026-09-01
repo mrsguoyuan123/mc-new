@@ -58,9 +58,9 @@
 					title: 'hello',
 					id: 1
 				}
-				uni.navigateTo({
-					url: `../index/` + res + `?data=` + encodeURIComponent(JSON.stringify(data))
-				})
+
+				let routeUrl = `../index/` + res + `?data=` + encodeURIComponent(JSON.stringify(data))
+				this.$safeJump(routeUrl)
 			},
 			logOut() {
 				uni.showModal({
@@ -87,6 +87,7 @@
 		max-width: 500px;
 		margin: 0 auto;
 	}
+
 	/* 紫色头部 */
 	.header {
 		padding: 80rpx 40rpx 60rpx;
@@ -95,6 +96,7 @@
 		border-bottom-left-radius: 40rpx;
 		border-bottom-right-radius: 40rpx;
 	}
+
 	.avatar-wrap {
 		width: 140rpx;
 		height: 140rpx;
@@ -106,6 +108,7 @@
 		justify-content: center;
 		margin-right: 30rpx;
 	}
+
 	.user-info .username {
 		font-size: 48rpx;
 		color: #fff;
@@ -113,6 +116,7 @@
 		display: block;
 		margin-bottom: 16rpx;
 	}
+
 	.tag {
 		display: flex;
 		align-items: center;
@@ -120,6 +124,7 @@
 		border-radius: 99rpx;
 		padding: 8rpx 20rpx;
 	}
+
 	.tag-dot {
 		width: 12rpx;
 		height: 12rpx;
@@ -127,11 +132,13 @@
 		border-radius: 50%;
 		margin-right: 12rpx;
 	}
+
 	.tag-text {
 		color: #fff;
 		font-size: 24rpx;
 		opacity: 0.8;
 	}
+
 	/* 菜单卡片 */
 	.menu-card {
 		margin: -30rpx 30rpx 40rpx;
@@ -140,34 +147,41 @@
 		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
 		overflow: hidden;
 	}
+
 	.menu-item {
 		display: flex;
 		align-items: center;
 		padding: 36rpx 32rpx;
 	}
+
 	.menu-item:last-child {
 		border-bottom: none;
 	}
+
 	.menu-icon {
 		font-size: 44rpx;
 		width: 70rpx;
 		margin-right: 24rpx;
 	}
+
 	.menu-label {
 		flex: 1;
 		font-size: 30rpx;
 		margin-left: 5px;
 		line-height: 45rpx;
 	}
+
 	/* 退出登录 */
 	.logout-btn {
 		padding: 0 30rpx;
 	}
+
 	.logout-icon,
 	.logout-text {
 		color: #e53935;
 		font-size: 34rpx;
 	}
+
 	.logout-icon {
 		margin-right: 12rpx;
 	}

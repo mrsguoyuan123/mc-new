@@ -21,6 +21,7 @@
 		},
 		data() {
 			return {
+				isNavigating: false,
 				color: "#c0c4cc",
 				selectedColor: "#2478f5",
 				tabList: [{
@@ -28,9 +29,8 @@
 						icon: "home",
 						text: "工作台"
 					},
-
 					{
-						pagePath: "/pages/index/SystemCustomerService",
+						pagePath: "/pages/index/systemCustomerService",
 						icon: "account",
 						text: "我的"
 					}
@@ -41,14 +41,26 @@
 			onTabClick(index) {
 				const item = this.tabList[index];
 				console.log(item)
-				uni.reLaunch({ url: item.pagePath })
-				// uni.switchTab({
-				// 	url: item.pagePath
-				// });
+				if (this.current === index) return;
+				if (this.isNavigating) return; //导航中直接拦截
+				this.isNavigating = true;
+
+				setTimeout(() => {
+					uni.reLaunch({
+						url: item.pagePath,
+						fail: (err) => {
+							console.warn('reLaunch失败', err)
+						},
+						complete: () => {
+							this.isNavigating = false; //无论成功失败解锁
+						}
+					})
+				}, 200)
 			}
 		}
 	};
 </script>
+
 
 <style scoped>
 	.custom-tabbar {

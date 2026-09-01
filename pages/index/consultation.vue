@@ -2,7 +2,7 @@
 	<view class="chat-page">
 		<view class="top-bar">
 			<!-- 状态栏占位 -->
-			<view class="status-bar"></view>
+			<view class="status-bar" :style="{height:((statusBarHeight +menuButton.height)||0)+'px'}"></view>
 			<!-- 自定义导航栏 -->
 			<view class="custom-nav">
 				<!-- 返回按钮 -->
@@ -10,6 +10,7 @@
 					<u-icon name="arrow-left" color="#222" size="36rpx"></u-icon>
 				</view>
 				<!-- 中间标题 -->
+				<!-- <view :style="{marginRight: menuButton.width + 'px'}"> -->
 				<view class="nav-title">
 					<view>我的私人医生团队</view>
 					<view class="u-flex flex-start align-center">
@@ -28,6 +29,8 @@
 					<view>呼叫我的私人医生团队</view>
 				</view>
 			</view>
+			<!-- <view :style="{ width: menuButton.width + 'px' }"></view> -->
+			<!-- </view> -->
 		</view>
 		<!-- 聊天消息滚动区域 -->
 		<scroll-view scroll-y class="chat-scroll" :scroll-top="scrollTop" @scrolltolower="onScrollToLower"
@@ -172,17 +175,28 @@
 		</u-popup>
 
 		<main-tabbar :current="2"></main-tabbar>
-
-
 	</view>
 </template>
 
 <script>
 	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
-
+	import {
+		mapState
+	} from 'vuex'
 	export default {
+		options: {
+			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
+		},
 		components: {
 			mainTabbar
+		},
+		computed: {
+			...mapState([
+				'statusBarHeight',
+				'menuButton',
+				'navContentHeight',
+				'navBarTotalHeight'
+			])
 		},
 		data() {
 			return {
@@ -304,6 +318,18 @@
 
 			this.parseQuery(options)
 		},
+		onUnload() {
+			if (this.pollTimer) {
+				clearInterval(this.pollTimer)
+				this.pollTimer = null
+			}
+			if (this.replyTimer) {
+				clearInterval(this.replyTimer)
+				this.replyTimer = null
+			}
+
+
+		},
 		methods: {
 			sendHealth() {
 				console.log(this.healthOption);
@@ -347,7 +373,7 @@
 			scrollToBottom() {
 				// console.log('滚动到底');
 				this.scrollTop = 99998
-				setTimeout(() => {
+				this.pollTimer = setTimeout(() => {
 					this.scrollTop = 99999
 				}, 60)
 			},
@@ -356,9 +382,18 @@
 				return `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`
 			},
 			handleBack() {
-				uni.navigateBack({
-					delta: 1
-				})
+				const pages = getCurrentPages()
+				console.log('页面栈长度', pages.length)
+				if (pages.length > 1) {
+					uni.navigateBack({
+						delta: 1
+					})
+				} else {
+					// 栈只有1，不能回退，改成跳首页
+					uni.reLaunch({
+						url: '/pages/index/home'
+					})
+				}
 			},
 			openUpload() {
 				console.log('点击上传', this.showUploadPopup)
@@ -406,6 +441,11 @@
 					count: 1,
 					sourceType: ['camera'],
 					success: (res) => {
+						// 增加防护：用户点取消的时候 res为undefined，直接return
+						if (!res || !res.tempFilePaths || res.tempFilePaths.length === 0) {
+							this.showUploadPopup = false
+							return
+						}
 						this.showUploadPopup = false
 						const tempPath = res.tempFilePaths[0]
 						this.chatList.push({
@@ -425,6 +465,11 @@
 					count: 1,
 					sourceType: ['album'],
 					success: (res) => {
+						// 同样增加防护判断
+						if (!res || !res.tempFilePaths || res.tempFilePaths.length === 0) {
+							this.showUploadPopup = false
+							return
+						}
 						this.showUploadPopup = false
 						const tempPath = res.tempFilePaths[0]
 						this.chatList.push({
@@ -439,6 +484,7 @@
 					}
 				})
 			},
+
 			previewImage(url) {
 				uni.previewImage({
 					urls: [url]

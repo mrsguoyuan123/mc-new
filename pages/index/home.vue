@@ -318,6 +318,9 @@
 	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
 
 	export default {
+		options: {
+			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
+		},
 		components: {
 			mainTabbar
 		},
@@ -362,14 +365,14 @@
 						dept: "骨科",
 						title: "关节置换术后：如何居家安全活动",
 						desc: "环境布置、助行器使用及跌倒预防全攻略...",
-						image: "https://images.unsplash.com/photo-1598184273446-94410290f6e7?w=400&q=80"
+						image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80"
 					},
 					{
 						id: "h5",
 						dept: "心外科",
 						title: "支架术后生活指南",
 						desc: "戒烟限酒、规律用药是心脏支架术后长久的关键...",
-						image: "https://images.unsplash.com/photo-1505751172107-573225ad4b73?w=400&q=80"
+						image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80"
 					},
 					{
 						id: "h6",
@@ -389,8 +392,8 @@
 				try {
 					const raw = decodeURIComponent(options.data)
 					const obj = JSON.parse(raw);
-					if(obj.dataName){
-					this.caregiverOption = obj	
+					if (obj.dataName) {
+						this.caregiverOption = obj
 					}
 				} catch (e) {
 					console.error('JSON解析失败', e)
@@ -399,32 +402,13 @@
 		},
 
 		methods: {
-			routeTo1(res) {
-
-				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(this
-					.caregiverOption))
-				uni.navigateTo({
-					url: routeUrl,
-					fail: (err) => {
-						console.error('跳转失败', err) //打印失败原因
-					}
-				});
-			},
+	
 			routeTo(res) {
 				console.log(res)
-
-
-				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(this
-					.caregiverOption))
-				uni.navigateTo({
-					url: routeUrl,
-					fail: (err) => {
-						console.error('跳转失败', err) //打印失败原因
-					}
-				});
-
-
+				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(this.caregiverOption))
+			this.$safeJump(routeUrl)
 			}
+
 		},
 
 

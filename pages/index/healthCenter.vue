@@ -466,6 +466,9 @@
 	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
 
 	export default {
+		options: {
+			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
+		},
 		components: {
 			mainTabbar
 		},
@@ -660,13 +663,13 @@
 				console.log(this.activeTab2)
 			},
 			showToast(params) {
-				
-				const name = this.tabList2[this.activeTab2-1].name;
+
+				const name = this.tabList2[this.activeTab2 - 1].name;
 				const data = {
-					value1:'1',
-					value2:'2',
-					healthType:name
-					
+					value1: '1',
+					value2: '2',
+					healthType: name
+
 				}
 				let routeUrl = "/pages/index/consultation" + `?data=` + encodeURIComponent(JSON.stringify(data))
 				this.$refs.uToast.show({
@@ -678,12 +681,8 @@
 					// 如果不需要图标，请设置为false
 					icon: 'checkmark-circle',
 					complete() {
-						uni.navigateTo({
-							url: routeUrl,
-							fail: (err) => {
-								console.error('跳转失败', err) //打印失败原因
-							}
-						});
+
+						this.$safeJump(routeUrl)
 					},
 				})
 
@@ -694,11 +693,10 @@
 					title: 'hello',
 					id: 1
 				}
+				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(data))
+				this.$safeJump(routeUrl)
 
 
-				uni.navigateTo({
-					url: `../index/` + res + `?data=` + encodeURIComponent(JSON.stringify(data))
-				})
 
 			}
 		},
@@ -719,6 +717,7 @@
 	::v-deep .u-toast__content__text {
 		line-height: 1.4 !important;
 	}
+
 	.chart-wrap {
 		height: 200rpx !important;
 		width: 100% !important;

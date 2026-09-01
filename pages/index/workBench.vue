@@ -15,11 +15,12 @@
 			<view>
 				<text class="font-l font-bold">客服工作台</text>
 				<view class="margin-top-5 font-m font-info">CS WORKBENCH</view>
+				<u-icon name="account" color="#155DFC" :bold="true" size="40rpx"></u-icon>
 			</view>
 			<view class="avatar-box">
-				<text class="avatar-icon">
+				<view class="avatar-icon">
 					<u-icon name="account" color="#909399" :bold="true" size="50rpx"></u-icon>
-				</text>
+				</view>
 				<view class="dot"></view>
 			</view>
 		</view>
@@ -90,7 +91,7 @@
 						<u-icon class="" name="phone-fill" color="white" :bold="true" size="32rpx"></u-icon>
 						<view class="margin-left-5">拨打</view>
 					</view>
-				
+
 					<text class="btn-tip">{{ item.btnTip }}</text>
 				</view>
 			</view>
@@ -105,8 +106,7 @@
 								<text v-if="currentStep>si+1">✓</text>
 								<text v-else>{{si+1}}</text>
 							</view>
-							<!-- 加判断：si !== stepList.length‑1，最后一项不输出线条 -->
-							<view v-if="si !== stepList.length - 1" class="step-line" :class="{done:currentStep>si+1}">
+							<view v-if="si !== stepList.length-1" class="step-line" :class="{done:currentStep>si+1}">
 							</view>
 						</view>
 					</view>
@@ -164,7 +164,7 @@
 					</view>
 					<view class="next-btn" @click="nextStep"> 下一步</view>
 				</view>
-				
+
 				<!-- step2 第二步：记录信息 -->
 				<view v-if="currentStep===2" class="step-content">
 					<view class="form-item">
@@ -255,6 +255,9 @@
 <script>
 	import myTabbar from '@/components/my‑tabbar/my‑tabbar.vue'
 	export default {
+		options: {
+			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
+		},
 		components: {
 			myTabbar
 		},
@@ -272,10 +275,10 @@
 						area: '杭州',
 						btnClass: 'btn-green',
 						btnTip: '首次触达 (强制记录)',
-						sex:'男',
-						age:"63",
-						tag:"常规",
-						value:"心外科",
+						sex: '男',
+						age: "63",
+						tag: "常规",
+						value: "心外科",
 						showStepPanel: false
 					},
 					{
@@ -370,6 +373,8 @@
 					phone: "0571‑53979574",
 					statusIndex: 0
 				},
+				pollTimer: null,
+				pollTimer2: null,
 				medicOptions: ["按时用药", "间断用药", "未用药"],
 				recoverOptions: ["恢复良好", "一般恢复", "恢复较差"],
 				followOptions: ["完全遵守", "部分遵守", "未遵医嘱"],
@@ -378,17 +383,25 @@
 				buyOptions: ["强烈意向", "一般意向", "无意向"]
 			}
 		},
+		onUnload() {
+			if (this.pollTimer) {
+				clearInterval(this.pollTimer)
+				this.pollTimer = null
+			}
+			if (this.pollTimer2) {
+				clearInterval(this.pollTimer2)
+				this.pollTimer2 = null
+			}
+
+
+		},
 		methods: {
 			routeTo(res) {
 				console.log(res)
-				let routeUrl = "/pages/index/chat" + `?data=` + encodeURIComponent(JSON.stringify(res))
-				uni.navigateTo({
-					url: routeUrl,
-					fail: (err) => {
-						console.error('跳转失败', err) //打印失败原因
-					}
-				})
+				let routeUrl = `/pages/index/chat` + `?data=` + encodeURIComponent(JSON.stringify(res))
+				this.$safeJump(routeUrl)
 			},
+
 			onCallStatusChange(e) {
 				this.form1.statusIndex = Number(e.detail.value)
 			},
@@ -401,7 +414,7 @@
 				this.currentStep = 1
 				this.callLoading = true
 				this.topTip.show = true
-				setTimeout(() => {
+				this.pollTimer = setTimeout(() => {
 					this.callLoading = false;
 					this.topTip.show = false
 				}, 2000)
@@ -410,7 +423,7 @@
 				console.log(this.formCall)
 				item.showStepPanel = false
 				this.currentStep = 1
-				setTimeout(() => {
+				this.pollTimer2 = setTimeout(() => {
 					this.topTip.show = false
 				}, 2000)
 			},
@@ -435,7 +448,6 @@
 	}
 </script>
 <style scoped>
-	/*顶部提示框*/
 	.top-tip {
 		background: #e8f4ff;
 		border-radius: 20rpx;
@@ -452,22 +464,17 @@
 
 	.tip-icon {
 		margin-right: 10rpx;
-		/* font-size: 36rpx; */
 	}
 
 	.tip-text {
 		display: block;
 		font-size: 30rpx;
 		color: #0052cc;
-		/* margin-left: 70rpx; */
 		line-height: 1.8;
 	}
 
-	/* ========== 步骤面板 ========== */
 	.step-panel {
-		/* background: #f0f6ff; */
 		border-radius: 32rpx;
-		/* padding: 40rpx 30rpx; */
 		margin: 30rpx 0;
 		border: 1px solid #ddd;
 		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
@@ -486,16 +493,14 @@
 	.step-item {
 		display: flex;
 		align-items: center;
-		flex‑grow: 0;
-		flex‑shrink: 0;
-		// ✅ 每个圆圈占均等可用宽度
-		flex‑basis: 0;
+		flex-grow: 0;
+		flex-shrink: 0;
+		flex-basis: 0;
 		flex: 1;
 	}
 
 	.step-item:last-child {
 		flex: 0 0 auto;
-		/* 最后一项宽度自适应内容，不瓜分容器宽度 */
 	}
 
 	.step-circle {
@@ -508,7 +513,7 @@
 		align-items: center;
 		justify-content: center;
 		font-size: 32rpx;
-		flex‑shrink: 0;
+		flex-shrink: 0;
 	}
 
 	.step-circle.active {
@@ -542,7 +547,6 @@
 		text-align: center;
 		font-size: 25rpx;
 		color: #2152e7;
-		/* margin: 20rpx 0 30rpx; */
 		padding: 10rpx 30rpx;
 		border-radius: 20rpx;
 		font-weight: bold;
@@ -556,7 +560,6 @@
 		background-color: #fff;
 	}
 
-	/* step1 呼叫中 */
 	.call-loading-box {
 		text-align: center;
 		padding: 60rpx 20rpx;
@@ -622,7 +625,6 @@
 		flex: 1;
 		border: 4rpx solid #00a63e;
 		border-radius: 20rpx;
-		/* padding: 20rpx; */
 		text-align: center;
 		font-size: 30rpx;
 		color: #00a63e;
@@ -658,7 +660,6 @@
 		font-weight: bold;
 	}
 
-	/* 表单通用 */
 	.form-item {
 		margin-bottom: 30rpx;
 	}
@@ -692,15 +693,12 @@
 	.orange-hint {
 		font-size: 20rpx;
 		color: #ff7800;
-		/* margin-top: 20rpx; */
 	}
 
 	.next-btn {
-		/* width: 100%; */
 		background: #fff;
 		border: 1rpx solid #e4e7ed;
 		border-radius: 20rpx;
-		/* padding: 28rpx; */
 		font-size: 34rpx;
 		margin-top: 20rpx;
 		text-align: center;
@@ -708,7 +706,6 @@
 		line-height: 80rpx;
 	}
 
-	/* step4 评价 */
 	.eval-box {
 		background: #e6f9ed;
 		border-radius: 20rpx;
@@ -781,18 +778,11 @@
 		font-size: 30rpx;
 	}
 
-	/* 头部 */
 	.page-header {
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-start;
 		margin-bottom: 30rpx;
-	}
-
-	.title {
-		/* font-size:52rpx; */
-		/* font-weight:bold; */
-		/* color:#111; */
 	}
 
 	.sub-title {
@@ -802,8 +792,6 @@
 	}
 
 	.avatar-box {
-		/*  width:110rpx;
-height:110rpx; */
 		background: #fff;
 		padding: 30rpx;
 		border-radius: 24rpx;
@@ -827,7 +815,6 @@ height:110rpx; */
 		border-radius: 50%;
 	}
 
-	/* 统计卡片 */
 	.stat-row {
 		display: flex;
 		gap: 24rpx;
@@ -866,16 +853,9 @@ height:110rpx; */
 		position: absolute;
 		top: 0;
 		right: -25%;
-		/* padding: 10rpx 20rpx; */
 		transform: translate(-50%, -50%);
 		z-index: 999;
 		width: fit-content;
-		/* background: #f53f3f;
-color: #fff;
-border-radius: 100%;
-*/
-		/* font-size: 24rpx; */
-		/* line-height: 44rpx; */
 	}
 
 	.badge-num ::v-deep .u-badge {
@@ -894,7 +874,6 @@ border-radius: 100%;
 		color: #666;
 	}
 
-	/* 沟通记录标题 */
 	.record-head {
 		display: flex;
 		justify-content: space-between;
@@ -912,7 +891,6 @@ border-radius: 100%;
 		color: #888;
 	}
 
-	/* 列表项 */
 	.list-scroll {
 		height: calc(100vh - 560rpx);
 	}
@@ -957,7 +935,6 @@ border-radius: 100%;
 	.info {
 		flex: 1;
 		margin-right: 24rpx;
-		/* border: 1px solid ; */
 	}
 
 	.name-row {
@@ -1044,7 +1021,6 @@ border-radius: 100%;
 	.page-workbench .btn-tip {
 		font-size: 20rpx;
 		color: #909399;
-		/* transform: scale(0.8); */
 	}
 
 	.bottom-space {

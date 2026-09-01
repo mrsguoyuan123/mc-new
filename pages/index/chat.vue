@@ -2,7 +2,7 @@
 	<view class="chat-page">
 		<view class="top-bar">
 			<!-- 状态栏占位 -->
-			<view class="status-bar"></view>
+			<view class="status-bar" :style="{height:((statusBarHeight +menuButton.height)||0)+'px'}"></view>
 			<view class="custom-nav">
 				<view class="nav-back" @click="handleBack()">
 					<u-icon name="arrow-left" color="#222" size="36rpx"></u-icon>
@@ -168,7 +168,7 @@
 				</view> -->
 			</view>
 			<view class="input-row">
-				<view class="phone-box"  @click="openAlbum">
+				<view class="phone-box" @click="openAlbum">
 					<u-icon name="photo" color="#909399" size="50rpx"></u-icon>
 				</view>
 				<input v-model="inputText" class="chat-input" placeholder="输入回复消息..." confirm-type="send"
@@ -184,24 +184,37 @@
 
 <script>
 	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
-
+	import {
+		mapState
+	} from 'vuex'
 	export default {
+		options: {
+			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
+		},
 		components: {
 			mainTabbar
+		},
+		computed: {
+			...mapState([
+				'statusBarHeight',
+				'menuButton',
+				'navContentHeight',
+				'navBarTotalHeight'
+			])
 		},
 		data() {
 			return {
 				answerList: false,
 				healthOption: {},
 				scrollTop: 0,
-				realScrollTop: 0, //记录scroll-view真实内部滚动位置
+				realScrollTop: 0,
 				inputText: '',
 				isReplying: false,
 				showLongMenuIndex: -1,
 				showUploadPopup: false,
 				showEvaluatePopup: false,
-				replyTimer: null, //机器人回复定时器
-
+				replyTimer: null,
+				pollTimer: null,
 				rateScore: 0,
 				evaText: '',
 				tagList: ['专业度高', '回复及时', '态度亲切', '建议实用', '沟通顺畅'],
@@ -271,6 +284,18 @@
 
 			this.parseQuery(options)
 		},
+		onUnload() {
+			if (this.pollTimer) {
+				clearInterval(this.pollTimer)
+				this.pollTimer = null
+			}
+			if (this.replyTimer) {
+				clearInterval(this.replyTimer)
+				this.replyTimer = null
+			}
+
+
+		},
 		methods: {
 			checkIt(item) {
 				this.inputText = item;
@@ -318,7 +343,7 @@
 			scrollToBottom() {
 				// console.log('滚动到底');
 				this.scrollTop = 99998
-				setTimeout(() => {
+				this.pollTimer = setTimeout(() => {
 					this.scrollTop = 99999
 				}, 60)
 			},
@@ -327,9 +352,18 @@
 				return `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`
 			},
 			handleBack() {
-				uni.navigateBack({
-					delta: 1
-				})
+				const pages = getCurrentPages()
+				console.log('页面栈长度', pages.length)
+				if (pages.length > 1) {
+					uni.navigateBack({
+						delta: 1
+					})
+				} else {
+					// 栈只有1，不能回退，改成跳首页
+					uni.reLaunch({
+						url: '/pages/index/workBench'
+					})
+				}
 			},
 			openUpload() {
 				console.log('点击上传', this.showUploadPopup)
@@ -372,44 +406,8 @@
 				}, 1300)
 			},
 
-			takeCamera() {
-				uni.chooseImage({
-					count: 1,
-					sourceType: ['camera'],
-					success: (res) => {
-						this.showUploadPopup = false
-						const tempPath = res.tempFilePaths[0]
-						this.chatList.push({
-							type: 'mine',
-							msgType: 'image',
-							imageUrl: tempPath,
-							time: this.getTimeStr(),
-							isRead: false
-						})
-						this.scrollToBottom()
-						this.mockRobotReply()
-					}
-				})
-			},
-			openAlbum() {
-				uni.chooseImage({
-					count: 1,
-					sourceType: ['album'],
-					success: (res) => {
-						// this.showUploadPopup = false
-						const tempPath = res.tempFilePaths[0]
-						this.chatList.push({
-							type: 'mine',
-							msgType: 'image',
-							imageUrl: tempPath,
-							time: this.getTimeStr(),
-							isRead: false
-						})
-						this.scrollToBottom()
-						this.mockRobotReply()
-					}
-				})
-			},
+
+
 			previewImage(url) {
 				uni.previewImage({
 					urls: [url]
@@ -482,7 +480,7 @@
 	.chat-scroll {
 		flex: 1;
 		background-color: #f9fafb;
-		height: calc(100vh - 250px);
+		height: calc(100vh - 330px);
 	}
 
 	.tag-wrapper {
@@ -711,7 +709,6 @@
 		border-top-right-radius: 8rpx;
 	}
 
-	/*====重点修改：时间紧贴气泡，不要拉开大距离====*/
 	.msg-footer {
 		display: flex;
 		gap: 10rpx;
@@ -832,7 +829,6 @@
 
 	.patient-preview-card {
 		flex: 1
-			/* padding:30rpx; */
 	}
 
 	.card-header {
@@ -927,25 +923,25 @@
 	.dot {
 		font-size: 36rpx;
 	}
-	
-	
-	
+
+
+
 	.intent-tag {
 		font-size: 24rpx;
 		padding: 4rpx 14rpx;
 		border-radius: 12rpx;
 	}
-	
+
 	.tag-high {
 		background: #ffe9e9;
 		color: #e53935;
 	}
-	
+
 	.tag-mid {
 		background: #fff3e0;
 		color: #f57c00;
 	}
-	
+
 	.tag-low {
 		background: #f0f1f3;
 		color: #666;

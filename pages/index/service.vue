@@ -174,7 +174,7 @@
 					summaryText: "",
 					serviceResult: '',
 				},
-
+				pollTimer: null,
 
 				abnormalList: ["突发状况", "排队过久", "其他"],
 				task3Done: false,
@@ -182,6 +182,15 @@
 				task1Finished: false,
 
 			}
+		},
+		onUnload() {
+			if (this.pollTimer) {
+				clearInterval(this.pollTimer)
+				this.pollTimer = null
+			}
+
+
+
 		},
 		computed: {
 			task1AllDone() {
@@ -231,7 +240,7 @@
 				// 			},
 				// 			fail: (err) => {
 				// 				console.error(err)
-				// 				if (err.errMsg.includes("auth")) {
+				// 				if (err?.errMsg.includes("auth")) {
 				// 					uni.showModal({
 				// 						title: "需要位置权限",
 				// 						content: "请开启位置权限才能定位打卡",
@@ -240,7 +249,7 @@
 				// 							if (res.confirm) uni.openSetting()
 				// 						}
 				// 					})
-				// 				} else if (err.errMsg.includes('cancel')) {
+				// 				} else if (err?.errMsg.includes('cancel')) {
 				// 					uni.showToast({
 				// 						title: "已取消定位打卡",
 				// 						icon: "none"
@@ -330,7 +339,7 @@
 				this.task3Done = true
 				this.showSubmitTip = true;
 				console.log(this.submitForm)
-				setTimeout(() => {
+				this.pollTImer = setTimeout(() => {
 					this.showSubmitTip = false
 				}, 3000)
 			},
@@ -424,7 +433,7 @@
 	/* .container {
 		padding: 30rpx;
 	} */
-	.page-content{
+	.page-content {
 		position: relative;
 	}
 
@@ -438,8 +447,8 @@
 		border: 1rpx solid #b2e8c4;
 		position: absolute;
 		top: 20rpx;
-		left:60rpx ;
-		right:60rpx ;
+		left: 60rpx;
+		right: 60rpx;
 	}
 
 	.tip-text {
@@ -535,7 +544,7 @@
 		background: #fff;
 		border-radius: 24rpx;
 		padding: 40rpx;
-		
+
 	}
 
 	.card-title {
@@ -599,6 +608,7 @@
 	.text-gray {
 		color: #909399;
 	}
+
 	.btn-group {
 		display: flex;
 		gap: 20rpx;
@@ -677,6 +687,7 @@
 		/* border: 2px solid #27ae60; */
 		/* margin-top: 20rpx; */
 	}
+
 	.purple-btn {
 		background: #9333ea;
 		color: #fff;
@@ -691,23 +702,27 @@
 		line-height: 80rpx;
 		/* border: 2px solid #9333ea; */
 	}
+
 	.done-row {
 		display: flex;
 		align-items: center;
 		height: calc(80rpx - 4px);
 		line-height: 80rpx;
-		padding:0 10px ;
+		padding: 0 10px;
 	}
+
 	.done-text {
 		color: #27ae60;
 		font-size: 25rpx;
 		margin-left: 10rpx;
 	}
+
 	.purple-btn[disabled] {
 		background-color: #d4a0ff !important; //禁用浅紫色
 		color: #fff !important;
 		border: 0 !important;
 	}
+
 	.submit-btn[disabled] {
 		background-color: #7fe2a7 !important; //禁用浅紫色
 		color: #fff !important;

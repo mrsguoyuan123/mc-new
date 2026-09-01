@@ -74,6 +74,9 @@
 	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
 
 	export default {
+		options: {
+			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
+		},
 		components: {
 			mainTabbar
 		},
@@ -127,29 +130,25 @@
 				console.log(res)
 				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(this
 					.caregiverOption))
-				uni.navigateTo({
-					url: routeUrl,
-					fail: (err) => {
-						console.error('跳转失败', err) //打印失败原因
-					}
-				});
+				
+			this.$safeJump(routeUrl)
 			},
 			handleCall() {
 				// #ifdef H5
 				window.location.href = `tel:${this.staff.phone}`
 				// #endif
-
 				// #ifndef H5
-				uni.makePhoneCall({
+				wx.makePhoneCall({
 					phoneNumber: this.staff.phone,
-					success() {
-						console.log('成功唤起拨号')
+					success: (res) => {
+						console.log('成功唤起拨号', res?.errMsg)
 					},
-					fail(err) {
-						console.error('唤起失败', err)
+					fail: (err) => {
+						console.error('唤起失败', err?.errMsg)
 					}
 				})
 				// #endif
+
 
 			},
 			handleRemind() {
@@ -187,21 +186,31 @@
 				// #endif
 
 				// #ifndef H5
-				uni.makePhoneCall({
+				wx.makePhoneCall({
 					phoneNumber: this.staff.phone,
-					success() {
-						console.log('成功唤起拨号')
+					success: (res) => {
+						console.log('成功唤起拨号', res?.errMsg)
 					},
-					fail(err) {
-						console.error('唤起失败', err)
+					fail: (err) => {
+						console.error('唤起失败', err?.errMsg)
 					}
 				})
 				// #endif
+
 			},
 			handleBack() {
-				uni.navigateBack({
-					delta: 1
-				})
+				const pages = getCurrentPages()
+				console.log('页面栈长度', pages.length)
+				if (pages.length > 1) {
+					uni.navigateBack({
+						delta: 1
+					})
+				} else {
+					// 栈只有1，不能回退，改成跳首页
+					uni.reLaunch({
+						url: '/pages/index/home'
+					})
+				}
 			},
 
 		}

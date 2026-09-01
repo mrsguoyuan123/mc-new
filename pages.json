@@ -5,7 +5,7 @@
 			"^u-(.*)": "@/uni_modules/uview-ui/components/u-$1/u-$1.vue"
 		}
 	},
-
+"lazyCodeLoading": "requiredComponents",
 
 	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
 		{
@@ -21,7 +21,7 @@
 			}
 		},
 		{
-			"path": "pages/index/register",
+			"path": "pages/index/patientRegistration",
 			"style": {
 				"navigationBarTitleText": ""
 			}
@@ -59,8 +59,9 @@
 		{
 			"path": "pages/index/records",
 			"style": {
-				"navigationStyle": "custom"
-			}
+			    "navigationBarTitleText": "术后病历详情",
+			    "navigationBarBackgroundColor": "#ffffff"
+			  }
 		},
 		{
 			"path": "pages/index/consultation",
@@ -71,8 +72,9 @@
 		{
 			"path": "pages/index/calendar",
 			"style": {
-				"navigationStyle": "custom"
-			}
+			    "navigationBarTitleText": "服务日历",
+			    "navigationBarBackgroundColor": "#ffffff"
+			  }
 		},
 		{
 			"path": "pages/index/patient",
@@ -100,7 +102,7 @@
 			}
 		},
 		{
-			"path": "pages/index/SystemCustomerService",
+			"path": "pages/index/systemCustomerService",
 			"style": {
 				"navigationStyle": "custom"
 			}
@@ -138,7 +140,20 @@
 			"style": {
 				"navigationStyle": "custom"
 			}
+		},
+		{
+			"path": "pages/index/register",
+			"style": {
+				"navigationBarTitleText": ""
+			}
+		},
+		{
+			"path": "pages/index/user/user",
+			"style": {
+				"navigationBarTitleText": ""
+			}
 		}
+		
 
 
 	],

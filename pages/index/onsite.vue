@@ -266,11 +266,8 @@
 					title: 'hello',
 					id: 1
 				}
-				uni.navigateTo({
-					url: `../index/` + res + `?data=` + encodeURIComponent(JSON.stringify(data))
-				})
-
-
+				let routeUrl = `../index/` + res + `?data=` + encodeURIComponent(JSON.stringify(data))
+				this.$safeJump(routeUrl)
 
 
 			},

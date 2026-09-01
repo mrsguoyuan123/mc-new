@@ -1,6 +1,6 @@
 <template>
 	<view class="page-content page-loginFirst ">
-	
+
 		<view class=" card-top  u-flex space-between u-flex-column ">
 			<view class="view-icon badge-blue-bg badge-circle margin-bottom-2">
 				<u-icon name="account" color="#155DFC" :bold="true" size="40"></u-icon>
@@ -17,13 +17,15 @@
 				</view>
 
 			</view>
-			<view  @click="routeTo(item)" :class="item.routeto=='onsite'?'list-outside':'list-home'" v-for="(item,index) in userList"
+			<view @click="routeTo(item)" :class="item.routeto=='onsite'?'list-outside':'list-home'"
+				v-for="(item,index) in userList"
 				class="card-list radius-15 card-top bg-white card-border card-border-gray">
 				<view class=" massage-list">
 					<view class="massage-icon-left view-icon bg-white1 margin-right-10 " v-if="item.routeto=='home'">
 						<u-icon name="account" color="#16c288" :bold="true" size="40rpx"></u-icon>
 					</view>
-					<view class="massage-icon-left view-icon bg-white1 margin-right-10 " v-else-if="item.routeto=='onsite'">
+					<view class="massage-icon-left view-icon bg-white1 margin-right-10 "
+						v-else-if="item.routeto=='onsite'">
 						<u-icon name="map" color="#155DFC" :bold="true" size="40rpx"></u-icon>
 					</view>
 
@@ -44,12 +46,15 @@
 				</view>
 
 			</view>
-			<view @click="logOut"  class="font-info font-m margin-top-3">返回登录界面</view>
+			<view @click="logOut" class="font-info font-m margin-top-3">返回登录界面</view>
 		</view>
 	</view>
 </template>
 
 <script>
+	import {
+		authLogout
+	} from '@/api/auth'
 	export default {
 		data() {
 			return {
@@ -72,7 +77,7 @@
 						name: "我是客服",
 						lastMsg: "提供陪诊服务、协调院内资源",
 						routeto: "workBench",
-					
+
 					},
 
 				]
@@ -80,26 +85,25 @@
 		},
 		methods: {
 			routeTo(item) {
-				console.log(item)
 				uni.showLoading()
 				uni.hideLoading()
 
-				
+
 				console.log(item.routeto)
-				if(item.routeto == 'onsite'){
+				if (item.routeto == 'onsite') {
 					uni.switchTab({
-					  url: "/pages/index/onsite"
+						url: "/pages/index/onsite"
 					})
-				}else{
-					uni.navigateTo({
-						url: `../index/`+ item.routeto+`?data=` + encodeURIComponent(JSON.stringify(item))
-					})
+				} else {
+					let routeUrl = "/pages/index/" + item.routeto + `?data=` + encodeURIComponent(JSON.stringify(item))
+					this.$safeJump(routeUrl)
+
 				}
-				
-				
-			
+
+
+
 			},
-			logOut(){
+			logOut() {
 				uni.showModal({
 					title: '提示',
 					content: '确认退出登录？',
@@ -112,9 +116,22 @@
 						}
 					}
 				})
-				
-			}
-			
+
+			},
+			// async logOut() {
+			// 	try {
+			// 		await authLogout()
+			// 	} catch (e) {
+			// 		console.warn('登出后端通知失败，继续清理本地', e)
+			// 	} finally {
+			// 		uni.removeStorageSync('token')
+			// 		uni.removeStorageSync('refreshToken')
+			// 		uni.reLaunch({
+			// 			url: '/pages/login/login'
+			// 		})
+			// 	}
+			// },
+
 		},
 
 
@@ -122,9 +139,10 @@
 </script>
 
 <style scoped lang="scss">
-	.page-loginFirst{
-		min-height: calc(100vh - 44px - 60rpx );
+	.page-loginFirst {
+		min-height: calc(100vh - 44px - 60rpx);
 	}
+
 	.page-loginFirst .card-list {
 		width: 100%;
 
@@ -143,6 +161,7 @@
 		border-color: #dbeafe;
 
 	}
+
 	/* 左图标 */
 	.massage-list .massage-icon-left {
 		position: absolute;
@@ -151,20 +170,23 @@
 		width: 40rpx;
 		height: 40rpx;
 	}
+
 	/* 中间内容 */
 	.massage-list {
 		position: relative;
 		width: calc(100% - 150rpx);
 		padding: 0 50rpx 0 90rpx;
 	}
+
 	/* 右箭头 */
 	.massage-list .massage-icon-right {
 		position: absolute;
 		right: 0;
 		top: calc(50% - 20rpx);
 	}
+
 	/* 右边小点  */
-	.massage-time{
+	.massage-time {
 		position: absolute;
 		right: 0;
 		top: 0;

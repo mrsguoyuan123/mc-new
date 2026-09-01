@@ -124,19 +124,24 @@
 		},
 		methods: {
 			handleBack() {
-				uni.navigateBack({
-					delta: 1
-				})
+				const pages = getCurrentPages()
+				console.log('页面栈长度', pages.length)
+				if (pages.length > 1) {
+					uni.navigateBack({
+						delta: 1
+					})
+				} else {
+					// 栈只有1，不能回退，改成跳首页
+					uni.reLaunch({
+						url: '/pages/index/home'
+					})
+				}
 			},
 			routeTo(res) {
 
 				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(this.caregiverOption))
-				uni.navigateTo({
-					url: routeUrl,
-					fail: (err) => {
-						console.error('跳转失败', err) //打印失败原因
-					}
-				})
+				
+				this.$safeJump(routeUrl)
 
 			},
 			selectPackage(index) {
@@ -369,37 +374,5 @@
 		margin-top: 20rpx;
 	}
 
-	/* 状态栏高度，自动适配各手机 */
-	.status-bar {
-		height: var(--status-bar-height);
-		width: 100%;
-		background-color: #ffffff;
-	}
-
-	.custom-nav {
-		/* height: 44px; */
-		background-color: #ffffff;
-		display: flex;
-		align-items: center;
-		padding: 30rpx;
-	}
-
-	.nav-back {
-		width: 70rpx;
-	}
-
-	.nav-title {
-		flex: 1;
-		font-size: 34rpx;
-		color: #111;
-		font-weight: 700;
-		text-align: left;
-	}
-
-	.nav-right {
-		width: 70rpx;
-		text-align: right;
-		color: #2979ff;
-		font-size: 32rpx;
-	}
+	
 </style>

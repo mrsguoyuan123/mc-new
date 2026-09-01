@@ -1,5 +1,6 @@
 
 
+
 .answer-wrapper{
 	border: 1px solid #ddd;
 	border-radius: 20rpx;
@@ -24,6 +25,7 @@
 	margin-bottom: 20rpx;
 	box-shadow: 0 1px 4px 0 #dddd;
 }
+
 /* 22222222222 */
 .radius-1 {
 	border-radius: 16rpx;
@@ -657,9 +659,7 @@
 	color: white;
 }
 
-/* /deep/ .u-icon__label {
-  display: none !important;
-} */
+
 
 /* 左图标 */
 /* .massage-list .massage-icon-left {

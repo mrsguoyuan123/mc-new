@@ -58,6 +58,9 @@
 <script>
 	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
 	export default {
+		options: {
+			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
+		},
 		components: {
 			mainTabbar
 		},
@@ -77,17 +80,17 @@
 				]
 			};
 		},
-	onLoad(options) {
-	if (options.data && options.data !== "undefined") {
-		try {
-			const raw = decodeURIComponent(options.data)
-			const obj = JSON.parse(raw)
-			this.caregiverOption = obj
-		} catch (e) {
-			console.error('JSON解析失败', e)
-		}
-	}
-	},
+		onLoad(options) {
+			if (options.data && options.data !== "undefined") {
+				try {
+					const raw = decodeURIComponent(options.data)
+					const obj = JSON.parse(raw)
+					this.caregiverOption = obj
+				} catch (e) {
+					console.error('JSON解析失败', e)
+				}
+			}
+		},
 		created() {
 			this.getNext7DaysFromTomorrow();
 		},
@@ -126,30 +129,22 @@
 					});
 					return
 				}
-
 				this.caregiverOption.date = this.dateList[this.selectDateIndex].day
 				this.caregiverOption.timeSlot = this.slotList[this.slotIndex].text
 				console.log(this.caregiverOption)
 				let routeUrl = "/pages/index/caregiverOrder" + `?data=` + encodeURIComponent(JSON.stringify(this
 					.caregiverOption))
-				// const url =`/pages/index/caregiverOrder?date=${encodeURIComponent(dateItem.day)}&timeSlot=${encodeURIComponent(slotItem.text)}&caregiverName=${encodeURIComponent(this.caregiverName)}`
+
 				this.$refs.uToast.show({
 					message: `已选定：${this.caregiverOption.name},预约上门：${this.caregiverOption.date} ${this.caregiverOption.timeSlot}成功`,
 					type: "success",
 					duration: 1500,
-					// position: "top",
-					complete() {
-						uni.navigateTo({
-							url: routeUrl,
-							fail: (err) => {
-								console.error('跳转失败', err) //打印失败原因
-							}
-						});
-					},
+					complete: () => {
+					this.$safeJump(routeUrl)
+					}
 				})
-
-
 			},
+
 		}
 	};
 </script>
@@ -304,39 +299,5 @@
 		height: 96rpx;
 		font-size: 34rpx;
 		font-weight: 700;
-	}
-
-	/* 状态栏高度，自动适配各手机 */
-	.status-bar {
-		height: var(--status-bar-height);
-		width: 100%;
-		background-color: #ffffff;
-	}
-
-	.custom-nav {
-		/* height: 44px; */
-		background-color: #ffffff;
-		display: flex;
-		align-items: center;
-		padding: 30rpx;
-	}
-
-	.nav-back {
-		width: 70rpx;
-	}
-
-	.nav-title {
-		flex: 1;
-		font-size: 34rpx;
-		color: #111;
-		font-weight: 700;
-		text-align: left;
-	}
-
-	.nav-right {
-		width: 70rpx;
-		text-align: right;
-		color: #2979ff;
-		font-size: 32rpx;
 	}
 </style>

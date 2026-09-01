@@ -112,20 +112,13 @@
 			}
 		},
 		methods: {
-
 			routeTo(res) {
 				console.log(res)
-
 				res.dataName = 'caregiverOption'
 				let routeUrl = "/pages/index/caregiverDetail" + `?data=` + encodeURIComponent(JSON.stringify(res))
-				uni.navigateTo({
-					url: routeUrl,
-					fail: (err) => {
-						console.error('跳转失败', err) //打印失败原因
-					}
-				})
-
+				this.$safeJump(routeUrl)
 			},
+
 		}
 	}
 </script>
@@ -281,39 +274,5 @@
 		color: #0066ff;
 		font-size: 25rpx;
 		font-weight: bold;
-	}
-
-	/* 状态栏高度，自动适配各手机 */
-	.status-bar {
-		height: var(--status-bar-height);
-		width: 100%;
-		background-color: #ffffff;
-	}
-
-	.custom-nav {
-		/* height: 44px; */
-		background-color: #ffffff;
-		display: flex;
-		align-items: center;
-		padding: 30rpx;
-	}
-
-	.nav-back {
-		width: 70rpx;
-	}
-
-	.nav-title {
-		flex: 1;
-		font-size: 34rpx;
-		color: #111;
-		font-weight: 700;
-		text-align: left;
-	}
-
-	.nav-right {
-		width: 70rpx;
-		text-align: right;
-		color: #2979ff;
-		font-size: 32rpx;
 	}
 </style>

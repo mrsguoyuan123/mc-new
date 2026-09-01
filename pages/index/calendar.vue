@@ -1,10 +1,6 @@
 <template>
 	<view class="page">
-		<view class="nav">
-			<u-icon name="arrow-left" @click="handleBack()"></u-icon>
-			<view class="nav-title">服务日历</view>
-			<view></view>
-		</view>
+
 
 		<view class="calendar-card">
 			<view class="cal-header">
@@ -122,9 +118,18 @@
 		},
 		methods: {
 			handleBack() {
-				uni.navigateBack({
-					delta: 1
-				})
+				const pages = getCurrentPages()
+				console.log('页面栈长度', pages.length)
+				if (pages.length > 1) {
+					uni.navigateBack({
+						delta: 1
+					})
+				} else {
+					// 栈只有1，不能回退，改成跳首页
+					uni.reLaunch({
+						url: '/pages/index/onsite'
+					})
+				}
 			},
 			prevMonth() {
 				let m = this.month - 1
@@ -258,7 +263,7 @@
 	.day-item.active {
 		background: #8b3ff2;
 		color: #fff;
-		border-radius:20rpx;
+		border-radius: 20rpx;
 	}
 
 	.day-item.empty {

@@ -1,16 +1,25 @@
 <script>
 export default {
 	onLaunch() {
-
-	},
-	onShow() {
-
-	},
-	onHide() {
-
+	this.$store.dispatch('initSystemInfo')
 	}
+
+  // onLaunch() {
+  //   uni.addInterceptor('navigateTo',{
+  //     invoke(e){
+  //       const token = uni.getStorageSync('token')
+  //       if(!token && !e.url.includes('/login') && !e.url.includes('/register')){
+		// 	setTimeout(()=>{
+		// 	      uni.reLaunch({url:'/pages/index/login'})
+		// 	    },300)
+  //         return false
+  //       }
+  //     }
+  //   })
+  // }
 }
 </script>
+
 
 <style lang="scss">
 /* uview2样式放最前面 */

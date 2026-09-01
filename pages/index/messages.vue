@@ -36,9 +36,11 @@
 			</u-tabs>
 
 		</view>
-		<view class="msg-item radius-15 card-top bg-white card-border card-border-gray" v-for="(item,index) in chatHistory" :key="index" @click="routeTo(item)">
+		<view class="msg-item radius-15 card-top bg-white card-border card-border-gray"
+			v-for="(item,index) in chatHistory" :key="index" @click="routeTo(item)">
 			<!-- 左侧图标 -->
-			<view class="msg-icon-wrap  badge-blue-bg" :style="{backgroundColor:item.bgColor}"  v-if="item.type=='human'">
+			<view class="msg-icon-wrap  badge-blue-bg" :style="{backgroundColor:item.bgColor}"
+				v-if="item.type=='human'">
 				<view class="massage-icon-left ">
 					<text class="custom-icon custom-icon-Headset1 icon-bold"
 						style="font-size:40rpx;color:#155DFC;"></text>
@@ -46,8 +48,9 @@
 				<!-- <text class="msg-icon">{{item.icon}}</text> -->
 				<view v-if="item.showDot" class="online-dot"></view>
 			</view>
-			<view class="msg-icon-wrap badge-orange-bg" :style="{backgroundColor:item.bgColor}"  v-else-if="item.type=='system'">		
-				<view class="massage-icon-left  " >
+			<view class="msg-icon-wrap badge-orange-bg" :style="{backgroundColor:item.bgColor}"
+				v-else-if="item.type=='system'">
+				<view class="massage-icon-left  ">
 					<text class="custom-icon custom-icon-order icon-bold" style="font-size:40rpx;color:#ff6900;"></text>
 				</view>
 				<!-- <text class="msg-icon">{{item.icon}}</text> -->
@@ -72,7 +75,7 @@
 			<!-- ✅最右侧箭头，独立列，垂直居中 -->
 			<u-icon name="arrow-right"></u-icon>
 		</view>
-	<!-- 	<view v-for="(item,index) in chatHistory" class="radius-15 card-top bg-white card-border card-border-gray"
+		<!-- 	<view v-for="(item,index) in chatHistory" class="radius-15 card-top bg-white card-border card-border-gray"
 			@click="routeTo('consultation')">
 			<view class=" massage-list">
 				<view class="massage-icon-left view-icon badge-blue-bg" v-if="item.type=='human'">
@@ -167,7 +170,7 @@
 						unreadCount: 1,
 						type: "human",
 						status: "在线",
-						showDot:true
+						showDot: true
 					},
 					{
 						id: "sys-1",
@@ -221,23 +224,16 @@
 			},
 			routeTo(res) {
 				// console.log(toRaw(res))
-				uni.showLoading()
-				uni.hideLoading()
-
 				let data = {
 					title: 'hello',
 					id: res.id
 				}
-
-				console.log(data)
-				uni.navigateTo({
-					url: `../index/consultation`  + `?data=` + encodeURIComponent(JSON.stringify(data))
-				})
-
+				let routeUrl = "/pages/index/consultation?data=" + encodeURIComponent(JSON.stringify(data))
+				this.$safeJump(routeUrl)
 			}
+
 		},
 		onReady() {
-			//如果需要兼容微信小程序，并且校验规则中含有方法等，只能通过setRules方法设置规则。
 
 		},
 	};
