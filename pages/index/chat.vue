@@ -146,12 +146,12 @@
 		<!-- ==========底部操作栏 ========== -->
 		<view class="chat-footer">
 			<view class="quick-btn-group">
-				<view class="quick-btn u-flex bg-blue border-blue font-blue">
+<!-- 				<view class="quick-btn u-flex bg-blue border-blue font-blue">
 					<text class="custom-icon custom-icon-briefcase-l" style="font-size:20rpx;color:#155dfc;"></text>
 					<view class="margin-left-5">
 						推送医助
 					</view>
-				</view>
+				</view> -->
 				<view class="quick-btn u-flex bg-green border-green font-green" @click="answerList = !answerList">
 					<text class="custom-icon custom-icon-message-circle" style="font-size:20rpx;color:#009966;"></text>
 					<view class="margin-left-5">回复模板</view>
@@ -750,8 +750,6 @@
 		left: 0;
 		right: 0;
 		bottom: 0;
-		/* bottom: calc(0 + constant(safe-area-inset-bottom));
-		bottom: calc(0 + env(safe-area-inset-bottom)); */
 
 		/* height: 200rpx; */
 		/* margin-bottom: 30rpx; */

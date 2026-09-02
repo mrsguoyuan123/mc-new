@@ -83,7 +83,6 @@
 	.page-my {
 		background-color: #f9fafb;
 		padding-bottom: calc(120rpx + var(--safe-area-inset-bottom));
-		min-height: calc(100vh - 100px);
 		max-width: 500px;
 		margin: 0 auto;
 	}

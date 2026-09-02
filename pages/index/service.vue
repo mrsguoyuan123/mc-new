@@ -1,11 +1,5 @@
 <template>
 	<view class="page-content">
-		<!--顶部提交成功提示-->
-		<view v-if="showSubmitTip" class="tip-box">
-			<u-icon name="checkmark-circle" color="#27ae60" size="36rpx"></u-icon>
-			<text class="tip-text">陪诊记录已提交</text>
-			<view class="close-tip" @click="showSubmitTip=false">✕</view>
-		</view>
 		<!--患者信息卡片-->
 		<view class="patient-card card-border-gray">
 			<view class="card-header">
@@ -137,6 +131,7 @@
 		</view>
 
 		<custom-tabbar :current="1"></custom-tabbar>
+		<u-toast ref="uToast"></u-toast>
 	</view>
 </template>
 
@@ -152,7 +147,6 @@
 		data() {
 			return {
 
-				showSubmitTip: false,
 				user: {
 					name: "孙患者",
 					age: 45,
@@ -188,9 +182,6 @@
 				clearInterval(this.pollTimer)
 				this.pollTimer = null
 			}
-
-
-
 		},
 		computed: {
 			task1AllDone() {
@@ -337,11 +328,17 @@
 					return
 				}
 				this.task3Done = true
-				this.showSubmitTip = true;
+				// this.showSubmitTip = true;
 				console.log(this.submitForm)
-				this.pollTImer = setTimeout(() => {
-					this.showSubmitTip = false
-				}, 3000)
+
+				this.$refs.uToast.show({
+					message: "陪诊记录已提交",
+					type: "success",
+					duration: 1500,
+					// complete: () => {
+					// 	this.$safeJump(routeUrl)
+					// }
+				})
 			},
 			/**
 			 * 1、地址转经纬度 高德http地理编码

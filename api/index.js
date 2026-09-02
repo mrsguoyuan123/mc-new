@@ -43,3 +43,18 @@ export * from './notification'
 
 // 文件上传模块：单文件上传/批量上传
 export * from './file'
+export default {
+  ...auth,
+  ...conversation,
+  ...dict,
+  ...escort,
+  ...file,
+  ...followup,   
+  ...health,
+  ...hospital,
+  ...notification,
+  ...patient,
+  ...risk,
+  ...staff,
+  ...user
+}

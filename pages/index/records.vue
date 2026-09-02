@@ -1,7 +1,7 @@
 <template>
 	<view class=" page-records">
 
-		<view class="page-content1">
+		<view class="page-content">
 			<view
 				class="radius-15 card-top margin-bottom-2 card-border card-border-gray  u-flex space-between border-blue bg-blue">
 
@@ -199,13 +199,7 @@
 <style scoped lang="scss">
 	.page-records {
 		overflow: hidden;
-		// padding-bottom: calc(120rpx + env(safe-area-inset-bottom));
 	}
-
-	.page-content1 {
-		padding: 30rpx 60rpx;
-	}
-
 	.page-records .records-wrapper {
 		padding: 20rpx 0;
 	}

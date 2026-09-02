@@ -1,21 +1,10 @@
 <template>
 	<view class="page-workbench page-content">
-		<view v-if="topTip.show" class="top-tip">
-			<!-- <view class="tip-close" @click="topTip.show=false">✕</view> -->
-			<view class="tip-icon">
-				<u-icon name="info-circle" color="#0052cc" size="40rpx"></u-icon>
-			</view>
-			<view>
-				<view class="tip-text">{{topTip.text1}}</view>
-				<view class="tip-text">{{topTip.text2}}</view>
-			</view>
-		</view>
 		<!-- 头部标题 + 头像 -->
 		<view class="page-header">
 			<view>
 				<text class="font-l font-bold">客服工作台</text>
 				<view class="margin-top-5 font-m font-info">CS WORKBENCH</view>
-				<u-icon name="account" color="#155DFC" :bold="true" size="40rpx"></u-icon>
 			</view>
 			<view class="avatar-box">
 				<view class="avatar-icon">
@@ -88,10 +77,10 @@
 				</view>
 				<view class="btn-group">
 					<view class="call-btn" :class="item.btnClass" @click="openStepPanel(item)">
-						<u-icon class="" name="phone-fill" color="white" :bold="true" size="32rpx"></u-icon>
+						<u-icon class="" name="phone-fill" :color="item.btnClass == 'btn-gray'? '#909399':'#fff'"
+							:bold="true" size="32rpx"></u-icon>
 						<view class="margin-left-5">拨打</view>
 					</view>
-
 					<text class="btn-tip">{{ item.btnTip }}</text>
 				</view>
 			</view>
@@ -102,19 +91,21 @@
 				<view class=" bg-blue bar-top">
 					<view class="step-bar">
 						<view class="step-item" v-for="(s,si) in stepList" :key="si">
-							<view class="step-circle" :class="{done:currentStep>si+1,active:currentStep===si+1}">
-								<text v-if="currentStep>si+1">✓</text>
+							<view class="step-circle"
+								:class="{done:item.currentStep>si+1,active:item.currentStep===si+1}">
+								<text v-if="item.currentStep>si+1">✓</text>
 								<text v-else>{{si+1}}</text>
 							</view>
-							<view v-if="si !== stepList.length-1" class="step-line" :class="{done:currentStep>si+1}">
+							<view v-if="si !== stepList.length-1" class="step-line"
+								:class="{done:item.currentStep>si+1}">
 							</view>
 						</view>
 					</view>
-					<view class="step-title">{{stepList[currentStep-1].title}}</view>
+					<view class="step-title">{{stepList[item.currentStep-1].title}}</view>
 				</view>
-				<!-- step1 第一步：电话沟通 -->
-				<view v-if="currentStep===1" class="step-content">
-					<view v-if="callLoading" class="call-loading-box radius-15 bg-blue border-blue">
+				<!-- step1 第一步：电话沟通  绿色按钮 -->
+				<view v-if="item.currentStep===1 && item.btnClass == 'btn-green'" class="step-content">
+					<view v-if="item.callLoading" class="call-loading-box radius-15 bg-blue border-blue">
 						<view class="call-icon">
 							<u-icon name="phone-fill" color="white" :bold="true" size="80rpx"></u-icon>
 						</view>
@@ -134,94 +125,235 @@
 							<view class="phone-box">
 								<u-icon name="phone" color="#00a63e" :bold="true" size="50rpx"></u-icon>
 								<view>
-									{{form1.phone}}
+									{{item.formCall.phone}}
 								</view>
 							</view>
 							<view class="picker-wrapper">
-								<picker :value="form1.statusIndex" :range="callStatusList" @change="onCallStatusChange">
-									<view class="picker-btn">{{callStatusList[form1.statusIndex]}}</view>
+								<picker class="picker-item" mode="selector" :value="item.formCall.statusIndex"
+									:range="callStatusList" @change="handleStatusChange(item, $event,'statusIndex')">
+									<view class="picker-box">
+										<text
+											:class="[item.formCall.statusIndex === -1 ? 'placeholder-text' : 'value-text']">
+											{{ item.formCall.statusIndex === -1 ? '状态登记' : callStatusList[item.formCall.statusIndex] }}
+										</text>
+									</view>
 								</picker>
 							</view>
 						</view>
 						<view class="reconnect-tip">
 							<text>呼叫失败？</text>
-							<text class="link" @click="openStepPanel"> 重新连接云端线路</text>
+							<text class="link" @click="reconnect(item)"> 重新连接云端线路</text>
 						</view>
 					</view>
-					<view v-show="form1.statusIndex == 1">
-						<view class="form-item">
-							<text class="label">沟通失败原因:</text>
-							<picker :value="formCall.failReason" :range="failOptions"
-								@change="e=>formCall.failReason=e.detail.value">
-								<view class="picker-input">{{failOptions[formCall.failReason]}}</view>
+					<view v-if="item.formCall.statusIndex == 1">
+						<view class="form-item  margin-top-1">
+							<view class="picker-label">
+								<text class="required-star">*</text>
+								<text class="label">沟通失败原因:</text>
+							</view>
+							<picker mode="selector" :value="item.formCall.failReason" :range="failOptions"
+								@change="handleStatusChange(item, $event,'failReason')">
+								<view class="picker-input">
+									<text
+										:class="[item.formCall.failReason === -1 ? 'placeholder-text' : 'value-text']">
+										{{ item.formCall.failReason === -1 ? '请选择' : failOptions[item.formCall.failReason] }}
+									</text>
+								</view>
 							</picker>
 						</view>
 						<view class="form-item">
 							<text class="label">备注:</text>
-							<textarea class="textarea" v-model="formCall.failRemark"
+							<textarea class="textarea" v-model="item.formCall.failRemark"
 								placeholder="如漏服原因、调整用药具体操作等..."></textarea>
 						</view>
 					</view>
-					<view class="next-btn" @click="nextStep"> 下一步</view>
+					<view class="next-btn" @click="nextStep(item)"> 下一步</view>
 				</view>
-
+				<!-- step1 第一步：电话沟通  蓝色按钮 -->
+				<view v-if="item.currentStep===1 && item.btnClass == 'btn-blue'" class="step-content">
+					<view v-if="item.callLoading" class="call-loading-box radius-15 bg-blue border-blue">
+						<view class="call-icon">
+							<u-icon name="phone-fill" color="white" :bold="true" size="80rpx"></u-icon>
+						</view>
+						<text class="call-text">正在为您呼叫患者...</text>
+						<text class="call-en">SECURE LINE CONNECTING</text>
+					</view>
+					<view v-else class="call-connected bg-blue border-blue radius-15">
+						<view class="call-state-row">
+							<view class="state-label">
+								<u-icon class="margin-right-5" name="phone" color="#0052cc" :bold="true"
+									size="40rpx"></u-icon>
+								<view>沟通线路状态</view>
+							</view>
+							<text class="state-tag" v-if="item.callSuccess">线路已接通</text>
+							<text class="state-tag state-tag-gray" v-else>待连接</text>
+						</view>
+						<view class="call-row" v-if="!item.callSuccess">
+							<view class=" call-btn btn-blue" @click="reconnect(item)">
+								<u-icon class="" name="phone-fill" color="white" :bold="true" size="32rpx"></u-icon>
+								<view class="margin-left-5">重新发起呼叫</view>
+							</view>
+							<view class="picker-wrapper">
+								<picker class="picker-item" mode="selector" :value="item.formCall.statusIndex"
+									:range="callStatusList" @change="handleStatusChange(item, $event,'statusIndex')"
+									:disabled="!item.callSuccess">
+									<view class="picker-box">
+										<text
+											:class="[item.formCall.statusIndex === -1 ? 'placeholder-text' : 'value-text']">
+											{{ item.formCall.statusIndex === -1 ? '状态登记' : callStatusList[item.formCall.statusIndex] }}
+										</text>
+									</view>
+								</picker>
+							</view>
+						</view>
+						<view class="call-row" v-if="item.callSuccess">
+							<!-- {{item.callSuccess}} -->
+							<view class="phone-box">
+								<u-icon name="phone" color="#00a63e" :bold="true" size="50rpx"></u-icon>
+								<view>
+									{{item.formCall.phone}}
+								</view>
+							</view>
+							<view class="picker-wrapper">
+								<picker class="picker-item" mode="selector" :value="item.formCall.statusIndex"
+									:range="callStatusList" @change="handleStatusChange(item, $event,'statusIndex')">
+									<view class="picker-box">
+										<text
+											:class="[item.formCall.statusIndex === -1 ? 'placeholder-text' : 'value-text']">
+											{{ item.formCall.statusIndex === -1 ? '状态登记' : callStatusList[item.formCall.statusIndex] }}
+										</text>
+									</view>
+								</picker>
+							</view>
+						</view>
+						<view class="reconnect-tip">
+							<text>呼叫失败？</text>
+							<text class="link" @click="reconnect(item)"> 重新连接云端线路</text>
+						</view>
+					</view>
+					<view v-if="item.formCall.statusIndex == 1">
+						<view class="form-item margin-top-1">
+							<view class="picker-label">
+								<text class="required-star">*</text>
+								<text class="label">沟通失败原因:</text>
+							</view>
+							<picker mode="selector" :value="item.formCall.failReason" :range="failOptions"
+								@change="handleStatusChange(item, $event,'failReason')">
+								<view class="picker-input">
+									<text
+										:class="[item.formCall.failReason === -1 ? 'placeholder-text' : 'value-text']">
+										{{ item.formCall.failReason === -1 ? '请选择' : failOptions[item.formCall.failReason] }}
+									</text>
+								</view>
+							</picker>
+						</view>
+						<view class="form-item">
+							<text class="label">备注:</text>
+							<textarea class="textarea" v-model="item.formCall.failRemark"
+								placeholder="如漏服原因、调整用药具体操作等..."></textarea>
+						</view>
+					</view>
+					<view class="next-btn" @click="nextStep(item,'called')"> 下一步</view>
+				</view>
 				<!-- step2 第二步：记录信息 -->
-				<view v-if="currentStep===2" class="step-content">
+				<view v-if="item.currentStep===2" class="step-content">
 					<view class="form-item">
-						<text class="label">用药情况:</text>
-						<picker mode="selector" :value="formCall.medicationStatus" :range="medicOptions"
-							@change="e=>formCall.medicationStatus=e.detail.value">
-							<view class="picker-input">{{medicOptions[formCall.medicationStatus]}}</view>
+						<view class="picker-label">
+							<text class="required-star">*</text>
+							<text class="label">用药情况:</text>
+						</view>
+						<picker mode="selector" :value="item.formCall.medicationStatus" :range="medicOptions"
+							@change="handleStatusChange(item, $event,'medicationStatus')">
+							<view class="picker-input">
+								<text
+									:class="[item.formCall.medicationStatus === -1 ? 'placeholder-text' : 'value-text']">
+									{{ item.formCall.medicationStatus === -1 ? '请选择' : medicOptions[item.formCall.medicationStatus] }}
+								</text>
+							</view>
 						</picker>
+
 					</view>
 					<view class="form-item">
-						<text class="label">身体恢复情况:</text>
-						<picker :value="formCall.recoveryStatus" :range="recoverOptions"
-							@change="e=>formCall.recoveryStatus=e.detail.value">
-							<view class="picker-input">{{recoverOptions[formCall.recoveryStatus]}}</view>
+						<view class="picker-label">
+							<text class="required-star">*</text>
+							<text class="label">身体恢复情况:</text>
+						</view>
+						<picker mode="selector" :value="item.formCall.recoveryStatus" :range="recoverOptions"
+							@change="handleStatusChange(item, $event,'recoveryStatus')">
+							<view class="picker-input">
+								<text
+									:class="[item.formCall.recoveryStatus === -1 ? 'placeholder-text' : 'value-text']">
+									{{ item.formCall.recoveryStatus === -1 ? '请选择' : recoverOptions[item.formCall.recoveryStatus] }}
+								</text>
+							</view>
 						</picker>
+
 					</view>
 					<view class="form-item">
-						<text class="label">遵医嘱情况:</text>
-						<picker :value="formCall.complianceStatus" :range="followOptions"
-							@change="e=>formCall.complianceStatus=e.detail.value">
-							<view class="picker-input">{{followOptions[formCall.complianceStatus]}}</view>
+						<view class="picker-label">
+							<text class="required-star">*</text>
+							<text class="label">遵医嘱情况:</text>
+						</view>
+						<picker mode="selector" :value="item.formCall.complianceStatus" :range="followOptions"
+							@change="handleStatusChange(item, $event,'complianceStatus')">
+							<view class="picker-input">
+								<text
+									:class="[item.formCall.complianceStatus === -1 ? 'placeholder-text' : 'value-text']">
+									{{ item.formCall.complianceStatus === -1 ? '请选择' : followOptions[item.formCall.complianceStatus] }}
+								</text>
+							</view>
 						</picker>
+
 					</view>
 					<view class="form-item">
 						<text class="label">备注:</text>
-						<textarea class="textarea margin-bottom-1" v-model="formCall.suggestion"
+						<textarea class="textarea margin-bottom-1" v-model="item.formCall.suggestion"
 							placeholder="如漏服原因、调整用药具体操作等..."></textarea>
 						<text class="orange-hint">如身体较差需说明具体症状: 伤口红肿、头晕等</text>
 					</view>
-					<view class="next-btn" @click="nextStep"> 下一步</view>
+					<view class="next-btn" @click="nextStep(item)"> 下一步</view>
 					<!-- <button> </button> -->
 				</view>
 				<!-- step3 第三步：服务包记录 -->
-				<view v-if="currentStep===3" class="step-content">
+				<view v-if="item.currentStep===3" class="step-content">
 					<view class="form-item">
-						<text class="label">当前服务包反馈:</text>
-						<picker :value="formCall.pkgFeedIndex" :range="pkgFeedOptions"
-							@change="e=>formCall.pkgFeedIndex=e.detail.value">
-							<view class="picker-input">{{pkgFeedOptions[formCall.pkgFeedIndex]}}</view>
+						<view class="picker-label">
+							<text class="required-star">*</text>
+							<text class="label">当前服务包反馈:</text>
+						</view>
+						<picker mode="selector" :value="item.formCall.pkgFeedIndex" :range="pkgFeedOptions"
+							@change="handleStatusChange(item, $event,'pkgFeedIndex')">
+							<view class="picker-input">
+								<text :class="[item.formCall.pkgFeedIndex === -1 ? 'placeholder-text' : 'value-text']">
+									{{ item.formCall.pkgFeedIndex === -1 ? '请选择' : pkgFeedOptions[item.formCall.pkgFeedIndex] }}
+								</text>
+							</view>
 						</picker>
 					</view>
 					<view class="form-item">
-						<text class="label">二次购买意向:</text>
-						<picker :value="formCall.buyIndex" :range="buyOptions"
-							@change="e=>formCall.buyIndex=e.detail.value">
-							<view class="picker-input">{{buyOptions[formCall.buyIndex]}}</view>
+						<view class="picker-label">
+							<text class="required-star">*</text>
+							<text class="label">二次购买意向:</text>
+						</view>
+						<picker mode="selector" :value="item.formCall.buyIndex" :range="buyOptions"
+							@change="handleStatusChange(item, $event,'buyIndex')">
+							<view class="picker-input">
+								<text :class="[item.formCall.buyIndex === -1 ? 'placeholder-text' : 'value-text']">
+									{{ item.formCall.buyIndex === -1 ? '请选择' : buyOptions[item.formCall.buyIndex] }}
+								</text>
+							</view>
 						</picker>
+
 					</view>
 					<view class="form-item">
 						<text class="label">备注:</text>
-						<textarea class="textarea" v-model="formCall.demand"
+						<textarea class="textarea" v-model="item.formCall.demand"
 							placeholder="备注未使用原因、购意向购买时间、顾虑点等..."></textarea>
 					</view>
-					<view class="next-btn" @click="nextStep"> 下一步</view>
+					<view class="next-btn" @click="nextStep(item)"> 下一步</view>
 				</view>
 				<!-- step4 第四步：评价满意度 -->
-				<view v-if="currentStep===4" class="step-content">
+				<view v-if="item.currentStep===4" class="step-content">
 					<view class="eval-box">
 						<view class="eval-left">
 							<text class="eval-title">电话评价结果</text>
@@ -235,11 +367,13 @@
 					</view>
 					<view class="form-item">
 						<text class="label">改进建议:</text>
-						<textarea class="textarea" v-model="formCall.suggest" placeholder="患者反馈的改进建议..."></textarea>
+						<textarea class="textarea" v-model="item.formCall.suggest"
+							placeholder="患者反馈的改进建议..."></textarea>
 					</view>
 					<view class="form-item">
 						<text class="label">其他需求记录:</text>
-						<textarea class="textarea" v-model="formCall.demand2" placeholder="记录患者的其他相关需求..."></textarea>
+						<textarea class="textarea" v-model="item.formCall.demand2"
+							placeholder="记录患者的其他相关需求..."></textarea>
 					</view>
 					<view class="btn-row-two">
 						<button class="btn-cancel" @click="closeStepPanel(item)">取消</button>
@@ -249,11 +383,31 @@
 				</view>
 			</view>
 		</view>
+		<view v-if="showCallLoading" class="call-loading-mask">
+			<view class="call-loading-content">
+				<view class="ping-ring"></view>
+
+				<view class="phone-wrap">
+					<view class="phone-icon-wrap">
+						<u-icon class="phone-icon" name="phone-fill" color="#2979ff" size="120rpx"></u-icon>
+					</view>
+				</view>
+
+				<text class="main-text">正在发起安全外呼...</text>
+				<text class="sub-text">ENCRYPTED LINE CONNECTING</text>
+			</view>
+		</view>
 		<my-tabbar :current="0"></my-tabbar>
+		<u-toast ref="uToast"></u-toast>
 	</view>
 </template>
 <script>
 	import myTabbar from '@/components/my‑tabbar/my‑tabbar.vue'
+	import {
+		getFollowupTasks,
+		postFollowupTaskCall,
+		getFollowupPhoneStatus
+	} from '@/api/followup.js'
 	export default {
 		options: {
 			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
@@ -263,6 +417,18 @@
 		},
 		data() {
 			return {
+				showCallLoading: false,
+				formValue: null,
+				show: false,
+				columns: [{
+						label: "待沟通",
+						value: 1
+					},
+					{
+						label: "已完成",
+						value: 2
+					}
+				],
 				// 患者列表
 				list: [{
 						name: '张三',
@@ -279,7 +445,31 @@
 						age: "63",
 						tag: "常规",
 						value: "心外科",
-						showStepPanel: false
+						showStepPanel: false,
+						callLoading: false,
+						currentStep: 1,
+						callSuccess: false,
+						formCall: {
+							id: 0,
+							taskId: 0,
+							patientId: 0,
+							csId: 0,
+							callStatus: "",
+							statusIndex: -1, //沟通成功or失败
+							failReason: -1, //沟通失败原因  select
+							failRemark: "失败原因",
+							durationSec: 0,
+							medicationStatus: -1, //用药情况
+							recoveryStatus: -1, //身体恢复情况
+							complianceStatus: -1, //遵医嘱情况:
+							suggestion: "如漏服原因、调整用药具体操作等...",
+							pkgFeedIndex: -1, //当前服务包反馈
+							buyIndex: -1, //二次购买意向
+							demand: "备注未使用原因、购意向购买时间、顾虑点等.",
+							suggest: "患者反馈的改进建议",
+							demand2: "记录患者的其他相关需求",
+							phone: '024-01234567'
+						},
 					},
 					{
 						name: '李四',
@@ -292,7 +482,31 @@
 						area: '上海',
 						btnClass: 'btn-blue',
 						btnTip: '二次采购 (拨号已激活)',
-						showStepPanel: false
+						callLoading: false,
+						currentStep: 1,
+						callSuccess: false,
+						showStepPanel: false,
+						formCall: {
+							id: 0,
+							taskId: 0,
+							patientId: 0,
+							csId: 0,
+							callStatus: "",
+							statusIndex: -1, //沟通成功or失败
+							failReason: -1, //沟通失败原因  select
+							failRemark: "失败原因",
+							durationSec: 0,
+							medicationStatus: -1, //用药情况
+							recoveryStatus: -1, //身体恢复情况
+							complianceStatus: -1, //遵医嘱情况:
+							suggestion: "如漏服原因、调整用药具体操作等...",
+							pkgFeedIndex: -1, //当前服务包反馈
+							buyIndex: -1, //二次购买意向
+							demand: "备注未使用原因、购意向购买时间、顾虑点等.",
+							suggest: "患者反馈的改进建议",
+							demand2: "记录患者的其他相关需求",
+							phone: '024-01234567'
+						},
 					},
 					{
 						name: '王五',
@@ -305,7 +519,36 @@
 						area: '北京',
 						btnClass: 'btn-blue',
 						btnTip: '待跟进',
-						showStepPanel: false
+						callLoading: false,
+						currentStep: 1,
+						callSuccess: false,
+						showStepPanel: false,
+						formCall: {
+							id: 0,
+							taskId: 0,
+							patientId: 0,
+							csId: 0,
+							callStatus: "",
+							failReason: 0,
+							durationSec: 0,
+							medicationStatus: 0,
+							recoveryStatus: 1,
+							complianceStatus: 1,
+							followUpDemand: 1,
+							satisfaction: 0,
+							suggestion: "",
+							pushToGroup: 0,
+							createTime: "",
+							pkgFeedIndex: 0,
+							buyIndex: 0,
+							remark: "步骤四",
+							suggest: "改进建议",
+							demand: "步骤三",
+							demand2: "步骤四",
+							failRemark: "失败原因",
+							statusIndex: -1,
+							phone: '024-01234567'
+						},
 					},
 					{
 						name: '赵六',
@@ -318,8 +561,80 @@
 						area: '北京',
 						btnClass: 'btn-blue',
 						btnTip: '待跟进',
-						showStepPanel: false
-					}
+						callLoading: false,
+						currentStep: 1,
+						callSuccess: false,
+						showStepPanel: false,
+						formCall: {
+							id: 0,
+							taskId: 0,
+							patientId: 0,
+							csId: 0,
+							callStatus: "",
+							failReason: 0,
+							durationSec: 0,
+							medicationStatus: 0,
+							recoveryStatus: 1,
+							complianceStatus: 1,
+							followUpDemand: 1,
+							satisfaction: 0,
+							suggestion: "",
+							pushToGroup: 0,
+							createTime: "",
+							pkgFeedIndex: 0,
+							buyIndex: 0,
+							remark: "步骤四",
+							suggest: "改进建议",
+							demand: "步骤三",
+							demand2: "步骤四",
+							failRemark: "失败原因",
+							statusIndex: -1,
+							phone: '024-01234567'
+						},
+					},
+					{
+						id: "p5",
+						name: "孙七",
+						gender: "女",
+						age: 29,
+						btnClass: 'btn-gray',
+						doctor: '王医生',
+						area: '上海',
+						operation: '骨折修复',
+						hospital: "鼓楼医院",
+						department: "妇产科",
+						surgeryType: "剖宫产",
+						urgency: "low",
+						status: "已购买",
+						servicePackage: "产后康复包",
+						purchaseIntent: "已购",
+						formCall: {
+							id: 0,
+							taskId: 0,
+							patientId: 0,
+							csId: 0,
+							callStatus: "",
+							failReason: 0,
+							durationSec: 0,
+							medicationStatus: 0,
+							recoveryStatus: 1,
+							complianceStatus: 1,
+							followUpDemand: 1,
+							satisfaction: 0,
+							suggestion: "",
+							pushToGroup: 0,
+							createTime: "",
+							pkgFeedIndex: 0,
+							buyIndex: 0,
+							remark: "步骤四",
+							suggest: "改进建议",
+							demand: "步骤三",
+							demand2: "步骤四",
+							failRemark: "失败原因",
+							statusIndex: -1,
+							phone: '024-01234567'
+						},
+					},
 				],
 				// 步骤条
 				stepList: [{
@@ -335,46 +650,13 @@
 						title: "第四步评价以及满意度记录"
 					}
 				],
-				currentStep: 1,
-				callLoading: false,
-				//顶部提示
-				topTip: {
-					show: false,
-					text1: "正在通过云端线路发起呼叫...",
-					text2: "正在为您生成加密虚拟保护号码"
-				},
-				//通话表单
-				formCall: {
-					id: 0,
-					taskId: 0,
-					patientId: 0,
-					csId: 0,
-					callStatus: "",
-					failReason: 0,
-					durationSec: 0,
-					medicationStatus: 0,
-					recoveryStatus: 1,
-					complianceStatus: 1,
-					followUpDemand: 1,
-					satisfaction: 0,
-					suggestion: "步骤二",
-					pushToGroup: 0,
-					createTime: "",
-					pkgFeedIndex: 0,
-					buyIndex: 0,
-					remark: "步骤四",
-					suggest: "改进建议",
-					demand: "步骤三",
-					demand2: "步骤四",
-					failRemark: "失败原因"
-				},
-				callStatusList: ["沟通成功", "沟通失败"],
-				form1: {
-					phone: "0571‑53979574",
-					statusIndex: 0
-				},
+				currentTaskId: '',
+				taskId: '',
 				pollTimer: null,
 				pollTimer2: null,
+				tipMsg1: '',
+				tipMsg1: '',
+				callStatusList: ["沟通成功", "沟通失败"],
 				medicOptions: ["按时用药", "间断用药", "未用药"],
 				recoverOptions: ["恢复良好", "一般恢复", "恢复较差"],
 				followOptions: ["完全遵守", "部分遵守", "未遵医嘱"],
@@ -395,42 +677,288 @@
 
 
 		},
+		onLoad() {
+			this.listInit()
+		},
 		methods: {
+			async listInit() {
+				try {
+					// 无分页无筛选，传空对象{}
+					const res = await getFollowupTasks({});
+					const records = res.data.records || []
+
+					records.forEach(item => {
+						this.$set(item, 'callSuccess', false)
+						if (!item.formCall) {
+							this.$set(item, 'formCall', {})
+						}
+						this.$set(item.formCall, 'phone', '')
+						this.$set(item.formCall, 'statusIndex', -1)
+					})
+					this.list = records
+				} catch (err) {
+					console.error('获取随访任务失败', err)
+				}
+			},
+
+
+			handleStatusChange(item, e, value) {
+				this.$set(item.formCall, value, e.detail.value)
+			},
+			// 状态  表单清空
+			clearCallstatus() {
+				this.list.forEach(item => {
+					item.showStepPanel = false
+					item.callLoading = false
+					item.currentStep = 1
+					item.callSuccess = false
+					item.formCall = {
+						id: 0,
+						taskId: 0,
+						patientId: 0,
+						csId: 0,
+						callStatus: "",
+						statusIndex: -1, //沟通成功or失败
+						failReason: -1, //沟通失败原因  select
+						failRemark: "",
+						durationSec: 0,
+						medicationStatus: -1, //用药情况
+						recoveryStatus: -1, //身体恢复情况
+						complianceStatus: -1, //遵医嘱情况:
+						suggestion: "",
+						pkgFeedIndex: -1, //当前服务包反馈
+						buyIndex: -1, //二次购买意向
+						demand: "",
+						suggest: "",
+						demand2: "",
+						phone: '024-01234567'
+					}
+				})
+
+			},
 			routeTo(res) {
 				console.log(res)
 				let routeUrl = `/pages/index/chat` + `?data=` + encodeURIComponent(JSON.stringify(res))
 				this.$safeJump(routeUrl)
 			},
 
-			onCallStatusChange(e) {
-				this.form1.statusIndex = Number(e.detail.value)
+			onCallStatusChange(item, e) {
+				item.formCall.statusIndex = Number(e.detail.value)
 			},
+			// 点击重新连接云端线路	  重新发起呼叫
+			reconnect(item) {
+				console.log(item)
+				item.callLoading = true;
+				this.$refs.uToast.show({
+					message: "正在通过云端线路发起呼叫...\n正在为您生成加密虚拟保护号码",
+					type: "success",
+					duration: 1500,
+					complete: () => {
+						item.callLoading = false;
+						item.callSuccess = true;
+					}
+				})
+
+			},
+			// 安全外呼
+			async handleSafeCall(item) {
+				this.currentTaskId = item.id
+				this.showCallLoading = true
+				try {
+					console.log('1 准备调用safeCall')
+					console.log('currentTaskId', this.currentTaskId)
+
+					// 打印api方法
+					console.log('safeCall函数', this.$api.safeCall)
+
+					const res = await this.$api.safeCall({
+						id: this.currentTaskId
+					})
+					console.log('2 请求返回', res)
+					this.taskId = res.data.taskId
+					this.pollCallStatus(item, res.data.taskId)
+
+				} catch (err) {
+					console.error('呼叫异常catch捕获', err)
+					uni.showToast({
+						title: '发起呼叫失败',
+						icon: 'none'
+					})
+				}
+				this.showCallLoading = false
+			},
+			// 轮询呼叫状态
+			async pollCallStatus(item, taskId) {
+				try {
+					const res = await this.$api.getCallStatus({
+						id: taskId
+					})
+					const info = res.data
+					const status = info.status
+
+					console.log('呼叫状态：', status)
+
+
+
+					switch (status) {
+						case 'waiting':
+							this.tipMsg1 = "正在通过云端线路发起呼叫..."
+							break
+						case 'generating_virtual':
+							this.tipMsg1 = "正在通过云端线路发起呼叫..."
+							this.tipMsg2 = "正在为您生成加密虚拟保护号码"
+							break
+						case 'calling_agent':
+							this.tipMsg1 = "正在呼叫您的手机"
+							break
+						case 'calling_customer':
+							item.currentStep = 1
+							break
+						case 'connected':
+							item.currentStep = 2;
+							this.$set(item, 'callSuccess', true)
+							this.$set(item.formCall, 'phone', 'xxxx')
+							break
+						case 'hangup':
+						case 'fail':
+							this.$set(item, 'callSuccess', false)
+							// this.showCallModal = false
+							return // 终止轮询
+					}
+					// 继续轮询
+					setTimeout(() => {
+						this.pollCallStatus()
+					}, 1200)
+
+				} catch (e) {
+					setTimeout(() => {
+						this.pollCallStatus()
+					}, 1200)
+				}
+			},
+			// 点击拨打
 			openStepPanel(item) {
 				console.log(item)
-				this.list.forEach(el => {
-					el.showStepPanel = false
-				})
-				item.showStepPanel = true
-				this.currentStep = 1
-				this.callLoading = true
-				this.topTip.show = true
-				this.pollTimer = setTimeout(() => {
-					this.callLoading = false;
-					this.topTip.show = false
-				}, 2000)
-			},
-			closeStepPanel(item) {
-				console.log(this.formCall)
-				item.showStepPanel = false
-				this.currentStep = 1
-				this.pollTimer2 = setTimeout(() => {
-					this.topTip.show = false
-				}, 2000)
-			},
-			nextStep() {
-				if (this.currentStep < 4) {
-					this.currentStep++
+				if (item.btnClass == 'btn-gray') {
+
+					this.handleSafeCall(item)
+
+				} else {
+
+					this.clearCallstatus()
+					// console.log(this.list)
+					item.showStepPanel = true
+					item.currentStep = 1
+					console.log(item.callSuccess)
+					if (item.btnClass == "btn-green") {
+						item.callLoading = true;
+						this.$refs.uToast.show({
+							message: "正在通过云端线路发起呼叫...\n正在为您生成加密虚拟保护号码",
+							type: "success",
+							duration: 1500,
+							complete: () => {
+								item.callLoading = false;
+							}
+						})
+
+					} else {
+						console.log(1111111111)
+						item.callLoading = false;
+					}
 				}
+
+
+
+			},
+
+			closeStepPanel(item) {
+				console.log(item.formCall)
+				item.showStepPanel = false
+				item.currentStep = 1
+
+			},
+			nextStep(item, val) {
+				console.log(item.formCall);
+				console.log(item.currentStep)
+				console.log(val)
+				if (item.currentStep == 1) {
+					if (item.formCall.statusIndex == -1) {
+						this.$refs.uToast.show({
+							message: "请选择沟通状态",
+							type: "error",
+							duration: 1500,
+
+						})
+					} else if (item.formCall.statusIndex == 1) {
+						console.log(222222222)
+						if (item.formCall.failReason == -1) {
+							this.$refs.uToast.show({
+								message: "请选择沟通失败原因",
+								type: "error",
+								duration: 1500,
+
+							})
+						} else {
+							if (item.currentStep < 4) {
+								item.currentStep++
+							}
+						}
+					} else {
+						if (item.currentStep < 4) {
+							item.currentStep++
+						}
+					}
+
+				} else if (item.currentStep == 2) {
+					if (item.formCall.medicationStatus == -1) {
+						this.$refs.uToast.show({
+							message: "请选择用药情况",
+							type: "error",
+							duration: 1500,
+
+						})
+					} else if (item.formCall.recoveryStatus == -1) {
+						this.$refs.uToast.show({
+							message: "请选择身体恢复情况",
+							type: "error",
+							duration: 1500,
+
+						})
+					} else if (item.formCall.complianceStatus == -1) {
+						this.$refs.uToast.show({
+							message: "请选择遵医嘱情况",
+							type: "error",
+							duration: 1500,
+
+						})
+					} else {
+						if (item.currentStep < 4) {
+							item.currentStep++
+						}
+					}
+
+				} else if (item.currentStep == 3) {
+					if (item.formCall.pkgFeedIndex == -1) {
+						this.$refs.uToast.show({
+							message: "请选择当前服务包反馈",
+							type: "error",
+							duration: 1500,
+
+						})
+					} else if (item.formCall.buyIndex == -1) {
+						this.$refs.uToast.show({
+							message: "请选择二次购买意向",
+							type: "error",
+							duration: 1500,
+
+						})
+					} else {
+						if (item.currentStep < 4) {
+							item.currentStep++
+						}
+					}
+				}
+
 			},
 			handleSave(item) {
 				uni.showToast({
@@ -439,15 +967,144 @@
 				this.closeStepPanel(item)
 			},
 			handleSavePush(item) {
-				this.topTip.text1 = "已成功推送至患者沟通群"
-				this.topTip.text2 = "康复进度记录已同步，点击患者详情可查看完整对话。"
-				this.topTip.show = true
+				this.$refs.uToast.show({
+					message: "已成功推送至患者沟通群\n康复进度记录已同步，点击患者详情可查看完整对话。",
+					type: "success",
+					duration: 1500,
+					// complete: () => {
+					// 	this.$safeJump(routeUrl)
+					// }
+				})
+
 				this.closeStepPanel(item)
 			}
 		}
 	}
 </script>
 <style scoped>
+	.call-loading-mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: rgba(41, 121, 255, 0.88);
+		z-index: 9999;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.call-loading-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		position: relative;
+	}
+
+	.ping-ring {
+		position: absolute;
+		width: 180rpx;
+		height: 180rpx;
+		border-radius: 50%;
+		background-color: rgba(255, 255, 255, 0.4);
+		animation: ping 1.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+	}
+
+	.phone-wrap {
+		position: relative;
+		width: 180rpx;
+		height: 180rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-bottom: 40rpx;
+		z-index: 2;
+	}
+
+	.phone-wrap .phone-icon {
+		animation: bounce 1.2s infinite ease-in-out;
+	}
+
+	.phone-icon-wrap {
+		width: 180rpx;
+		height: 180rpx;
+		background-color: #ffffff;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 3;
+	}
+
+	.main-text {
+		font-size: 40rpx;
+		color: #ffffff;
+		font-weight: 600;
+		margin-bottom: 16rpx;
+		margin-top: 80rpx;
+		animation: pulse 2s infinite ease-in-out;
+	}
+
+	.sub-text {
+		font-size: 22rpx;
+		color: #ffffff;
+		opacity: 0.85;
+		letter-spacing: 2rpx;
+	}
+
+	@keyframes ping {
+		0% {
+			transform: scale(1);
+			opacity: 0.7;
+		}
+
+		75%,
+		100% {
+			transform: scale(3);
+			opacity: 0;
+		}
+	}
+
+
+
+	@keyframes pulse {
+
+		0%,
+		100% {
+			opacity: 0.55;
+			transform: scale(1);
+		}
+
+		50% {
+			opacity: 1;
+			transform: scale(1.06);
+		}
+	}
+
+	@keyframes bounce {
+
+		0%,
+		100% {
+			animation-timing-function: cubic-bezier(.8, 0, 1, 1);
+			transform: translateY(-25%);
+		}
+
+		50% {
+			animation-timing-function: cubic-bezier(0, 0, .2, 1);
+			transform: none;
+		}
+
+	}
+
+
+	::v-deep .u-toast__content__text {
+		line-height: 1.4 !important;
+		font-size: 26rpx;
+	}
+
+
+
 	.top-tip {
 		background: #e8f4ff;
 		border-radius: 20rpx;
@@ -615,10 +1272,16 @@
 		border-radius: 12rpx;
 	}
 
+	.state-tag-gray {
+		color: #abaeb2;
+		background: #f3f4f6;
+	}
+
 	.call-row {
 		display: flex;
 		gap: 20rpx;
 		align-items: center;
+		justify-content: space-between;
 	}
 
 	.phone-box {
@@ -630,14 +1293,33 @@
 		color: #00a63e;
 		font-weight: bold;
 		display: flex;
-		height: 80rpx;
-		line-height: 80rpx;
+		height: 70rpx;
+		line-height: 70rpx;
 	}
 
-	.picker-wrapper {
-		height: 80rpx;
-		line-height: 80rpx;
+	.page-workbench .call-row .call-btn {
+		height: 70rpx;
+		line-height: 70rpx;
+		padding: 0 30rpx;
+		border: 2px solid #155dfc;
 	}
+
+	.picker-wrapper .picker-item {
+		height: 70rpx;
+		line-height: 70rpx;
+		border-radius: 20rpx;
+		padding: 0 30rpx;
+		background: #fff;
+		border: 2px solid #e4e7ed;
+
+	}
+
+	.picker-wrapper uni-picker[disabled] {
+		background: #f6f9fc;
+		border: 2px solid #e4e7ed;
+		color: #abaeb2;
+	}
+
 
 	.picker-btn {
 		background: #fff;
@@ -664,9 +1346,22 @@
 		margin-bottom: 30rpx;
 	}
 
+	.picker-label {
+		display: flex;
+		align-items: center;
+		// margin-bottom:12rpx;
+	}
+
+	.required-star {
+		color: #f53f3f;
+		/*红色星号*/
+		font-size: 30rpx;
+		margin-right: 8rpx;
+	}
+
 	.label {
 		font-size: 25rpx;
-		color: #333;
+		color: #909399;
 		display: block;
 		margin-bottom: 14rpx;
 	}
@@ -1016,6 +1711,7 @@
 
 	.page-workbench .btn-gray {
 		background: #f3f4f6;
+		color: #909399;
 	}
 
 	.page-workbench .btn-tip {

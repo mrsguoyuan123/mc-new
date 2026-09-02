@@ -140,7 +140,7 @@
 					type: "success",
 					duration: 1500,
 					complete: () => {
-					this.$safeJump(routeUrl)
+						this.$safeJump(routeUrl)
 					}
 				})
 			},

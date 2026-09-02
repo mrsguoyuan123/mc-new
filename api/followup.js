@@ -1,5 +1,5 @@
 // 随访任务
-import request from '@/common/request'
+import request from '@/api/request'
 
 export function getFollowupTasks(params) {
   return request.get('/follow-up/tasks', params, { loading: false })
@@ -13,12 +13,7 @@ export function putFollowupTask(id, data) {
 export function postFollowupTaskCall(id, data) {
   return request.post(`/follow-up/tasks/${id}/calls`, data, { loading: true })
 }
-export function getFollowupTaskCalls(id, params) {
-  return request.get(`/follow-up/tasks/${id}/calls`, params, { loading: false })
-}
-export function getFollowupPhoneStatus(id) {
-  return request.get(`/follow-up/tasks/${id}/phone-status`, {}, { loading: false })
-}
+
 export function getFollowupSummary() {
   return request.get('/follow-up/summary', {}, { loading: false })
 }

@@ -47,7 +47,7 @@ baseURL = 'http://47.100.61.248:3002'
  * @param {Number} options.timeout 超时毫秒，默认10000
  */
 const request = (options) => {
-	console.log('baseURL====', baseURL)
+	// console.log('baseURL====', baseURL)
 	console.log('请求完整url：', baseURL + options.url)
 	const {
 		url,
@@ -208,7 +208,9 @@ export function uploadFile(filePath, formData = {}) {
 		})
 	})
 }
-export { baseURL }
+export {
+	baseURL
+}
 export default {
 	get(url, data = {}, opts = {}) {
 		return request({
@@ -240,6 +242,28 @@ export default {
 			method: 'DELETE',
 			data,
 			...opts
+		})
+	},
+	// 安全外呼接口 safeCall，后端接口地址 /api/call/safeOutCall
+	safeCall(data) {
+		const {
+			id
+		} = data
+		return request({
+			url: `/follow-up/tasks/${id}/calls`,
+			method: 'POST',
+			data
+		})
+	},
+	// 查询呼叫状态接口
+	getCallStatus(data) {
+		const {
+			id
+		} = data
+		return request({
+			url: `/follow-up/tasks/${id}/phone-status`,
+			method: 'get',
+			data
 		})
 	}
 }

@@ -1,53 +1,56 @@
 <template>
 	<view class=" page-content page-patient">
-		<!-- 上方信息卡片 -->
-		<view class="card-top1 radius-15 card-border-gray">
-			<view class="card-header">
-				<view class="icon-box">
-					<u-icon name="file-text" color="#9c27b0" size="60rpx"></u-icon>
-				</view>
-				<view class="header-info">
-					<view class="name-row">
-						<text class="name ">{{detailData.name}}</text>
-						<text class="font-info ">{{detailData.age}}岁</text>
+
+		<view>
+			<!-- 上方信息卡片 -->
+			<view class="card-top1 radius-15 card-border-gray">
+				<view class="card-header">
+					<view class="icon-box">
+						<u-icon name="file-text" color="#9c27b0" size="60rpx"></u-icon>
 					</view>
-					<text class="status">{{detailData.status}}</text>
+					<view class="header-info">
+						<view class="name-row">
+							<text class="name ">{{detailData.name}}</text>
+							<text class="font-info ">{{detailData.age}}岁</text>
+						</view>
+						<text class="status">{{detailData.status}}</text>
+					</view>
+				</view>
+
+				<view class="info-item">
+					<u-icon name="phone" color="#909399" size="32rpx"></u-icon>
+					<text class="font-info">{{detailData.phone}}</text>
+				</view>
+				<view class="info-item">
+					<u-icon name="map" color="#909399" size="32rpx"></u-icon>
+					<text class="font-info">{{detailData.hospital}}</text>
+				</view>
+				<view class="info-item">
+					<u-icon name="clock" color="#909399" size="32rpx"></u-icon>
+					<text class="font-info">服务时间: {{detailData.serviceTime}}</text>
 				</view>
 			</view>
 
-			<view class="info-item">
-				<u-icon name="phone" color="#909399" size="32rpx"></u-icon>
-				<text class="font-info">{{detailData.phone}}</text>
-			</view>
-			<view class="info-item">
-				<u-icon name="map" color="#909399" size="32rpx"></u-icon>
-				<text class="font-info">{{detailData.hospital}}</text>
-			</view>
-			<view class="info-item">
-				<u-icon name="clock" color="#909399" size="32rpx"></u-icon>
-				<text class="font-info">服务时间: {{detailData.serviceTime}}</text>
-			</view>
-		</view>
-
-		<!-- 服务记录卡片 -->
-		<view class="card-record  radius-15 card-border-gray">
-			<text class="card-title ">服务记录</text>
-			<view class="record-list">
-				<view v-for="(item, idx) in detailData.recordList" :key="idx" class="record-item">
-					<view class="node-wrap">
-						<u-icon name="checkmark-circle" color="#36b37e" size="40rpx"></u-icon>
-						<!-- 时间轴竖线，非最后一项显示 -->
-						<view v-if="idx < detailData.recordList.length - 1" class="timeline-line"></view>
-					</view>
-					<view class="record-content">
-						<text class="record-name">{{item.title}}</text>
-						<text class="record-date font-info">{{item.date}}</text>
+			<!-- 服务记录卡片 -->
+			<view class="card-record  radius-15 card-border-gray">
+				<text class="card-title ">服务记录</text>
+				<view class="record-list">
+					<view v-for="(item, idx) in detailData.recordList" :key="idx" class="record-item">
+						<view class="node-wrap">
+							<u-icon name="checkmark-circle" color="#36b37e" size="40rpx"></u-icon>
+							<!-- 时间轴竖线，非最后一项显示 -->
+							<view v-if="idx < detailData.recordList.length - 1" class="timeline-line"></view>
+						</view>
+						<view class="record-content">
+							<text class="record-name">{{item.title}}</text>
+							<text class="record-date font-info">{{item.date}}</text>
+						</view>
 					</view>
 				</view>
 			</view>
+
 		</view>
 		<view class="my-btn" @click="routeTo('service')">开始陪诊服务</view>
-		<view></view>
 		<custom-tabbar :current="0"></custom-tabbar>
 	</view>
 </template>
@@ -81,7 +84,7 @@
 		},
 		methods: {
 			routeTo(res) {
-				
+
 
 				uni.switchTab({
 					url: `/pages/index/` + res,
@@ -96,13 +99,14 @@
 </script>
 
 <style scoped>
-	
-
 	.page-content {
-		padding: 30rpx;
-		height: calc(100vh - 180rpx - 44px);
+		height: calc(100vh  - 44px);
 		background-color: #f9fafb;
 		position: relative;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		/* border: 2px solid ; */
 	}
 
 	.my-btn {
@@ -113,11 +117,7 @@
 		line-height: 88rpx;
 		border-radius: 100rpx;
 		font-weight: 700;
-		margin-top: 50rpx;
-		position: absolute;
-		bottom: 30rpx;
-		left: 30rpx;
-		right: 30rpx;
+	
 	}
 
 	.card-top1 {

@@ -316,9 +316,9 @@
 		font-size: 32rpx;
 	}
 
-	.page-content {
+/* 	.page-content {
 		padding: 30rpx;
-	}
+	} */
 
 	.card-top {
 		margin-bottom: 30rpx;

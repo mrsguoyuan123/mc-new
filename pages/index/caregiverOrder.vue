@@ -130,8 +130,8 @@
 				console.log(res)
 				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(this
 					.caregiverOption))
-				
-			this.$safeJump(routeUrl)
+
+				this.$safeJump(routeUrl)
 			},
 			handleCall() {
 				// #ifdef H5

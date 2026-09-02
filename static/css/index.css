@@ -1,23 +1,21 @@
-
-
-
-.answer-wrapper{
+.answer-wrapper {
 	border: 1px solid #ddd;
 	border-radius: 20rpx;
-	padding:30rpx;
-	box-shadow: inset 0 2rpx 14rpx 0 rgba(0,120,70,0.1);
+	padding: 30rpx;
+	box-shadow: inset 0 2rpx 14rpx 0 rgba(0, 120, 70, 0.1);
 	background-color: #f9fafb;
 	margin-bottom: 30rpx;
 }
-.answer-title{
+
+.answer-title {
 	color: #008855;
 	font-weight: bold;
 	margin-bottom: 20rpx;
 	/* fongsize:co */
-	
+
 }
-	
-.answer-item{
+
+.answer-item {
 	font-size: 20rpx;
 	padding: 20rpx;
 	border-radius: 20rpx;
@@ -49,16 +47,18 @@
 	box-shadow: none;
 }
 
-.uni-body {
-	background-color: #f9fafb;
-	min-height: 100vh;
 
+page {
+	height: 100%;
+	background-color: #f9fafb;
 }
 
 .page-content {
-	padding: 60rpx;
+	box-sizing: border-box;
+	padding: 40rpx;
 	background-color: #f9fafb;
-	/* min-height: calc(100vh - 100px); */
+	/* background-color: red; */
+	min-height: var(--window-height);
 	max-width: 500px;
 	min-width: 300px;
 	margin: 0 auto;
@@ -139,6 +139,7 @@
 .text-left {
 	text-align: left;
 }
+
 .text-right {
 	text-align: right;
 }

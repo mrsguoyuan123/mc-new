@@ -139,9 +139,7 @@
 </script>
 
 <style scoped lang="scss">
-	.page-loginFirst {
-		min-height: calc(100vh - 44px - 60rpx);
-	}
+
 
 	.page-loginFirst .card-list {
 		width: 100%;

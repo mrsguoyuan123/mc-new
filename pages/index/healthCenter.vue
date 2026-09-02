@@ -172,7 +172,7 @@
 
 				</view>
 				<view class="chart-wrap">
-					<qiun-data-charts type="column" :opts="chartOpts" :chartData="chartData" canvas2d />
+					<qiun-data-charts type="column" :opts="chartOpts" :chartData="chartData"  />
 				</view>
 
 				<view class="heart-bottom">
@@ -672,6 +672,7 @@
 
 				}
 				let routeUrl = "/pages/index/consultation" + `?data=` + encodeURIComponent(JSON.stringify(data))
+				const that = this;
 				this.$refs.uToast.show({
 					title: '',
 					position: 'top',
@@ -681,7 +682,6 @@
 					// 如果不需要图标，请设置为false
 					icon: 'checkmark-circle',
 					complete() {
-
 						this.$safeJump(routeUrl)
 					},
 				})
@@ -780,14 +780,7 @@
 	}
 
 
-	/* 左边图标 */
-	/* .page-heathCenter .massage-list .massage-icon-left {
-		position: absolute;
-		left: 0;
-		top: 0;
-		width: 40rpx;
-		height: 40rpx;
-	} */
+
 
 	/* 未标记药品 */
 	.page-heathCenter .card-list .massage-icon-left {
@@ -798,28 +791,16 @@
 	/* 右边文字 标记已服用*/
 	.page-heathCenter .massage-list .massage-icon-right {
 		width: 260rpx;
-		/* border: 1px solid red; */
-		/* position: absolute;
-		right: 0;
-		top: calc(50% - 20rpx); */
+	
 	}
 
 	/* 中间内容 未标记 */
 	.page-heathCenter .massage-list {
 		position: relative;
-		/* width: calc(100% - 220rpx); */
-		/* border: 1px solid; */
-		/* padding: 0 150rpx 0 90rpx; */
-		/* height: 80rpx; */
-
-		/* flex: 1; */
+		
 	}
 
-	/* 已标记 */
-	/* 	.page-heathCenter .medicationTake .massage-list {
-		width: calc(100% - 80rpx);
-		padding: 0 30rpx 0 90rpx;
-	} */
+
 
 	.page-heathCenter .medicationTake .massage-icon-left {
 		background-color: #c8c9cc;

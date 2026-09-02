@@ -80,8 +80,6 @@
 		/* height: 120rpx; */
 		padding-bottom: env(safe-area-inset-bottom);
 	}
-
-
 	.tab-item {
 		flex: 1;
 		display: flex;
@@ -89,10 +87,5 @@
 		align-items: center;
 		justify-content: center;
 		height: 120rpx;
-	}
-
-	.tab-text {
-		font-size: 24rpx;
-		margin-top: 8rpx;
 	}
 </style>
