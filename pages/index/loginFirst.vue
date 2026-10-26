@@ -52,9 +52,7 @@
 </template>
 
 <script>
-	import {
-		authLogout
-	} from '@/api/auth'
+	
 	export default {
 		data() {
 			return {
@@ -95,6 +93,7 @@
 						url: "/pages/index/onsite"
 					})
 				} else {
+					
 					let routeUrl = "/pages/index/" + item.routeto + `?data=` + encodeURIComponent(JSON.stringify(item))
 					this.$safeJump(routeUrl)
 
@@ -118,19 +117,7 @@
 				})
 
 			},
-			// async logOut() {
-			// 	try {
-			// 		await authLogout()
-			// 	} catch (e) {
-			// 		console.warn('登出后端通知失败，继续清理本地', e)
-			// 	} finally {
-			// 		uni.removeStorageSync('token')
-			// 		uni.removeStorageSync('refreshToken')
-			// 		uni.reLaunch({
-			// 			url: '/pages/login/login'
-			// 		})
-			// 	}
-			// },
+		
 
 		},
 

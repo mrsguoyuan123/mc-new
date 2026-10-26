@@ -26,7 +26,7 @@
 					<text class="info-val">{{user.hospital}}</text>
 				</view>
 				<view class="nav-btn" @click="goNav">
-					<text class="custom-icon custom-icon-navigation icon-bold"
+					<text class="custom-icon custom-icon-navigation icon-bold mr-10"
 						style="font-size:28rpx;color:#9333ea;"></text>
 					<text>导航</text>
 				</view>
@@ -38,7 +38,7 @@
 			<view class="card-title">陪诊任务</view>
 			<view class="timeline">
 				<!--任务1：到院签到-->
-				<view class="timeline-item">
+				<view class="timeline-item timeline-line">
 					<view class="dot" :class="getDotClass(1)"></view>
 					<view class="timeline-body">
 						<view class="task-title" :class="getTitleClass(1)">任务 1: 到院签到</view>
@@ -47,7 +47,7 @@
 							<text class="done-text">已完成</text>
 						</view>
 						<view class="btn-group" v-if="currentTask === 1&& !task1Done">
-							<view>
+							<view class="margin-bottom-1">
 								<view v-if="locDone"
 									class="done-row border-green bg-green radius-15 padding-1 border-2">
 									<u-icon name="checkmark-circle" color="#27ae60" size="34rpx"></u-icon>
@@ -70,14 +70,14 @@
 								</button>
 							</view>
 
-							<button v-if="task1AllDone" class=" purple-btn  radius-15" @click="goTask2">下一步</button>
+							<button v-if="task1AllDone" class=" purple-btn  radius-15 margin-top-10" @click="goTask2">下一步</button>
 						</view>
 
 					</view>
 				</view>
 
 				<!--任务2：诊疗进展记录-->
-				<view class="timeline-item">
+				<view class="timeline-item timeline-line">
 					<view class="dot" :class="getDotClass(2)"></view>
 					<view class="timeline-body">
 						<view class="task-title" :class="getTitleClass(2)">任务 2: 诊疗进展记录</view>
@@ -115,7 +115,7 @@
 								placeholder="请对本次陪诊服务进行总结..."></textarea>
 							<view class="form-label">服务是否达成</view>
 							<view class="radio-group">
-								<view class="radio-item radius-15" :class="{active:submitForm.serviceResult===1}"
+								<view class="radio-item radius-15 mr-24" :class="{active:submitForm.serviceResult===1}"
 									@click="submitForm.serviceResult=1">
 									已达成</view>
 								<view class="radio-item radius-15" :class="{active:submitForm.serviceResult===0}"
@@ -534,7 +534,6 @@
 		align-items: center;
 		color: #9333ea;
 		font-size: 30rpx;
-		gap: 8rpx;
 	}
 
 	.task-card {
@@ -579,18 +578,18 @@
 		border: 2rpx #cccccc solid;
 	}
 
-	/*未开始：空心灰色圆圈*/
 
-	.timeline-item:not(:last-child)::before {
-		content: "";
-		position: absolute;
-		left: 17rpx;
-		top: 42rpx;
-		width: 2rpx;
-		height: calc(100% + 12rpx);
-		background: #ddd;
-	}
 
+/* 只有不是最后一条，才渲染竖线 */
+.timeline-line::before {
+	content: "";
+	position: absolute;
+	left: 17rpx;
+	top: 42rpx;
+	width: 2rpx;
+	height: calc(100% + 12rpx);
+	background: #ddd;
+}
 	.timeline-body {
 		flex: 1;
 	}
@@ -608,9 +607,9 @@
 
 	.btn-group {
 		display: flex;
-		gap: 20rpx;
-		flex-wrap: wrap;
+		flex-direction: column;
 	}
+	
 
 	.action-btn {
 		background: #9333ea;
@@ -651,7 +650,6 @@
 
 	.radio-group {
 		display: flex;
-		gap: 24rpx;
 		margin: 20rpx 0;
 	}
 
@@ -748,11 +746,7 @@
 		color: #9333ea;
 	}
 
-	.btn-group {
-		display: flex;
-		flex-direction: column;
-		gap: 24rpx;
-	}
+
 
 
 

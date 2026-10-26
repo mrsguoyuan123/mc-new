@@ -107,7 +107,7 @@
 				<view class="quick-btn" @click="showUploadPopup = true">上传照片</view>
 			</view>
 			<view class="input-row">
-				<input v-model="inputText" class="chat-input" placeholder="描述您的不适..." confirm-type="send"
+				<input v-model="inputText" class="chat-input mr-16" placeholder="描述您的不适..." confirm-type="send"
 					@confirm="handleSend" :disabled="isReplying" />
 				<view class="send-btn" @click="handleSend">
 					<text class="custom-icon custom-icon-navigation " style="font-size:40rpx;color:#fff;"></text>
@@ -124,7 +124,7 @@
 					</view>
 				</view>
 				<view class="popup-btn-row">
-					<view class="popup-btn-item" @click="takeCamera">
+					<view class="popup-btn-item mr-40" @click="takeCamera">
 						<view class="popup-icon">
 							<u-icon name="camera" color="#155dfc" size="80rpx"></u-icon>
 						</view>
@@ -151,7 +151,7 @@
 				<view class="evaluate-desc">请为您收到的答复打分</view>
 				<!-- 星星评分 -->
 				<view class="star-rate">
-					<u-icon v-for="n in 5" :key="n" :name="n <= rateScore ? 'star-fill' : 'star'"
+					<u-icon v-for="n in 5" :key="n" :name="n <= rateScore ? 'star-fill' : 'star'"  :class="{ 'mr-16': n !== 5 }"
 						:color="n <= rateScore ? '#d08700' : '#ddd'" size="60rpx" @click="rateScore = n">
 					</u-icon>
 				</view>
@@ -161,8 +161,12 @@
 				</view>
 				<!-- 标签选择 -->
 				<view class="tag-group">
-					<view v-for="tag in tagList" :key="tag" class="tag-item"
-						:class="{active: selectTagList.includes(tag)}" @click="toggleTag(tag)">
+					<view v-for="(tag, idx) in tagList" :key="tag" class="tag-item"
+						:class="{
+									'active': selectTagList.includes(tag),
+									'mr-16': idx !== tagList.length - 1
+								}"
+								 @click="toggleTag(tag)">
 						{{tag}}
 					</view>
 				</view>
@@ -618,7 +622,6 @@
 	.msg-item {
 		position: relative;
 		display: flex;
-		gap: 16rpx;
 		margin-bottom: 28rpx;
 	}
 
@@ -654,6 +657,7 @@
 		flex-shrink: 0;
 		font-size: 32rpx;
 		box-shadow: 0 1rpx 4rpx #00000015;
+		margin-right: 16rpx;
 	}
 
 	.avatar-blue {
@@ -667,6 +671,7 @@
 		flex-shrink: 0;
 		font-size: 32rpx;
 		box-shadow: 0 1rpx 4rpx #00000015;
+		margin-left: 16rpx;
 	}
 
 	.msg-content {
@@ -786,10 +791,8 @@
 		border-top-right-radius: 8rpx;
 	}
 
-	/*====重点修改：时间紧贴气泡，不要拉开大距离====*/
 	.msg-footer {
 		display: flex;
-		gap: 10rpx;
 		margin-top: 4rpx;
 	}
 
@@ -837,9 +840,13 @@
 
 	.quick-btn-group {
 		display: flex;
-		gap: 20rpx;
 		margin-bottom: 20rpx;
 		font-size: 18rpx
+	}
+
+
+	.quick-btn-group ::v-deep .quick-btn:first-child {
+		margin-right: 20rpx;
 	}
 
 	.quick-btn {
@@ -858,7 +865,6 @@
 	.input-row {
 		display: flex;
 		align-items: center;
-		gap: 16rpx;
 	}
 
 	.chat-input {
@@ -906,7 +912,6 @@
 
 	.popup-btn-row {
 		display: flex;
-		gap: 30rpx;
 	}
 
 	.popup-btn-item {
@@ -949,7 +954,6 @@
 	.star-rate {
 		display: flex;
 		justify-content: center;
-		gap: 16rpx;
 		margin-bottom: 20rpx;
 	}
 
@@ -963,15 +967,15 @@
 	.tag-group {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 20rpx;
 		margin-bottom: 40rpx;
 	}
 
 	.tag-item {
-		padding: 12rpx 24rpx;
+		padding: 12rpx 20rpx;
 		border-radius: 40rpx;
 		background: #f3f4f6;
-		font-size: 26rpx;
+		font-size: 18rpx;
+		margin-bottom: 16rpx;
 	}
 
 	.tag-item.active {

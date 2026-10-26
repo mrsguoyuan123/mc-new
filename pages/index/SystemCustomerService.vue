@@ -51,7 +51,8 @@
 					</view>
 					<view class="item-text">
 						<text class="label">联系电话</text>
-						<input class="phone-input" v-if="editMode" v-model="userInfo.phone" placeholder="请输入电话" />
+						<input class="phone-input" type="number" v-if="editMode" v-model="userInfo.phone"
+							placeholder="请输入电话" />
 						<text v-else class="value">{{ userInfo.phone }}</text>
 
 					</view>
@@ -82,7 +83,7 @@
 		<view class="grid-row">
 			<view class="grid-item blue">
 				<view class="grid-icon">
-					<text class="custom-icon custom-icon-tongzhiNotice " style="font-size:50rpx;color:#155dfc;"></text>
+					<text class="custom-icon custom-icon-tongzhiNotice " style="font-size:46rpx;color:#155dfc;"></text>
 				</view>
 				<text class="grid-text">通知</text>
 			</view>
@@ -100,13 +101,13 @@
 			</view>
 		</view>
 		<!-- 版本、缓存、注销账户 -->
-		<view class="card-block">
+		<view class="card-block card-block1">
 			<view class="menu-item">
 				<text class="item-title">版本更新</text>
 				<view class="item-right">
 					<text class="gray-text">V 2.1.0</text>
 					<text class="arrow">
-						<u-icon class="arrow" name="arrow-right" color="#ddd" size="32rpx"></u-icon>
+						<u-icon class="arrow" name="arrow-right" color="#ddd" size="26rpx"></u-icon>
 					</text>
 				</view>
 			</view>
@@ -116,7 +117,7 @@
 				<view class="item-right">
 					<text class="gray-text">{{cacheSizeText}}</text>
 					<text class="arrow">
-						<u-icon class="arrow" name="arrow-right" color="#ddd" size="32rpx"></u-icon>
+						<u-icon class="arrow" name="arrow-right" color="#ddd" size="26rpx"></u-icon>
 					</text>
 				</view>
 			</view>
@@ -124,7 +125,7 @@
 			<view class="menu-item" @click="handleLogoutAccount">
 				<text class="item-title danger">注销账户</text>
 				<text class="arrow">
-					<u-icon class="arrow" name="arrow-right" color="#ddd" size="32rpx"></u-icon>
+					<u-icon class="arrow" name="arrow-right" color="#ddd" size="26rpx"></u-icon>
 				</text>
 			</view>
 		</view>
@@ -262,13 +263,6 @@
 </script>
 
 <style scoped>
-	/* 状态栏高度，自动适配各手机 */
-	.status-bar {
-		height: var(--status-bar-height);
-		width: 100%;
-		background-color: #ffffff;
-	}
-
 	.custom-nav {
 		height: 44px;
 		background-color: #ffffff;
@@ -356,7 +350,7 @@
 		box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.1);
 	}
 
-/* 	.avatar-icon {
+	/* 	.avatar-icon {
 		font-size: 80rpx;
 		color: #007aff;
 	} */
@@ -411,8 +405,17 @@
 		font-weight: bold;
 		border: 2rpx solid #007aff;
 		border-radius: 12rpx;
+		padding: 0 20rpx;
 		height: 60rpx;
 		line-height: 60rpx;
+	}
+
+	.value {
+		font-size: 30rpx;
+		font-weight: 500;
+		height: 60rpx;
+		line-height: 60rpx;
+		/* border: 2rpx solid #007aff; */
 	}
 
 	.user-tag {
@@ -447,7 +450,11 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: 32rpx;
+		padding: 20rpx 30rpx;
+	}
+
+	.card-block1 .menu-item {
+		padding: 30rpx;
 	}
 
 	.item-left {
@@ -485,11 +492,6 @@
 		margin-bottom: 8rpx;
 	}
 
-	.value {
-		font-size: 34rpx;
-		font-weight: 500;
-	}
-
 	.arrow {
 		font-size: 32rpx;
 		color: #bbb;
@@ -507,20 +509,19 @@
 	}
 
 	.gray-text {
-		color: #aaa;
-		font-size: 28rpx;
+		color: #909399;
+		font-size: 26rpx;
 		margin-right: 12rpx;
 	}
 
 	.item-title {
-		font-size: 32rpx;
+		font-size: 26rpx;
 	}
 
 	.danger {
 		color: #f53f3f;
 	}
 
-	/*三格网格 小程序不支持gap，改用margin*/
 	.grid-row {
 		display: flex;
 		margin: 0 30rpx;

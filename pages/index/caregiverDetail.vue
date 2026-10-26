@@ -37,7 +37,7 @@
 				</view>
 				<view class="divider-line"></view>
 				<view class="feature-row">
-					<view class="feature-item">
+					<view class="feature-item mr-40">
 						<u-icon name="clock" color="#909399" size="26rpx"></u-icon>
 						<text>{{item.desc1}}</text>
 					</view>
@@ -312,8 +312,8 @@
 
 	.feature-row {
 		display: flex;
-		gap: 40rpx;
 	}
+	
 
 	.feature-item {
 		display: flex;

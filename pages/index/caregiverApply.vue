@@ -30,7 +30,15 @@
 						</view>
 						<!-- 标签 -->
 						<view class="tag-wrap">
-							<u-tag v-for="(tag,i) in item.tags" :key="i" :text="tag" size="mini"></u-tag>
+							<view 
+									v-for="(tag,i) in item.tags" 
+									:key="tag"
+									class="tag-item-wrap"
+									:class="{ 'mr-16': i !== item.tags.length -1 }"
+								>
+									<u-tag :text="tag" size="mini"></u-tag>
+								</view>
+					
 						</view>
 						<u--text size="12" class="font-info font-s" :lines="3" :text="item.desc"></u--text>
 						<view class="row-bottom">
@@ -238,9 +246,9 @@
 
 	.tag-wrap {
 		display: flex;
-		gap: 16rpx;
 		margin: 16rpx 0;
 	}
+
 
 	.tag {
 		font-size: 24rpx;

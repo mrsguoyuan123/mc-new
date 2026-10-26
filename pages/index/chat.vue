@@ -10,36 +10,40 @@
 				<!-- 自定义导航栏 -->
 				<view class="patient-preview-card">
 					<!-- 头部信息 -->
-					<view class="">
+					<view class="u-flex space-between">
 						<view class="base-info">
-							<text class="name">{{healthOption.name}}</text>
-							<text class="tag-label">{{healthOption.sex}} | {{healthOption.age}}岁</text>
+							<text class="name mr-16">{{healthOption.name}}</text>
+							<text class="tag-label mr-16">{{healthOption.gender}} | {{healthOption.age}}岁</text>
 							<view class="city u-flex">
 								<u-icon name="map" size="18rpx" color="#909399"></u-icon>
-								<view class="margin-left-5">{{healthOption.area}}</view>
+								<view class="margin-left-5">{{healthOption.region}}</view>
 							</view>
+						</view>
+						<view class="intent-tag-wrapper">
+							<text class="intent-tag"
+								:class="'tag-' + healthOption.purchaseIntent">{{ healthOption.purchaseIntent === 'HIGH' ? '高意向' : healthOption.purchaseIntent === 'MEDIUM' ? '中等意向' : healthOption.purchaseIntent === 'LOW' ? '低意向' : '' }}</text>
 						</view>
 					</view>
 					<view class="card-sub-info">
-						<view class="info-item u-flex">
+						<view class="info-item u-flex mr-30">
 							<text class="custom-icon custom-icon-activity "
 								style="font-size:30rpx;color:#009966;"></text>
 							<view class="margin-left-5">
-								{{healthOption.operation}}
+								{{healthOption.surgeryType}}
 							</view>
 						</view>
-						<view class="info-item u-flex">
+						<view class="info-item u-flex  mr-30">
 							<text class="custom-icon custom-icon-hospital-line"
 								style="font-size:30rpx;color:#009966;"></text>
 							<view class="margin-left-5">
-								{{healthOption.hospital}}
+								{{healthOption.hospitalName}}
 							</view>
 						</view>
 						<view class="info-item u-flex">
 							<text class="custom-icon custom-icon-stethoscope1"
 								style="font-size:30rpx;color:#009966;"></text>
 							<view class="margin-left-5">
-								{{healthOption.value}}·{{healthOption.doctor}}
+								{{healthOption.value}}·{{healthOption.surgeon}}
 							</view>
 						</view>
 
@@ -54,20 +58,16 @@
 			<!-- 沟通预判气泡 -->
 			<view class="predict-block">
 				<view class="block-title">
-
 					<text class="custom-icon custom-icon-lightning1 icon-activity"
 						style="font-size:36rpx;color:#009966;"></text>
-					<text>沟通初步预判</text>
+					<text class="ml-">沟通初步预判</text>
 				</view>
 				<view class="block-list">
 					<view class="li-item">
-						<text class="dot">•</text>
-						<text>患者主诉术后切口处有阵发性瘙痒，伴随轻微发热感，需排查炎症。</text>
+						<text>{{ healthOption.aiSummary == null ? '暂无' : healthOption.aiSummary.text }}
+						</text>
 					</view>
-					<view class="li-item">
-						<text class="dot">•</text>
-						<text>询问前期用药是否合规，特别是抗血小板类药物的服用频率与剂量。</text>
-					</view>
+
 				</view>
 			</view>
 		</view>
@@ -80,8 +80,9 @@
 					borderColor="#eff1f3"></u-tag>
 			</view>
 			<view class="message-list">
-				<view v-for="(msg, idx) in chatList" :key="idx" class="msg-item" :class="[msg.type]"
-					@longpress="handleLongPress(msg, idx)">
+				<view v-for="(msg, idx) in chatList" :key="idx" class="msg-item other"
+					:class="msg.actor === '客服'?'mine':''" @longpress="handleLongPress(msg, idx)">
+
 					<!-- 长按弹出菜单 -->
 					<!-- <view v-if="showLongMenuIndex === idx" class="longpress-menu">
 						<view class="menu-item" @click="copyMsg(msg)">复制</view>
@@ -89,10 +90,10 @@
 					</view> -->
 					<!-- 头像 -->
 					<view class="avatar">
-						<text v-if="msg.type === 'other'" class="avatar-white">
+						<text v-if="msg.actor !== '客服'" class="avatar-white">
 							<text class="custom-icon custom-icon-user " style="font-size:40rpx;color:#a1a8b5;"></text>
 						</text>
-						<text v-if="msg.type === 'mine'" class="avatar-blue">
+						<text v-if="msg.actor === '客服'" class="avatar-blue">
 							<text class="custom-icon custom-icon-briefcase-l"
 								style="font-size:40rpx;color:#fff;"></text>
 						</text>
@@ -104,18 +105,18 @@
 							<!-- <view v-if="msg.type === 'other'" class="sender-name">
 								{{ msg.name }}
 							</view> -->
-							<view v-if="msg.type === 'mine'" class="sender-name text-right">
-								{{ msg.name }}
+							<view v-if="msg.actor === '客服'" class="sender-name text-right">
+								{{ msg.actor }}
 							</view>
 							<!-- 文本气泡 -->
-							<view v-if="msg.msgType === 'text'" class="bubble">{{ msg.content }}</view>
+							<view v-if="msg.type === 'MESSAGE'" class="bubble">{{ msg.content }}</view>
 							<!-- 图片消息气泡 -->
-							<view v-if="msg.msgType === 'image'" class="bubble-img">
+							<view v-if="msg.type === 'image'" class="bubble-img">
 								<image :src="msg.imageUrl" mode="aspectFill" @click="previewImage(msg.imageUrl)">
 								</image>
 							</view>
-
-							<view class="diet-report-card " v-if="msg.msgType === 'health'">
+							<!-- 卡片 -->
+							<view class="diet-report-card " v-if="msg.type === 'health'">
 								<!-- 头部蓝色栏 -->
 								<view class="card-header">
 									<view class="header-left">
@@ -146,7 +147,7 @@
 		<!-- ==========底部操作栏 ========== -->
 		<view class="chat-footer">
 			<view class="quick-btn-group">
-<!-- 				<view class="quick-btn u-flex bg-blue border-blue font-blue">
+				<!-- 				<view class="quick-btn u-flex bg-blue border-blue font-blue">
 					<text class="custom-icon custom-icon-briefcase-l" style="font-size:20rpx;color:#155dfc;"></text>
 					<view class="margin-left-5">
 						推送医助
@@ -171,7 +172,7 @@
 				<view class="phone-box" @click="openAlbum">
 					<u-icon name="photo" color="#909399" size="50rpx"></u-icon>
 				</view>
-				<input v-model="inputText" class="chat-input" placeholder="输入回复消息..." confirm-type="send"
+				<input v-model="inputText" class="chat-input  mr-16 ml-16" placeholder="输入回复消息..." confirm-type="send"
 					@confirm="handleSend" :disabled="isReplying" />
 				<view class="send-btn" @click="handleSend">
 					<text class="custom-icon custom-icon-navigation " style="font-size:40rpx;color:#fff;"></text>
@@ -183,6 +184,10 @@
 </template>
 
 <script>
+	import {
+		getCsPatientsByIdApi,
+		getCsPatientsByIdAiSummaryApi
+	} from '@/api/frontApikit.js'
 	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
 	import {
 		mapState
@@ -204,6 +209,7 @@
 		},
 		data() {
 			return {
+				id: 0,
 				answerList: false,
 				healthOption: {},
 				scrollTop: 0,
@@ -219,33 +225,7 @@
 				evaText: '',
 				tagList: ['专业度高', '回复及时', '态度亲切', '建议实用', '沟通顺畅'],
 				selectTagList: [],
-				chatList: [{
-						type: 'other',
-						name: '健康助理孙小芳',
-						msgType: 'text',
-						content: '您好，我是您的健康管理团队助理。\n已收到您的术前病历，医生团队正在评估中。',
-						time: '09:30',
-						isRead: true
-					},
-					{
-						type: 'mine',
-						name: '健康助理孙小芳',
-						msgType: 'text',
-						content: '你好，我感觉伤口有点痒，是正常的吗？',
-						time: '10:05',
-						isRead: true
-					},
-					{
-						type: 'other',
-						name: '健康助理王小翠',
-						msgType: 'text',
-						content: '您好，术后伤口轻微瘙痒通常是组织愈合的正常表现，请保持局部干燥。\n如有红肿请拍照上传。',
-						time: '10:08',
-						isRead: true
-					},
-
-
-				],
+				chatList: [],
 				replyPool: [
 					'您好，收到您的问题，请不要过于担心，我们会为您跟进。',
 					'您描述的情况属于术后较为常见现象，请保持伤口干燥清洁，密切观察。',
@@ -270,8 +250,12 @@
 				const dataStr = sp.get('data')
 				if (dataStr && dataStr !== 'undefined') {
 					try {
-						this.healthOption = JSON.parse(decodeURIComponent(dataStr))
-						console.log('onShow H5解析参数成功', this.healthOption)
+						// this.healthOption = JSON.parse(decodeURIComponent(dataStr))
+						const data = JSON.parse(decodeURIComponent(dataStr))
+						this.id = data.id
+						// console.log('onShow H5解析参数成功', this.id);
+						this.getCsPatientsById()
+						this.getCsPatientsByIdAiSummary()
 					} catch (err) {
 						console.error('解析data失败', err)
 					}
@@ -283,6 +267,7 @@
 			console.log('onLoad options', options)
 
 			this.parseQuery(options)
+
 		},
 		onUnload() {
 			if (this.pollTimer) {
@@ -297,6 +282,36 @@
 
 		},
 		methods: {
+			async getCsPatientsById() {
+				console.log(this.id)
+				try {
+					const listData = await getCsPatientsByIdApi({
+						id: this.id
+					})
+
+
+					this.healthOption = listData;
+					this.chatList = listData.timeline;
+					console.log('healthOption', this.healthOption)
+					console.log('chatList', this.chatList)
+				} catch (e) {
+					console.log('报错：', e)
+				}
+			},
+			async getCsPatientsByIdAiSummary() {
+
+				try {
+					const aiData = await getCsPatientsByIdAiSummaryApi({
+						id: this.id
+					})
+					console.log('aiSummary：', aiData)
+
+					// this.healthOption.aiSummary = aiData.text
+				} catch (e) {
+					console.log('报错：', e)
+				}
+			},
+
 			checkIt(item) {
 				this.inputText = item;
 				this.answerList = false
@@ -321,6 +336,7 @@
 				if (!options || !options.data || options.data === 'undefined') return
 				try {
 					this.healthOption = JSON.parse(decodeURIComponent(options.data));
+
 					this.sendHealth()
 				} catch (e) {
 					console.error('onLoad解析参数异常', e)
@@ -374,16 +390,25 @@
 			handleSend() {
 				const text = this.inputText.trim()
 				if (!text || this.isReplying) return
-				this.chatList.push({
-					type: 'mine',
-					msgType: 'text',
+				const message = {
+					actor: "客服",
 					content: text,
+					id: 704,
 					time: this.getTimeStr(),
-					isRead: false
-				})
+					title: "群消息",
+					type: "MESSAGE"
+				}
+				// {
+				// 	type: 'mine',
+				// 	msgType: 'text',
+				// 	content: text,
+				// 	time: this.getTimeStr(),
+				// 	isRead: false
+				// }
+				this.chatList.push(message)
 				this.inputText = ''
 				this.scrollToBottom() //push之后调用
-				this.mockRobotReply()
+				// this.mockRobotReply()
 			},
 			// 模拟回复
 			mockRobotReply() {
@@ -465,6 +490,27 @@
 </script>
 
 <style scoped>
+	.intent-tag {
+		font-size: 24rpx;
+		padding: 4rpx 14rpx;
+		border-radius: 12rpx;
+	}
+
+	.tag-HIGH {
+		background: #ffe9e9;
+		color: #e53935;
+	}
+
+	.tag-MEDIUM {
+		background: #fff3e0;
+		color: #f57c00;
+	}
+
+	.tag-LOW {
+		background: #f0f1f3;
+		color: #666;
+	}
+
 	.tag-wrapper ::v-deep .u-transition {
 		width: fit-content;
 		margin: 0 auto;
@@ -536,12 +582,12 @@
 
 	.message-list {
 		padding: 0 24rpx;
+		padding-bottom: 100rpx;
 	}
 
 	.msg-item {
 		position: relative;
 		display: flex;
-		gap: 16rpx;
 		margin-bottom: 28rpx;
 	}
 
@@ -577,6 +623,7 @@
 		flex-shrink: 0;
 		font-size: 32rpx;
 		box-shadow: 0 1rpx 4rpx #00000015;
+		margin-right: 16rpx;
 	}
 
 	.avatar-blue {
@@ -590,6 +637,7 @@
 		flex-shrink: 0;
 		font-size: 32rpx;
 		box-shadow: 0 1rpx 4rpx #00000015;
+		margin-left: 16rpx;
 	}
 
 	.msg-content {
@@ -711,7 +759,6 @@
 
 	.msg-footer {
 		display: flex;
-		gap: 10rpx;
 		margin-top: 4rpx;
 	}
 
@@ -757,7 +804,6 @@
 
 	.quick-btn-group {
 		display: flex;
-		gap: 20rpx;
 		margin-bottom: 20rpx;
 		font-size: 18rpx
 	}
@@ -782,7 +828,6 @@
 	.input-row {
 		display: flex;
 		align-items: center;
-		gap: 16rpx;
 	}
 
 	.chat-input {
@@ -839,7 +884,6 @@
 	.base-info {
 		display: flex;
 		align-items: center;
-		gap: 20rpx;
 	}
 
 	.name {
@@ -877,7 +921,6 @@
 
 	.card-sub-info {
 		display: flex;
-		gap: 30rpx;
 		font-size: 32rpx;
 		color: #909399;
 		margin: 20rpx 0;
@@ -902,7 +945,6 @@
 	.block-title {
 		display: flex;
 		align-items: center;
-		gap: 12rpx;
 		font-size: 25rpx;
 		color: #008855;
 		font-weight: bold;
@@ -911,7 +953,6 @@
 
 	.li-item {
 		display: flex;
-		gap: 12rpx;
 		font-size: 20rpx;
 		line-height: 1.4;
 		color: #006644;

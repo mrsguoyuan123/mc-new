@@ -230,7 +230,10 @@
 
 	.cal-btns {
 		display: flex;
-		gap: 16rpx;
+	}
+
+	.cal-btns ::v-deep .u-button:first-child {
+		margin-right: 16rpx;
 	}
 
 	.week-row {

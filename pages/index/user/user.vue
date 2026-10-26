@@ -5,15 +5,7 @@
 </template>
 
 <script>
-import {
-  getMeProfile,
-  putMeProfile,
-  getMeHealthManager,
-  getMeMedicalRecord,
-  postMeMedicalRecordScan,
-  getMeMedicalRecordScanResult,
-  postMeMedicalRecordConfirm
-} from '@/api/user'
+
 
 export default {
   data() {

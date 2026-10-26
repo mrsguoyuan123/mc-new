@@ -1,3 +1,22 @@
+# 编译输出
 unpackage/
-.DS_Store
+dist/
+
+# HBuilderX缓存
 .hbuilderx/
+
+# node依赖
+node_modules/
+
+# 日志、缓存
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 编辑器
+.idea/
+.vscode/
+
+# 系统文件
+.DS_Store
+Thumbs.db

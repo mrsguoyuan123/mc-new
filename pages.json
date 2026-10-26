@@ -21,7 +21,19 @@
 			}
 		},
 		{
-			"path": "pages/index/patientRegistration",
+			"path": "pages/index/rehabSport",
+			"style": {
+				"navigationBarTitleText": ""
+			}
+		},
+		{
+			"path": "pages/index/weightManagement",
+			"style": {
+				"navigationBarTitleText": ""
+			}
+		},
+		{
+			"path": "pages/index/patientRegistration", //创建档案
 			"style": {
 				"navigationBarTitleText": ""
 			}
@@ -32,6 +44,7 @@
 				"navigationBarTitleText": ""
 			}
 		},
+		
 		{
 			"path": "pages/index/profile",
 			"style": {
@@ -152,7 +165,20 @@
 			"style": {
 				"navigationBarTitleText": ""
 			}
+		},
+		{
+			"path": "pages/index/weightControl",
+			"style": {
+				"navigationBarTitleText": ""
+			}
+		},
+		{
+			"path": "pages/index/sleepManagement",
+			"style": {
+				"navigationStyle": "custom"
+			}
 		}
+		
 		
 
 

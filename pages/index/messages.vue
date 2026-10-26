@@ -39,7 +39,7 @@
 		<view class="msg-item radius-15 card-top bg-white card-border card-border-gray"
 			v-for="(item,index) in chatHistory" :key="index" @click="routeTo(item)">
 			<!-- 左侧图标 -->
-			<view class="msg-icon-wrap  badge-blue-bg" :style="{backgroundColor:item.bgColor}"
+			<view class="msg-icon-wrap  badge-blue-bg  mr-30" :style="{backgroundColor:item.bgColor}"
 				v-if="item.type=='human'">
 				<view class="massage-icon-left ">
 					<text class="custom-icon custom-icon-Headset1 icon-bold"
@@ -48,7 +48,7 @@
 				<!-- <text class="msg-icon">{{item.icon}}</text> -->
 				<view v-if="item.showDot" class="online-dot"></view>
 			</view>
-			<view class="msg-icon-wrap badge-orange-bg" :style="{backgroundColor:item.bgColor}"
+			<view class="msg-icon-wrap badge-orange-bg  mr-30" :style="{backgroundColor:item.bgColor}"
 				v-else-if="item.type=='system'">
 				<view class="massage-icon-left  ">
 					<text class="custom-icon custom-icon-order icon-bold" style="font-size:40rpx;color:#ff6900;"></text>
@@ -65,7 +65,7 @@
 				</view>
 
 				<view class="msg-desc-row">
-					<view class="msg-desc">{{item.lastMsg}}</view>
+					<view class="msg-desc mr-16">{{item.lastMsg}}</view>
 					<u-badge numberType="limit" max="99" :value="item.unreadCount"></u-badge>
 					<!-- <view  class="red-badge">{{item.unreadCount}}</view> -->
 				</view>
@@ -240,17 +240,11 @@
 </script>
 
 <style>
-	.msg-desc-row {
-		display: flex;
-		align-items: center;
-		gap: 16rpx;
-		min-width: 0;
-	}
+	
 
 	.msg-desc {
 		flex: 1;
 		min-width: 0;
-		/* ✅子元素必须加这个！flex:1的盒子允许被压缩 */
 		font-size: 28rpx;
 		color: #666;
 		overflow: hidden;
@@ -267,8 +261,6 @@
 		margin-bottom: 24rpx;
 		display: flex;
 		align-items: center;
-		/* ✅全部垂直居中 */
-		gap: 24rpx;
 	}
 
 	.msg-icon-wrap {
@@ -327,6 +319,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
+		min-width: 0;
 	}
 
 	.msg-desc {

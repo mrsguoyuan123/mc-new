@@ -281,7 +281,10 @@
 
 	.info-row {
 		display: flex;
-		gap: 60rpx;
+	}
+
+	.info-row ::v-deep .info-item:first-child {
+		margin-right: 60rpx;
 	}
 
 	.info-item {
@@ -351,8 +354,10 @@
 
 	.btn-row {
 		display: flex;
-		gap: 24rpx;
 		margin-top: 36rpx;
+	}
+	.btn-phone,.btn-refund{
+		margin-right: 24rpx;
 	}
 
 	.btn-phone {
@@ -394,7 +399,6 @@
 
 	.action-row {
 		display: flex;
-		gap: 24rpx;
 		margin-top: 40rpx;
 	}
 

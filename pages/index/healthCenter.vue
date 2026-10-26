@@ -130,8 +130,8 @@
 		</view>
 		<!-- 运动处方 -->
 		<view v-else-if="activeTab2 == 2">
-
-			<view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between u-flex-column ">
+<rehabSport></rehabSport>
+			<!-- <view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between u-flex-column ">
 				<view class="header-text">
 					<view class="header-icon ">
 						<view class="header-name font-bold font-m">
@@ -172,7 +172,7 @@
 
 				</view>
 				<view class="chart-wrap">
-					<qiun-data-charts type="column" :opts="chartOpts" :chartData="chartData"  />
+					<qiun-data-charts type="column" :opts="chartOpts" :chartData="chartData" />
 				</view>
 
 				<view class="heart-bottom">
@@ -193,16 +193,18 @@
 				<view class="font-s margin-top-10">
 					今日运动心率平稳，建议保持当前强度。若感到胸闷或气促请立即停止。
 				</view>
-			</view>
+			</view> -->
 
 		</view>
 		<!-- 体重动态 -->
 		<view v-else-if="activeTab2 == 3">
-			<view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between u-flex-column ">
+			
+			<weightControl />
+			<!-- <view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between u-flex-column ">
 				<view class="header-text">
 					<view class="header-icon ">
 						<view class="header-name font-bold font-m">
-							今日体重记录
+							今日体重记录11111111111111111111
 						</view>
 					</view>
 
@@ -261,7 +263,7 @@
 				<view class="  font-s margin-top-10">
 					体重控制处于安全区间，建议维持当前方案。
 				</view>
-			</view>
+			</view> -->
 
 		</view>
 		<!-- 血压血糖 -->
@@ -326,56 +328,157 @@
 				</view>
 			</view>
 		</view>
-		<!-- 睡眠管理 -->
+		<!-- 今日用药 -->
 		<view v-else-if="activeTab2 == 5" class="heath-5">
 			<view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between u-flex-column ">
 				<view class="header-text">
 					<view class="header-icon ">
-						<view class="font-l font-bold font-m">
-							今日用药
+						<view class="font-m font-bold font-m">
+							添加用药提醒
 						</view>
 					</view>
-					<view class="font-blue font-bold font-s ">
-						+添加
-					</view>
+
 				</view>
+				<view class="wrap">
+					<view class="card">
+						<view class="header">
+							<view class="icon-box">
+								<text class="custom-icon custom-icon-PillOutline icon-bold"
+									style="font-size:40rpx;color:#155DFC;"></text>
 
-				<view class="card-list u-flex space-between   radius-1 medication-wrapper margin-bottom-1 no-shadow"
-					:class="item.taken? 'medicationTake' : ''" v-for="item in medicationList" :key="item.id">
-					<view class=" massage-list u-flex align-center flex-center">
-						<view class="massage-icon-left  view-icon  ">
-							<u-icon v-if="item.taken" name="checkmark-circle" color="white" size="40rpx"></u-icon>
-							<text v-else class="custom-icon custom-icon-PillOutline icon-bold"
-								style="font-size:40rpx;color:white;"></text>
+							</view>
+							<view class="title-box">
+								<view class="main-title">添加用药提醒</view>
+								<view class="sub-title1">按时服药，别忘了确认</view>
+							</view>
 						</view>
-						<view class="massage-content">
-							<!-- 内容 -->
-							<view class="view-text">
-								<u--text size="28rpx" :bold="true" class=" font-m  font-black font-bold " lines="1"
-									:text="item.name"></u--text>
 
-								<view class="badge-wrapper margin-top-1">
-									<view class="font-info font-s">
-										{{item.dosage}}
-									</view>
-									<view class="font-info font-s">
-										{{item.time}}
-									</view>
+						<view class="form-item">
+							<view class="label-row">
+								<view class="label">药物名称<text class="star">*</text></view>
+								<view class="required-txt">必填</view>
+							</view>
+							<view class="input-wrap">
+								<input class="input" v-model="form.name" placeholder="请输入药物名称" />
+								<view class="input-icon">
+									<text class="custom-icon custom-icon-PillOutline icon-bold"
+										style="font-size:30rpx;color:#155DFC;"></text>
+
+
 								</view>
 							</view>
-
 						</view>
 
-						<view @click="markTaken(item)" v-show="!item.taken"
-							class="massage-icon-right font-blue font-bold font-s">
-							标记已服用
+						<view class="form-item">
+							<view class="label-row">
+								<view class="label">每日次数<text class="star">*</text></view>
+								<view class="required-txt">必填</view>
+							</view>
+							<view class="radio-group">
+								<view class="radio-item" :class="{active: form.timesPerDay === 1}"
+									@click="form.timesPerDay = 1">1次
+								</view>
+								<view class="radio-item" :class="{active: form.timesPerDay === 2}"
+									@click="form.timesPerDay = 2">2次
+								</view>
+								<view class="radio-item" :class="{active: form.timesPerDay === 3}"
+									@click="form.timesPerDay = 3">3次
+								</view>
+							</view>
+							<view class="tip-small">请按照医嘱选择每日服用次数</view>
 						</view>
+
+						<view class="info-tip">
+							<view class="info-icon">
+								<u-icon name="info-circle" color="#ff6900" :size="fontSize1"></u-icon>
+
+							</view>
+							<view class="info-text">请按医嘱或药品说明书使用，本提醒不替代医护建议。</view>
+						</view>
+						<u-button class="button-wrapper-fill" :disabled="!form.name" @click="postMeMedicationApi">+
+							添加提醒
+						</u-button>
+						<!-- <view class="button-wrapper-fill" :disabled="{disabled: !form.name}" @click="postMeMedicationApi">
+							+ 添加提醒
+						</view> -->
 					</view>
-
 				</view>
-
 			</view>
-			<view class="radius-1 bg-white margin-top-1 padding-1 border-pink bg-linear-pink">
+			<view class="radius-15 card-top bg-white card-border card-border-gray u-flex space-between u-flex-column ">
+    <view class="header-text">
+      <view class="">
+        <view class="font-m font-bold font-m">今日用药</view>
+        <view class="font-info font-s">服药后请点击确认</view>
+      </view>
+      <view class="font-info font-s" v-if="medicationList.length">共{{ medicationList.length }}项</view>
+    </view>
+
+    <!-- 全部确认成功提示块 -->
+    <view v-if="medicationList.length && isAllTaken" class="all-done-tip">
+      <u-icon name="checkmark-circle-fill" color="#06b370" size="44rpx"></u-icon>
+      <view class="tip-text-wrap">
+        <view class="tip-title">今日用药已全部确认</view>
+        <view class="tip-desc">遵医嘱规律服药有助术后平稳康复，请保持良好作息</view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view v-if="!medicationList.length" class="empty-wrap">
+      <view class="empty-icon">
+<text class="custom-icon custom-icon-PillOutline icon-bold"
+						style="font-size:40rpx;color:#155DFC;"></text>
+	  </view>
+	 
+      <view class="empty-title">还没有添加用药提醒</view>
+      <view class="empty-desc">添加药物后，可以在这里确认服用情况。</view>
+    </view>
+
+    <!-- 用药列表 -->
+    <view
+      class="card-list u-flex space-between radius-1 medication-wrapper margin-bottom-1 no-shadow"
+      :class="item.taken ? 'medicationTake' : ''"
+      v-for="item in medicationList"
+      :key="item.id"
+    >
+      <view class="massage-list u-flex align-center flex-center">
+        <view class="massage-icon-left view-icon"  :class="item.status === 'TAKEN' ? 'message-checked' : ''">
+          <u-icon v-if="item.status === 'TAKEN'" name="checkmark-circle-fill" color="#06b370" size="44rpx"></u-icon>
+          <text v-else class="custom-icon custom-icon-PillOutline icon-bold" style="font-size:40rpx;color:#999;"></text>
+        </view>
+        <view class="massage-content">
+          <view class="view-text">
+            <u--text size="28rpx" :bold="true" class="font-m font-black font-bold" lines="1" :text="item.name"></u--text>
+            <view class="badge-wrapper margin-top-1">
+              <view class="font-info font-s">每日{{item.timesPerDay}}次</view>
+              <view
+                class="font-info font-s"
+                :class="{'color-green': item.status === 'TAKEN', 'color-gray': item.status === 'PENDING'}"
+              >
+                {{ item.status === 'PENDING' ? '待服用' : item.status === 'TAKEN' ? '已服用' : item.status }}
+              </view>
+            </view>
+          </view>
+        </view>
+        <view class="massage-icon-right">
+          <view
+            @click="openModal(item)"
+            v-show="item.status == 'PENDING'"
+            class="font-blue font-bold font-s btn-confirm-txt"
+          >
+            确认已服用
+          </view>
+          <view
+            v-show="item.status == 'TAKEN'"
+            class="font-info font-s color-gray btn-confirmed-txt"
+          >
+            已确认
+          </view>
+          <view @click="openModal2(item)" class="font-blue font-bold font-s">删除</view>
+        </view>
+      </view>
+    </view>
+  </view>
+			<!-- <view class="radius-1 bg-white margin-top-1 padding-1 border-pink bg-linear-pink">
 				<view class="u-flex space-start">
 					<text class="custom-icon custom-icon-PillOutline icon-bold"
 						:style="{color: '#9810fa',fontSize: fontSize1}"></text>
@@ -389,13 +492,15 @@
 				<view class="font-blue font-s margin-top-10 font-bold">
 					编辑提醒时间 →
 				</view>
-			</view>
+			</view> -->
 
 		</view>
 
 
 		<view v-else-if="activeTab2 == 6" class="">
-			<view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between u-flex-column ">
+			
+			<sleepManagement />
+			<!-- <view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between u-flex-column ">
 				<view class="radius-1   padding-1  bg-gray-dark gray-content width-100-2rem">
 					<view class="  font-m margin-bottom-1">
 						睡眠评估
@@ -422,7 +527,6 @@
 					</view>
 
 				</view>
-
 				<view
 					class="card-list  radius-1 card-top  card-border card-border-gray no-shadow bg-gray margin-bottom-1"
 					v-for="item in articleList" :key="item.id">
@@ -431,26 +535,17 @@
 						<view class="massage-icon-left view-icon badge-blue-bg">
 							<u-icon name="file-text" color="#155DFC" :bold="true" size="40rpx"></u-icon>
 						</view>
-
 						<view class="article-list ">
 							<u--text size="28rpx" :bold="true" class=" font-s  font-black font-bold " lines="1"
-								:text="item.title"></u--text>
-							<!-- 这里加自定义class tag-row -->
+								:text="item.title"></u--text>					
 							<view class="u-flex space-start margin-top-1 tag-row">
-								<u-tag plain plainFill size="mini" :text="item.type"></u-tag>
-								<u--text size="22rpx" class="font-info " :lines="1" :text="item.duration"></u--text>
+								<u-tag plain plainFill size="mini" :text="item.type" class="margin-right-5"></u-tag>
+								<u--text size="22rpx" class="font-info" :lines="1" :text="item.duration"></u--text>
 							</view>
 						</view>
-
-
-
-					</view>
-
+					</view
 				</view>
-
-
-
-			</view>
+			</view> -->
 
 		</view>
 		<view v-if="activeTab2 != 5" class="button-wrapper u-flex flex-center font-s" @click="showToast()" ref="uToast">
@@ -459,10 +554,52 @@
 		</view>
 		<main-tabbar :current="1"></main-tabbar>
 		<u-toast ref="uToast"></u-toast>
-
+		<view class="mask" v-if="showModal">
+			<view class="dialog">
+				<view class="dialog-icon">
+					<text class="custom-icon custom-icon-PillOutline icon-bold"
+						style="font-size:40rpx;color:#155DFC;"></text>
+				</view>
+				<view class="dialog-title">确认已服用?</view>
+				<view class="dialog-desc">请确认已完成本次服用: "{{ drugName }}"</view>
+				<view class="btn-row">
+					<view class="btn-cancel" @click="closeModal">取消</view>
+					<view class="btn-confirm" @click="postMeMedicationByIdTakeApi(drugId)">确认已服用</view>
+				</view>
+			</view>
+		</view>
+		<view class="mask" v-if="showModal2">
+			<view class="dialog">
+				<view class="dialog-icon">
+					<text class="custom-icon custom-icon-PillOutline icon-bold"
+						style="font-size:40rpx;color:#155DFC;"></text>
+				</view>
+				<view class="dialog-title">确认删除提醒?</view>
+				      <view class="dialog-desc">请确认删除用药提醒: "{{ drugName }}"</view>
+				      <view class="btn-row">
+					        <view class="btn-cancel" @click="closeModal2">取消</view>
+					        <view class="btn-confirm" @click="deleteMeMedicationByIdApi(drugId)">确认删除提醒</view>
+				</view>
+			</view>
+		</view>
+	
+	
 	</view>
 </template>
 <script>
+	import {
+		
+		getMeExercisePlanApi,
+		getMeMedicationTodayApi,
+		postMeMedicationApi,
+		postMeMedicationByIdTakeApi,
+		deleteMeMedicationByIdApi
+
+	} from '@/api/frontApikit.js'
+	import weightControl from './weightControl.vue'
+	import sleepManagement from './sleepManagement.vue'
+	import rehabSport from './rehabSport.vue'
+
 	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
 
 	export default {
@@ -470,10 +607,24 @@
 			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
 		},
 		components: {
-			mainTabbar
+			mainTabbar,weightControl,sleepManagement,rehabSport
 		},
+		computed: {
+    isAllTaken() {
+      if (!this.medicationList.length) return false
+      return this.medicationList.every(item => item.status === 'TAKEN')
+    }
+  },
 		data() {
 			return {
+				showModal: false,
+				showModal2: false,
+				drugName: '',
+				drugId: "",
+				form: {
+					name: '',
+					timesPerDay: 1
+				},
 				chartData: {
 					categories: ['', '', '', '', '', '', '', '', '', '', ''],
 					series: [{
@@ -522,55 +673,9 @@
 				fontSize1: "30rpx",
 				fontSize2: "40rpx",
 				activeTab: 1,
-				activeTab2: 1,
-				medicationList: [{
-						id: 1,
-						name: "阿司匹林肠溶片阿司匹林肠溶片阿司匹林肠溶片阿司匹林肠溶片",
-						time: "早餐后",
-						dosage: "100mg",
-						taken: true
-					},
-					{
-						id: 2,
-						name: "阿托伐他汀钙片阿托伐他汀钙片阿托伐他汀钙片阿托伐他汀钙片阿托伐他汀钙片",
-						time: "早餐后",
-						dosage: "100mg",
-						taken: false
-					},
-				],
-				articleList: [{
-					id: 1,
-					title: "术后焦虑怎么办？专业医生为您解答专业医生为您解答",
-					type: "文章",
-					duration: "5分钟"
-				}, {
-					id: 2,
-					title: "术后焦虑怎么办？专业医生为您解答",
-					type: "文章",
-					duration: "10分钟"
-				}, ],
-				useState: [{
-						id: 1,
-						name: "有氧步行 (散步)",
-						duration: "30分钟",
-						completed: true,
-						intensity: "轻度"
-					},
-					{
-						id: 2,
-						name: "呼吸功能训练",
-						duration: "10分钟",
-						completed: true,
-						intensity: "低强度"
-					},
-					{
-						id: 3,
-						name: "上肢柔韧性练习",
-						duration: "15分钟",
-						completed: false,
-						intensity: "轻度"
-					},
-				],
+				activeTab2: 2,
+				medicationList: [],
+		
 				tabList: [{
 					id: 1,
 					name: "首页",
@@ -634,16 +739,128 @@
 
 			};
 		},
-		methods: {
+		onLoad(options) {
+			this.getMeMedicationTodayApi()
+			// this.getMeExercisePlan()
 
-			// 标记已服用
-			markTaken(item) {
-				item.taken = true
-				uni.showToast({
-					title: "已标记服用",
-					icon: "success"
-				})
+		},
+		methods: {
+			openModal(item) {
+				console.log(item)
+				this.drugName = item.name
+				this.drugId = item.id
+				this.showModal = true
 			},
+			openModal2(item) {
+				
+				this.drugName = item.name
+				this.drugId = item.id
+				this.showModal2 = true
+			},
+			closeModal() {
+				this.showModal = false
+			},
+			closeModal2() {
+				this.showModal2 = false
+			},
+			confirmTake() {
+				console.log('确认服用', this.drugName)
+				this.closeModal()
+			},
+		
+			//  今日用药列表（status 由当日打卡推导）
+			async getMeMedicationTodayApi() {
+				try {
+
+					const getMeMedicationToday = await getMeMedicationTodayApi({
+
+
+					})
+
+					this.medicationList = getMeMedicationToday
+					console.log('用药', getMeMedicationToday)
+
+				} catch (e) {
+					console.log('报错：', e)
+				}
+			},
+			// 添加用药（药名+每日次数 1-3；v3 不再设置提醒时间）
+			async postMeMedicationApi() {
+				try {
+					console.log(this.form)
+
+					const postMeMedication = await postMeMedicationApi(
+
+						this.form
+					)
+					uni.showToast({
+						title: "用药提醒已添加",
+						icon: "success"
+					})
+					this.getMeMedicationTodayApi()
+					// console.log('用药', postMeMedication)
+
+				} catch (e) {
+					console.log('报错：', e)
+				}
+			},
+			//用药打卡（当日幂等）
+			async postMeMedicationByIdTakeApi(drugId) {
+
+				try {
+
+					const postMeMedicationByIdTake = await postMeMedicationByIdTakeApi({
+						id: drugId
+					})
+
+					uni.showToast({
+						title: "已标记服用",
+						icon: "success"
+					})
+					this.closeModal()
+					this.getMeMedicationTodayApi()
+
+				} catch (e) {
+					console.log('报错：', e)
+				}
+			},
+			// 删除本人用药提醒
+
+			async deleteMeMedicationByIdApi(drugId) {
+				
+				try {
+
+					const deleteMeMedicationById = await deleteMeMedicationByIdApi({
+						id: drugId
+
+					})
+					uni.showToast({
+						title: "用药提醒已删除",
+						icon: "success"
+					})
+
+					this.closeModal2()
+					this.getMeMedicationTodayApi()
+
+				} catch (e) {
+					console.log('报错：', e)
+				}
+			},
+			// 我的运动康复方案（动作+本周统计；每日重置昨日完成项）
+			async getMeExercisePlan() {
+				try {
+
+					const MeExercisePlan = await getMeExercisePlanApi({
+						id: this.id
+					})
+					console.log('MeExercisePlan：', MeExercisePlan)
+					this.list = listData.list
+				} catch (e) {
+					console.log('报错：', e)
+				}
+			},
+
+
 			toggleTask(id) {
 				console.log(id)
 				const newState = this.useState.map((item, index) => {
@@ -709,6 +926,136 @@
 
 
 <style scoped>
+	.header {
+		display: flex;
+		align-items: center;
+		gap: 24rpx;
+		margin-bottom: 48rpx;
+	}
+
+	.icon-box {
+		width: 80rpx;
+		height: 80rpx;
+		border-radius: 50%;
+		background-color: #e8f3ff;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 36rpx;
+		color: #0066ee;
+	}
+
+	.main-title {
+		font-size: 36rpx;
+		font-weight: 600;
+		color: #222;
+	}
+
+	.sub-title1 {
+		font-size: 26rpx;
+		color: #888;
+		margin-top: 8rpx;
+	}
+
+	.form-item {
+		margin-bottom: 40rpx;
+	}
+
+	.label-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 20rpx;
+	}
+
+	.label {
+		font-size: 30rpx;
+		color: #222;
+	}
+
+	.star {
+		color: #f56c6c;
+	}
+
+	.required-txt {
+		font-size: 26rpx;
+		color: #999;
+	}
+
+	.input-wrap {
+		display: flex;
+		align-items: center;
+		border: 2rpx solid #b4d3ff;
+		border-radius: 20rpx;
+		padding: 0 24rpx;
+		height: 88rpx;
+		background: #fff;
+	}
+
+	.input {
+		flex: 1;
+		font-size: 28rpx;
+	}
+
+	.input-icon {
+		font-size: 28rpx;
+		color: #999;
+	}
+
+	.radio-group {
+		display: flex;
+		gap: 16rpx;
+	}
+
+	.radio-item {
+		flex: 1;
+		height: 70rpx;
+		line-height: 70rpx;
+		text-align: center;
+		background-color: #f4f5f7;
+		border-radius: 20rpx;
+		color: #333;
+	}
+
+	.radio-item.active {
+		background-color: #0066ee;
+		color: #fff;
+	}
+
+	.tip-small {
+		font-size: 24rpx;
+		color: #888;
+		margin-top: 16rpx;
+	}
+
+	.info-tip {
+		display: flex;
+		gap: 12rpx;
+		margin: 48rpx 0;
+		font-size: 24rpx;
+		color: #888;
+	}
+
+	.info-icon {
+		color: #888;
+	}
+
+	.submit-btn {
+		width: 100%;
+		height: 96rpx;
+		line-height: 96rpx;
+		text-align: center;
+		border-radius: 48rpx;
+		font-size: 30rpx;
+		background-color: #0066ee;
+		color: #fff;
+	}
+
+	.submit-btn.disabled {
+		background-color: #e7e8eb;
+		color: #b9bcc3;
+	}
+
 	/* .tab-wrapper {
 		::v-deep .u-icon__label {
 			display: none !important;
@@ -770,7 +1117,6 @@
 	}
 
 	.tag-row {
-		gap: 10rpx;
 		align-items: center;
 	}
 
@@ -784,20 +1130,23 @@
 
 	/* 未标记药品 */
 	.page-heathCenter .card-list .massage-icon-left {
-		background-color: #c8c9cc;
-		border-radius: 100%;
+		background-color: #eff6ff;
+		border-radius: 10px;
 	}
-
+.page-heathCenter .card-list .massage-icon-left.message-checked {
+		background-color: #e8fbf3;
+		
+	}
 	/* 右边文字 标记已服用*/
 	.page-heathCenter .massage-list .massage-icon-right {
 		width: 260rpx;
-	
+
 	}
 
 	/* 中间内容 未标记 */
 	.page-heathCenter .massage-list {
 		position: relative;
-		
+
 	}
 
 
@@ -854,6 +1203,7 @@
 		padding: 10px;
 		color: white;
 		width: calc(100% - 30rpx);
+		text-align: center;
 	}
 
 	.page-heathCenter .header-text {
@@ -915,4 +1265,136 @@
 	.my-card .view-icon {
 		padding: 30rpx;
 	}
+
+	.color-gray {
+		color: #999;
+	}
+
+	.color-green {
+		color: #00a64c;
+	}
+
+	.mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: rgba(0, 0, 0, 0.45);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 999;
+	}
+
+	.dialog {
+		width: 620rpx;
+		background: #fff;
+		border-radius: 36rpx;
+		padding: 48rpx 36rpx;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.dialog-icon {
+		width: 120rpx;
+		height: 120rpx;
+		border-radius: 20px;
+		background: #e8f3ff;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 52rpx;
+		color: #0066ee;
+		margin-bottom: 32rpx;
+	}
+
+	.dialog-title {
+		font-size: 40rpx;
+		font-weight: 600;
+		color: #222;
+		margin-bottom: 20rpx;
+	}
+
+	.dialog-desc {
+		font-size: 28rpx;
+		color: #666;
+		margin-bottom: 48rpx;
+	}
+
+	.btn-row {
+		width: 100%;
+		display: flex;
+		gap: 24rpx;
+	}
+
+	.btn-cancel {
+		flex: 1;
+		height: 88rpx;
+		line-height: 88rpx;
+		text-align: center;
+		background: #f4f5f7;
+		border-radius: 44rpx;
+		font-size: 30rpx;
+		color: #333;
+	}
+
+	.btn-confirm {
+		flex: 1;
+		height: 88rpx;
+		line-height: 88rpx;
+		text-align: center;
+		background: #0066ee;
+		border-radius: 44rpx;
+		font-size: 30rpx;
+		color: #fff;
+	}
+	.empty-wrap {
+  padding:80rpx 20rpx;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.empty-icon {
+  width:120rpx;
+  height:120rpx;
+  background:#f7f8fa;
+  border-radius:24rpx;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:48rpx;
+  color:#ccc;
+  margin-bottom:32rpx;
+}
+.empty-title {
+  font-size:32rpx;
+  font-weight:600;
+  color:#222;
+  margin-bottom:12rpx;
+}
+.empty-desc {
+  font-size:26rpx;
+  color:#888;
+}
+.all-done-tip {
+  background: #e8fbf3;
+  border-radius: 20rpx;
+  padding:24rpx;
+  display:flex;
+  align-items:center;
+  gap:16rpx;
+  margin-bottom:24rpx;
+}
+.tip-title {
+  font-size:24rpx;
+  font-weight:600;
+  color:#00a64c;
+}
+.tip-desc {
+  font-size:20rpx;
+  color:#06b370;
+  margin-top:4rpx;
+}
 </style>

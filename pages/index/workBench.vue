@@ -15,25 +15,25 @@
 		</view>
 		<!-- 搜索框 -->
 		<view class="margin-30 ">
-			<u--input placeholder="搜索患者姓名、意向、手机号" shape="" prefixIcon="search"
+			<u--input placeholder="搜索患者姓名、意向、手机号" shape="" v-model="searchKey" prefixIcon="search"
 				prefixIconStyle="font-size: 22px;color: #909399"></u--input>
 		</view>
 		<!-- 统计数字卡片组 -->
 		<view class="stat-row">
-			<view class="stat-item">
+			<view class="stat-item mr-24">
 				<view class="dot red"></view>
 				<view class="badge-num">
 					<u-badge bgColor="#f53f3f" max="99" value="3"></u-badge>
 				</view>
-				<text class="num">8</text>
+				<text class="num">{{highIntent}}</text>
 				<text class="stat-label">高意向</text>
 			</view>
-			<view class="stat-item">
+			<view class="stat-item  mr-24">
 				<view class="dot orange"></view>
 				<view class="badge-num">
 					<u-badge bgColor="#f53f3f" max="99" value="143"></u-badge>
 				</view>
-				<text class="num">15</text>
+				<text class="num">{{pendingCall}}</text>
 				<text class="stat-label">待电话沟通</text>
 			</view>
 			<view class="stat-item">
@@ -41,7 +41,7 @@
 				<view class="badge-num">
 					<u-badge bgColor="#f53f3f" max="99" value="143"></u-badge>
 				</view>
-				<text class="num">23</text>
+				<text class="num">{{pendingReply}}</text>
 				<text class="stat-label">待信息回复</text>
 			</view>
 		</view>
@@ -53,36 +53,37 @@
 		<!-- 沟通记录列表 -->
 		<!-- 	<scroll-view scroll-y class="list-scroll">
 </scroll-view> -->
-		<view v-for="(item, idx) in list" :key="idx">
+		<view v-for="(item, idx) in filterList" :key="idx">
 			<view class="record-item">
 				<!-- 左侧竖条标记 -->
-				<view class="left-bar" :class="{active: item.highlight}"></view>
+				<view class="left-bar" :class="{active: item.purchaseIntent == 'HIGH'}"></view>
 				<!-- 头像缩写 -->
 				<view class="short-avatar">{{ item.name.charAt(0) }}</view>
 				<view class="info">
 					<view class="name-row">
-						<text class="name">{{ item.name }}</text>
+						<text class="name mr-16">{{ item.name }}</text>
 						<view class="intent-tag-wrapper">
-							<text class="intent-tag" :class="item.intentClass">{{ item.intent }}</text>
+							<text class="intent-tag"
+								:class="'tag-' + item.purchaseIntent">{{ item.purchaseIntent === 'HIGH' ? '高意向' : item.purchaseIntent === 'MEDIUM' ? '中等意向' : item.purchaseIntent === 'LOW' ? '低意向' : '' }}</text>
 						</view>
 						<text class="custom-icon custom-icon-message" style="font-size:45rpx;color:#1ec76f;"
 							@click="routeTo(item)"></text>
 					</view>
 					<view class="desc-line">
-						<text class="desc">{{ item.operation }} | {{ item.hospital }}</text>
+						<text class="desc">{{ item.surgeryType }} | {{ item.hospitalName }}</text>
 					</view>
 					<view class="sub-desc">
-						<text>主刀: {{ item.doctor }} | 地区: {{ item.area }}</text>
+						<text>主刀: {{ item.surgeon }} | 地区: {{ item.surgeryRegion }}</text>
 					</view>
 				</view>
-				<view class="btn-group">
+				<!-- 	<view class="btn-group">
 					<view class="call-btn" :class="item.btnClass" @click="openStepPanel(item)">
 						<u-icon class="" name="phone-fill" :color="item.btnClass == 'btn-gray'? '#909399':'#fff'"
 							:bold="true" size="32rpx"></u-icon>
 						<view class="margin-left-5">拨打</view>
 					</view>
 					<text class="btn-tip">{{ item.btnTip }}</text>
-				</view>
+				</view> -->
 			</view>
 
 
@@ -90,7 +91,8 @@
 				<!-- 步骤条 -->
 				<view class=" bg-blue bar-top">
 					<view class="step-bar">
-						<view class="step-item" v-for="(s,si) in stepList" :key="si">
+						<view class="step-item" v-for="(s,si) in stepList" :key="si"
+							:class="{ 'step-last': si === stepList.length -1 }">
 							<view class="step-circle"
 								:class="{done:item.currentStep>si+1,active:item.currentStep===si+1}">
 								<text v-if="item.currentStep>si+1">✓</text>
@@ -122,7 +124,7 @@
 							<text class="state-tag">线路已接通</text>
 						</view>
 						<view class="call-row">
-							<view class="phone-box">
+							<view class="phone-box mr-24">
 								<u-icon name="phone" color="#00a63e" :bold="true" size="50rpx"></u-icon>
 								<view>
 									{{item.formCall.phone}}
@@ -189,7 +191,7 @@
 							<text class="state-tag state-tag-gray" v-else>待连接</text>
 						</view>
 						<view class="call-row" v-if="!item.callSuccess">
-							<view class=" call-btn btn-blue" @click="reconnect(item)">
+							<view class=" call-btn btn-blue mr-24" @click="reconnect(item)">
 								<u-icon class="" name="phone-fill" color="white" :bold="true" size="32rpx"></u-icon>
 								<view class="margin-left-5">重新发起呼叫</view>
 							</view>
@@ -208,7 +210,7 @@
 						</view>
 						<view class="call-row" v-if="item.callSuccess">
 							<!-- {{item.callSuccess}} -->
-							<view class="phone-box">
+							<view class="phone-box  mr-24">
 								<u-icon name="phone" color="#00a63e" :bold="true" size="50rpx"></u-icon>
 								<view>
 									{{item.formCall.phone}}
@@ -376,13 +378,14 @@
 							placeholder="记录患者的其他相关需求..."></textarea>
 					</view>
 					<view class="btn-row-two">
-						<button class="btn-cancel" @click="closeStepPanel(item)">取消</button>
+						<button class="btn-cancel mr-24" @click="closeStepPanel(item)">取消</button>
 						<button class="btn-save" @click="handleSave(item)">保存</button>
 					</view>
 					<button class="btn-save-push" @click="handleSavePush(item)">️ 保存并推送至沟通群</button>
 				</view>
 			</view>
 		</view>
+		<view class="empty-tip" v-if="filterList.length === 0">暂无匹配患者</view>
 		<view v-if="showCallLoading" class="call-loading-mask">
 			<view class="call-loading-content">
 				<view class="ping-ring"></view>
@@ -402,12 +405,11 @@
 	</view>
 </template>
 <script>
-	import myTabbar from '@/components/my‑tabbar/my‑tabbar.vue'
 	import {
-		getFollowupTasks,
-		postFollowupTaskCall,
-		getFollowupPhoneStatus
-	} from '@/api/followup.js'
+		getConversationsStatsApi,
+		getCsPatientsApi
+	} from '@/api/frontApikit.js'
+	import myTabbar from '@/components/my‑tabbar/my‑tabbar.vue'
 	export default {
 		options: {
 			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
@@ -417,9 +419,13 @@
 		},
 		data() {
 			return {
+				searchKey: "",
 				showCallLoading: false,
 				formValue: null,
 				show: false,
+				highIntent: 0,
+				pendingCall: 0,
+				pendingReply: 0,
 				columns: [{
 						label: "待沟通",
 						value: 1
@@ -430,212 +436,7 @@
 					}
 				],
 				// 患者列表
-				list: [{
-						name: '张三',
-						intent: '高意向',
-						intentClass: 'tag-high',
-						highlight: true,
-						operation: '痔疮手术',
-						hospital: '浙一医院',
-						doctor: '李医生',
-						area: '杭州',
-						btnClass: 'btn-green',
-						btnTip: '首次触达 (强制记录)',
-						sex: '男',
-						age: "63",
-						tag: "常规",
-						value: "心外科",
-						showStepPanel: false,
-						callLoading: false,
-						currentStep: 1,
-						callSuccess: false,
-						formCall: {
-							id: 0,
-							taskId: 0,
-							patientId: 0,
-							csId: 0,
-							callStatus: "",
-							statusIndex: -1, //沟通成功or失败
-							failReason: -1, //沟通失败原因  select
-							failRemark: "失败原因",
-							durationSec: 0,
-							medicationStatus: -1, //用药情况
-							recoveryStatus: -1, //身体恢复情况
-							complianceStatus: -1, //遵医嘱情况:
-							suggestion: "如漏服原因、调整用药具体操作等...",
-							pkgFeedIndex: -1, //当前服务包反馈
-							buyIndex: -1, //二次购买意向
-							demand: "备注未使用原因、购意向购买时间、顾虑点等.",
-							suggest: "患者反馈的改进建议",
-							demand2: "记录患者的其他相关需求",
-							phone: '024-01234567'
-						},
-					},
-					{
-						name: '李四',
-						intent: '中等意向',
-						intentClass: 'tag-mid',
-						highlight: false,
-						operation: '骨折修复',
-						hospital: '瑞金医院',
-						doctor: '王医生',
-						area: '上海',
-						btnClass: 'btn-blue',
-						btnTip: '二次采购 (拨号已激活)',
-						callLoading: false,
-						currentStep: 1,
-						callSuccess: false,
-						showStepPanel: false,
-						formCall: {
-							id: 0,
-							taskId: 0,
-							patientId: 0,
-							csId: 0,
-							callStatus: "",
-							statusIndex: -1, //沟通成功or失败
-							failReason: -1, //沟通失败原因  select
-							failRemark: "失败原因",
-							durationSec: 0,
-							medicationStatus: -1, //用药情况
-							recoveryStatus: -1, //身体恢复情况
-							complianceStatus: -1, //遵医嘱情况:
-							suggestion: "如漏服原因、调整用药具体操作等...",
-							pkgFeedIndex: -1, //当前服务包反馈
-							buyIndex: -1, //二次购买意向
-							demand: "备注未使用原因、购意向购买时间、顾虑点等.",
-							suggest: "患者反馈的改进建议",
-							demand2: "记录患者的其他相关需求",
-							phone: '024-01234567'
-						},
-					},
-					{
-						name: '王五',
-						intent: '低意向',
-						intentClass: 'tag-low',
-						highlight: false,
-						operation: '支架手术',
-						hospital: '协和医院',
-						doctor: '陈医生',
-						area: '北京',
-						btnClass: 'btn-blue',
-						btnTip: '待跟进',
-						callLoading: false,
-						currentStep: 1,
-						callSuccess: false,
-						showStepPanel: false,
-						formCall: {
-							id: 0,
-							taskId: 0,
-							patientId: 0,
-							csId: 0,
-							callStatus: "",
-							failReason: 0,
-							durationSec: 0,
-							medicationStatus: 0,
-							recoveryStatus: 1,
-							complianceStatus: 1,
-							followUpDemand: 1,
-							satisfaction: 0,
-							suggestion: "",
-							pushToGroup: 0,
-							createTime: "",
-							pkgFeedIndex: 0,
-							buyIndex: 0,
-							remark: "步骤四",
-							suggest: "改进建议",
-							demand: "步骤三",
-							demand2: "步骤四",
-							failRemark: "失败原因",
-							statusIndex: -1,
-							phone: '024-01234567'
-						},
-					},
-					{
-						name: '赵六',
-						intent: '已购',
-						intentClass: 'tag-low',
-						highlight: false,
-						operation: '支架手术',
-						hospital: '协和医院',
-						doctor: '陈医生',
-						area: '北京',
-						btnClass: 'btn-blue',
-						btnTip: '待跟进',
-						callLoading: false,
-						currentStep: 1,
-						callSuccess: false,
-						showStepPanel: false,
-						formCall: {
-							id: 0,
-							taskId: 0,
-							patientId: 0,
-							csId: 0,
-							callStatus: "",
-							failReason: 0,
-							durationSec: 0,
-							medicationStatus: 0,
-							recoveryStatus: 1,
-							complianceStatus: 1,
-							followUpDemand: 1,
-							satisfaction: 0,
-							suggestion: "",
-							pushToGroup: 0,
-							createTime: "",
-							pkgFeedIndex: 0,
-							buyIndex: 0,
-							remark: "步骤四",
-							suggest: "改进建议",
-							demand: "步骤三",
-							demand2: "步骤四",
-							failRemark: "失败原因",
-							statusIndex: -1,
-							phone: '024-01234567'
-						},
-					},
-					{
-						id: "p5",
-						name: "孙七",
-						gender: "女",
-						age: 29,
-						btnClass: 'btn-gray',
-						doctor: '王医生',
-						area: '上海',
-						operation: '骨折修复',
-						hospital: "鼓楼医院",
-						department: "妇产科",
-						surgeryType: "剖宫产",
-						urgency: "low",
-						status: "已购买",
-						servicePackage: "产后康复包",
-						purchaseIntent: "已购",
-						formCall: {
-							id: 0,
-							taskId: 0,
-							patientId: 0,
-							csId: 0,
-							callStatus: "",
-							failReason: 0,
-							durationSec: 0,
-							medicationStatus: 0,
-							recoveryStatus: 1,
-							complianceStatus: 1,
-							followUpDemand: 1,
-							satisfaction: 0,
-							suggestion: "",
-							pushToGroup: 0,
-							createTime: "",
-							pkgFeedIndex: 0,
-							buyIndex: 0,
-							remark: "步骤四",
-							suggest: "改进建议",
-							demand: "步骤三",
-							demand2: "步骤四",
-							failRemark: "失败原因",
-							statusIndex: -1,
-							phone: '024-01234567'
-						},
-					},
-				],
+				list: [],
 				// 步骤条
 				stepList: [{
 						title: "第一步电话沟通"
@@ -677,29 +478,77 @@
 
 
 		},
+		computed: {
+			filterList() {
+				let arr = [...this.list]
+				// 1. 卡片筛选
+				if (this.activeFilter) {
+					arr = arr.filter(item => item.intentType === this.activeFilter)
+				}
+				// 2. 搜索过滤
+				const key = this.searchKey?.trim()
+				if (key) {
+					const lowKey = key.toLowerCase()
+					// 映射：中文/小写英文 匹配后端大写 HIGH MEDIUM LOW
+					const levelMap = {
+						'高意向': 'high',
+						'high': 'high',
+						'中等意向': 'medium',
+						'中意向': 'medium',
+						'medium': 'medium',
+						'低意向': 'low',
+						'low': 'low'
+					}
+					arr = arr.filter(item => {
+						const matchName = item.name && item.name.toLowerCase().includes(lowKey)
+						const matchIntent = item.purchaseIntent && item.purchaseIntent.toLowerCase().includes(
+							lowKey)
+						const matchPhone = item.phone && item.phone.includes(key)
+
+						// 匹配意向等级：把后端purchaseIntent转小写对比
+						const targetLevel = levelMap[lowKey]
+						const matchLevel = targetLevel ? item.purchaseIntent?.toLowerCase() === targetLevel : false
+
+						return matchName || matchIntent || matchPhone || matchLevel
+					})
+				}
+				return arr
+			}
+		},
+
+
 		onLoad() {
-			this.listInit()
+
+			this.getList()
+			this.getConversationsStats()
 		},
 		methods: {
-			async listInit() {
-				try {
-					// 无分页无筛选，传空对象{}
-					const res = await getFollowupTasks({});
-					const records = res.data.records || []
+			async getList() {
 
-					records.forEach(item => {
-						this.$set(item, 'callSuccess', false)
-						if (!item.formCall) {
-							this.$set(item, 'formCall', {})
-						}
-						this.$set(item.formCall, 'phone', '')
-						this.$set(item.formCall, 'statusIndex', -1)
+				try {
+					const listData = await getCsPatientsApi({
+						page: 1,
+						pageSize: 20
 					})
-					this.list = records
-				} catch (err) {
-					console.error('获取随访任务失败', err)
+					console.log('列表返回：', listData)
+
+					this.list = listData.list
+				} catch (e) {
+					console.log('getList报错：', e)
 				}
 			},
+			async getConversationsStats() {
+				try {
+					const statsData = await getConversationsStatsApi()
+					console.log('统计数据', statsData);
+					this.highIntent = statsData.highIntent ?? 0
+					this.pendingCall = statsData.pendingCall ?? 0
+					this.pendingReply = statsData.pendingReply ?? 0
+				} catch (e) {
+					console.log('统计接口报错', e)
+				}
+			},
+
 
 
 			handleStatusChange(item, e, value) {
@@ -738,7 +587,10 @@
 			},
 			routeTo(res) {
 				console.log(res)
-				let routeUrl = `/pages/index/chat` + `?data=` + encodeURIComponent(JSON.stringify(res))
+				const data = {
+					id: res.id
+				}
+				let routeUrl = `/pages/index/chat` + `?data=` + encodeURIComponent(JSON.stringify(data))
 				this.$safeJump(routeUrl)
 			},
 
@@ -982,6 +834,20 @@
 	}
 </script>
 <style scoped>
+	.search-input {
+		background-color: #f7f7f7;
+		border-radius: 8rpx;
+		padding: 20rpx 24rpx;
+		font-size: 28rpx;
+	}
+
+	.empty-tip {
+		text-align: center;
+		color: #999;
+		padding: 60rpx 0;
+		font-size: 28rpx;
+	}
+
 	.call-loading-mask {
 		position: fixed;
 		top: 0;
@@ -1156,7 +1022,7 @@
 		flex: 1;
 	}
 
-	.step-item:last-child {
+	.step-last {
 		flex: 0 0 auto;
 	}
 
@@ -1279,7 +1145,6 @@
 
 	.call-row {
 		display: flex;
-		gap: 20rpx;
 		align-items: center;
 		justify-content: space-between;
 	}
@@ -1302,6 +1167,7 @@
 		line-height: 70rpx;
 		padding: 0 30rpx;
 		border: 2px solid #155dfc;
+		flex: 1;
 	}
 
 	.picker-wrapper .picker-item {
@@ -1438,7 +1304,6 @@
 
 	.btn-row-two {
 		display: flex;
-		gap: 24rpx;
 		margin-top: 20rpx;
 	}
 
@@ -1512,7 +1377,6 @@
 
 	.stat-row {
 		display: flex;
-		gap: 24rpx;
 		margin-top: 50rpx;
 	}
 
@@ -1635,7 +1499,6 @@
 	.name-row {
 		display: flex;
 		align-items: center;
-		gap: 16rpx;
 		margin-bottom: 12rpx;
 	}
 
@@ -1654,17 +1517,17 @@
 		border-radius: 12rpx;
 	}
 
-	.tag-high {
+	.tag-HIGH {
 		background: #ffe9e9;
 		color: #e53935;
 	}
 
-	.tag-mid {
+	.tag-MEDIUM {
 		background: #fff3e0;
 		color: #f57c00;
 	}
 
-	.tag-low {
+	.tag-LOW {
 		background: #f0f1f3;
 		color: #666;
 	}

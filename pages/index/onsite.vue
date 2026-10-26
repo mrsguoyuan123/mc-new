@@ -1,11 +1,11 @@
 <template>
 	<view class="page-content page-onsite">
 		<view class="u-grid">
-			<view class="radius-15 card-border-gray text-center ">
+			<view class="radius-15 card-border-gray text-center mr-16">
 				<view class="font-bold font-l font-green">6</view>
 				<view class="font-s font-info">已服务</view>
 			</view>
-			<view class="radius-15 card-border-gray text-center ">
+			<view class="radius-15 card-border-gray text-center  mr-16">
 				<view class="font-bold font-l font-purple">3</view>
 				<view class="font-s font-info">待服务</view>
 			</view>
@@ -51,7 +51,7 @@
 		<view class="list-wrap list-wrap-green" v-if="currentIndex == 0">
 			<view v-for="(item,idx) in userList" :key="idx" class="patient-card">
 				<view class="card-header" style="margin-bottom: 0;">
-					<view class="card-avatar">
+					<view class="card-avatar  mr-24">
 						<u-icon name="account" color="#00c950" size="60rpx"></u-icon>
 					</view>
 					<view class="header-info">
@@ -61,7 +61,7 @@
 						</view>
 						<view class="row-time">
 							<u-icon name="clock" color="#00c950" size="32rpx"></u-icon>
-							<text class="time-text font-info ">{{item.lastServiceTime}}</text>
+							<text class="time-text font-info    ml-10">{{item.lastServiceTime}}</text>
 						</view>
 					</view>
 					<view class="card-right">
@@ -77,7 +77,7 @@
 			<view v-for="(item,idx) in patientList" :key="idx" class="patient-card">
 				<!-- 头部行：头像 + 姓名年龄时间 + 查看详情 -->
 				<view class="card-header">
-					<view class="card-avatar">
+					<view class="card-avatar  mr-24">
 						<u-icon name="account" color="#9c27b0" size="60rpx"></u-icon>
 					</view>
 					<view class="header-info">
@@ -87,7 +87,7 @@
 						</view>
 						<view class="row-time">
 							<u-icon name="clock" color="#9c27b0" size="32rpx"></u-icon>
-							<text class="time-text">{{item.time}}</text>
+							<text class="time-text    ml-10">{{item.time}}</text>
 						</view>
 					</view>
 					<view class="card-right">
@@ -110,17 +110,17 @@
 			<view v-for="(item,idx) in useState" :key="idx" class="patient-card">
 				<!-- 头部行：头像 + 姓名年龄时间 + 查看详情 -->
 				<view class="card-header">
-					<view class="card-avatar">
+					<view class="card-avatar mr-24">
 						<u-icon name="account" color="#ff6900" size="60rpx"></u-icon>
 					</view>
 					<view class="header-info">
 						<view class="row-name">
-							<text class="name">{{item.name}}</text>
+							<text class="name mr-16">{{item.name}}</text>
 							<text class="age">{{item.age}}岁</text>
 						</view>
 						<view class="row-time">
 							<u-icon name="clock" color="#ff6900" size="32rpx"></u-icon>
-							<text class="time-text">{{item.serviceTime}}</text>
+							<text class="time-text   ml-10">{{item.serviceTime}}</text>
 						</view>
 					</view>
 
@@ -128,14 +128,14 @@
 
 				<view class="bottom-item">
 					<u-icon name="phone" color="#909399" size="32rpx"></u-icon>
-					<text class="bottom-text">{{item.phone}}</text>
+					<text class="bottom-text ml-16">{{item.phone}}</text>
 				</view>
 				<view class="bottom-item" style="margin-bottom: 0;">
 					<u-icon name="map" color="#909399" size="32rpx"></u-icon>
-					<text class="bottom-text">{{item.address}}</text>
+					<text class="bottom-text  ml-16">{{item.address}}</text>
 				</view>
 
-				<u-button class="width-100 margin-top-1" color="#ff6900" hairline="false" text="接单"></u-button>
+				<u-button class="width-100 margin-top-1" color="#ff6900" :hairline="false" text="接单"></u-button>
 
 			</view>
 		</view>
@@ -146,6 +146,11 @@
 
 
 <script>
+	import {
+		getConversationsStatsApi,
+		getCsPatientsApi
+	} from '@/api/frontApikit.js'
+
 	import customTabbar from "@/components/custom-tabbar/custom-tabbar.vue";
 	export default {
 		components: {
@@ -254,7 +259,34 @@
 				]
 			}
 		},
+		onLoad() {
+			console.log('onLoad执行')
+  this.getList()
+			this.getConversationsStats()
+		},
 		methods: {
+			async getList() {
+    console.log('进入getList')
+    try {
+      console.log('准备调用 getCsPatientsApi')
+      const listData = await getCsPatientsApi({
+        page: 1,
+        pageSize: 20
+      })
+      console.log('列表返回：', listData)
+    } catch (e) {
+      console.log('getList报错：', e)
+    }
+  },
+		async getConversationsStats() {
+  try {
+    const statsData = await getConversationsStatsApi()
+    console.log('统计数据', statsData)
+  } catch (e) {
+    console.log('统计接口报错', e)
+  }
+},
+
 			sexSelect(e) {
 				this.model1.userInfo.sex = e.name
 				this.$refs.uForm.validateField('userInfo.sex')
@@ -308,7 +340,6 @@
 		overflow: hidden;
 		position: relative;
 		display: grid;
-		gap: 15rpx;
 		grid-template-columns: repeat(3, 1fr);
 	}
 
@@ -361,7 +392,6 @@
 	/* 头部flex：头像｜姓名时间｜查看详情 */
 	.card-header {
 		display: flex;
-		gap: 24rpx;
 		align-items: flex-start;
 		margin-bottom: 32rpx;
 	}
@@ -384,7 +414,6 @@
 	.row-name {
 		display: flex;
 		align-items: baseline;
-		gap: 16rpx;
 		margin-bottom: 16rpx;
 	}
 
@@ -402,7 +431,6 @@
 	.row-time {
 		display: flex;
 		align-items: center;
-		gap: 12rpx;
 	}
 
 	.time-text {
@@ -424,9 +452,7 @@
 	.bottom-item {
 		display: flex;
 		align-items: center;
-		gap: 16rpx;
 		margin-bottom: 24rpx;
-		/* 左边距离 = 头像宽度 + gap(24rpx) */
 		margin-left: 0rpx;
 	}
 

@@ -22,8 +22,16 @@
 				<!--日期横向选择-->
 				<scroll-view scroll-x class="date-scroll">
 					<view class="date-list">
-						<view class="date-item" :class="{active: idx === selectDateIndex}" v-for="(d, idx) in dateList"
-							:key="idx" @click="selectDateIndex = idx">
+						<view 
+							class="date-item" 
+							v-for="(d, idx) in dateList"
+							:key="idx" 
+							@click="selectDateIndex = idx" 
+							:class="{
+								active: idx === selectDateIndex,
+								'mr-16': idx !== dateList.length - 1
+							}"
+						>
 							<text class="week">{{d.week}}</text>
 							<text class="day">{{d.day}}</text>
 						</view>
@@ -33,8 +41,16 @@
 				<view class="label-text">选择时段</view>
 				<!--时段选择-->
 				<view class="time-slot-wrap">
-					<view class="slot-item" :class="{active: slotIndex === idx}" v-for="(slot, idx) in slotList"
-						:key="idx" @click="slotIndex = idx">
+					<view 
+						class="slot-item" 
+						v-for="(slot, idx) in slotList"
+						:key="idx" 
+						@click="slotIndex = idx"
+						:class="{
+							active: slotIndex === idx,
+							'mr-16': idx !== slotList.length - 1
+						}"
+					>
 						{{slot.text}}
 					</view>
 				</view>
@@ -213,8 +229,9 @@
 
 	.date-list {
 		display: flex;
-		gap: 20rpx;
 	}
+
+
 
 	.date-item {
 		min-width: 160rpx;
@@ -253,8 +270,9 @@
 
 	.time-slot-wrap {
 		display: flex;
-		gap: 24rpx;
 	}
+
+	
 
 	.slot-item {
 		flex: 1;

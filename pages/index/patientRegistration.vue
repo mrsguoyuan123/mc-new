@@ -8,50 +8,45 @@
 				<u--form :labelStyle="{width:'100px',color:'#909399',fontSize:'20rpx'}" labelPosition="left"
 					:model="model1" :rules="rules" ref="uForm">
 					<view class="view-between">
-						<u-form-item style="margin-right: 15px;" class="form-50" label="患者姓名" prop="userInfo.name"
-							labelWidth="100%" labelPosition="top"
-							:labelStyle="{width:'100px',color:'#606266',fontWeight:'bold'}" ref="itemName">
-							<u--input v-model="model1.userInfo.name"></u--input>
+						<u-form-item class="mr-16" label="患者姓名" prop="userInfo.name" labelPosition="top"
+							:labelStyle="{color:'#606266',fontWeight:'bold'}" ref="itemName">
+							<u--input v-model="model1.userInfo.name" placeholder="请输入患者姓名"></u--input>
 						</u-form-item>
-						<u-form-item style="margin-right: 15px;" class="form-50" label="性别" prop="userInfo.sex"
-							labelWidth="100%" labelPosition="top"
-							:labelStyle="{width:'100px',color:'#606266',fontWeight:'bold'}" ref="itemSex">
-							<u--input v-model="model1.userInfo.sex" disabled disabledColor="#ffffff" placeholder="请选择性别"
-								@click="showSex=true">
-								<u-icon slot="right" name="arrow-right"></u-icon>
-							</u--input>
+						<u-form-item label="性别" prop="userInfo.sex" labelPosition="top"
+							:labelStyle="{color:'#606266',fontWeight:'bold'}" ref="itemSex">
+							<view @click="sexclick">
+								<u--input v-model="model1.userInfo.sex" disabled disabledColor="#ffffff" placeholder="请选择性别">
+									<u-icon slot="right" name="arrow-right"></u-icon>
+								</u--input>
+							</view>
 						</u-form-item>
 					</view>
-					<u-form-item label="年龄" labelWidth="100%" prop="userInfo.age" labelPosition="top" ref="itemAge">
-						<u--input v-model="model1.userInfo.age" type="number" placeholder="前置图标" prefixIcon="order"
+					<u-form-item label="年龄" prop="userInfo.age" labelPosition="top" ref="itemAge">
+						<u--input v-model="model1.userInfo.age" type="number" placeholder="请输入年龄" prefixIcon="order"
 							prefixIconStyle="font-size: 22px;color: #909399"></u--input>
 					</u-form-item>
-					<u-form-item label="手术地区" labelWidth="100%" prop="userInfo.area" labelPosition="top" ref="itemArea">
-						<u--input v-model="model1.userInfo.area" placeholder="前置图标" prefixIcon="map"
+					<u-form-item label="手术地区" prop="userInfo.area" labelPosition="top" ref="itemArea">
+						<u--input v-model="model1.userInfo.area" placeholder="请输入手术地区" prefixIcon="map"
 							prefixIconStyle="font-size: 22px;color: #909399"></u--input>
 					</u-form-item>
-					<u-form-item label="手术医院" labelWidth="100%" prop="userInfo.hospital" labelPosition="top"
-						ref="itemHospital">
-						<u--input v-model="model1.userInfo.hospital" placeholder="前置图标" prefixIcon="coupon"
+					<u-form-item label="手术医院" prop="userInfo.hospital" labelPosition="top" ref="itemHospital">
+						<u--input v-model="model1.userInfo.hospital" placeholder="请输入手术医院" prefixIcon="coupon"
 							prefixIconStyle="font-size: 22px;color: #909399"></u--input>
 					</u-form-item>
-					<u-form-item label="科室" labelWidth="100%" prop="userInfo.department" labelPosition="top"
-						ref="itemDept">
-						<u--input v-model="model1.userInfo.department" placeholder="前置图标" prefixIcon="home"
+					<u-form-item label="科室" prop="userInfo.department" labelPosition="top" ref="itemDept">
+						<u--input v-model="model1.userInfo.department" placeholder="请输入就诊科室" prefixIcon="home"
 							prefixIconStyle="font-size: 22px;color: #909399"></u--input>
 					</u-form-item>
-					<u-form-item label="手术类别" labelWidth="100%" prop="userInfo.operateType" labelPosition="top"
-						ref="itemOperate">
-						<u--input v-model="model1.userInfo.operateType" placeholder="前置图标" prefixIcon="gift"
+					<u-form-item label="手术类别" prop="userInfo.operateType" labelPosition="top" ref="itemOperate">
+						<u--input v-model="model1.userInfo.operateType" placeholder="请输入手术类别" prefixIcon="gift"
 							prefixIconStyle="font-size: 22px;color: #909399"></u--input>
 					</u-form-item>
-					<u-form-item label="主刀医生" labelWidth="100%" prop="userInfo.doctor" labelPosition="top"
-						ref="itemDoctor">
-						<u--input v-model="model1.userInfo.doctor" placeholder="前置图标" prefixIcon="man-delete"
+					<u-form-item label="主刀医生" prop="userInfo.doctor" labelPosition="top" ref="itemDoctor">
+						<u--input v-model="model1.userInfo.doctor" placeholder="请输入主刀医生姓名" prefixIcon="man-delete"
 							prefixIconStyle="font-size: 22px;color: #909399"></u--input>
 					</u-form-item>
 				</u--form>
-				<u-button type="primary" text="完成注册" @click="handleClick"></u-button>
+				<u-button class="margin-top-2" type="primary" text="完成注册" @click="handleClick"></u-button>
 				<u-action-sheet :show="showSex" :actions="actions" title="请选择性别" @close="showSex = false"
 					@select="sexSelect">
 				</u-action-sheet>
@@ -171,6 +166,10 @@
 			};
 		},
 		methods: {
+			sexclick(){
+				console.log(11111111111)
+				this.showSex=true
+			},
 			sexSelect(e) {
 				this.model1.userInfo.sex = e.name
 				this.$refs.uForm.validateField('userInfo.sex')
@@ -209,8 +208,12 @@
 		align-items: flex-start;
 	}
 
-	.view-between .form-50 {
-		width: 50%;
+	::v-deep .u-form-item__body__right__message {
+		margin-left: 0 !important;
+	}
+
+	.view-between>.u-form-item {
+		flex: 1;
 	}
 
 	.page-register .bg-blue-top {
@@ -224,7 +227,11 @@
 		right: 0;
 	}
 
-	::v-deep .u-form-item {
+	.u-form-item {
+		/* padding-bottom: 30rpx; */
+	}
+
+	/* 	::v-deep .u-form-item {
 		position: relative !important;
 	}
 
@@ -236,5 +243,5 @@
 		text-align: left !important;
 		right: auto !important;
 		margin-top: 8rpx;
-	}
+	} */
 </style>

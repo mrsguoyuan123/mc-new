@@ -92,8 +92,8 @@
 		padding: 80rpx 40rpx 60rpx;
 		display: flex;
 		align-items: center;
-		border-bottom-left-radius: 40rpx;
-		border-bottom-right-radius: 40rpx;
+		border-bottom-left-radius: 60rpx;
+		border-bottom-right-radius: 60rpx;
 	}
 
 	.avatar-wrap {
@@ -153,9 +153,6 @@
 		padding: 36rpx 32rpx;
 	}
 
-	.menu-item:last-child {
-		border-bottom: none;
-	}
 
 	.menu-icon {
 		font-size: 44rpx;

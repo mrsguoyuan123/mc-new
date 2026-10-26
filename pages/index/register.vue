@@ -10,7 +10,7 @@
   </view>
 </template>
 <script>
-import {authSmsCode,authRegister} from '@/api/auth'
+
 export default {
   data(){
     return{
@@ -21,20 +21,9 @@ export default {
     }
   },
   methods:{
-    async sendCode(){
-      await authSmsCode({phone:this.phone})
-      this.countDown = 60
-      const timer = setInterval(()=>{
-        this.countDown--
-        if(this.countDown<=0) clearInterval(timer)
-      },1000)
-    },
+   
     async handleRegister(){
-      await authRegister({
-        phone:this.phone,
-        code:this.smsCode,
-        password:this.password
-      })
+     
       uni.showToast({title:'注册成功，请登录'})
       uni.navigateBack()
     }
