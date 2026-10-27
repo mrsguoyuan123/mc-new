@@ -33,7 +33,7 @@
 					<view class="heading-bar"></view>
 					<text class="heading-title">健康管理团队为你制定</text>
 				</view>
-				<view class="date-pill">今日方案 ·{{ formatDate(generateTime, 'MM月DD日')}}</view>
+				<view class="date-pill">{{ datePillText }}</view>
 			</view>
 
 			<view class="card plan-card">
@@ -44,22 +44,22 @@
 								<text class="card-title">今日运动方案</text>
 								<text class="today-badge">今日方案</text>
 							</view>
-							<text class="card-subtitle">健康管理团队制定</text>
+							<text class="card-subtitle">{{ surgeryType || '健康管理团队制定' }}</text>
 						</view>
-						<view class="summary-pill">共 {{ exercises.length }} 项 · 约 {{ totalMinutes }} 分钟</view>
+						<view class="summary-pill">共 {{ items.length }} 项 · 约 {{ totalMinutes }} 分钟</view>
 					</view>
 					<view class="progress-box">
 						<view class="progress-label">
 							<view class="progress-dot"></view>
-							<text>今日完成进度：已完成 {{ completedCount }} / {{ exercises.length }}</text>
+							<text>今日完成进度：已完成 {{ completedCount }} / {{ items.length }}</text>
 						</view>
 						<view class="progress-track">
 							<view class="progress-inner" :style="{ width: progressPercent + '%' }"></view>
 						</view>
 					</view>
 					<view class="exercise-list">
-						<view v-for="item in exercises" :key="item.id" class="exercise-item"
-							:class="{ active: currentActionId == item.id, completed: item.status === 'COMPLETED' }"
+						<view v-for="item in items" :key="item.id" class="exercise-item"
+							:class="{ active: isCurrentItem(item), completed: item.status === 'COMPLETED' }"
 							@click="selectAction(item)">
 							<!-- {{ currentActionId }} -->
 							<!-- {{ item.id }} -->
@@ -71,15 +71,15 @@
 							</view>
 							<view class="item-right">
 								<text class="status-tag"
-									:class="statusTheme(item.status)">{{ statusText(item.status, true) }}</text>
+								:class="statusTheme(item.status)">{{ statusText(item.status, item.completedSets, item.targetSets, true) }}</text>
 								<u-icon name="arrow-right" color="#9aa7ba" size="14"></u-icon>
 							</view>
 						</view>
 					</view>
-					<view class="primary-btn start-btn" :class="{ disabled: completedCount === exercises.length }"
+					<view class="primary-btn start-btn" :class="{ disabled: actionLoading || completedCount === items.length }"
 						@click="startTraining">
 						<u-icon name="play-right" color="#ffffff" size="16"></u-icon>
-						<text>{{ completedCount === exercises.length ? '今日运动已完成' : '开始今日运动' }}</text>
+						<text>{{ startButtonText }}</text>
 					</view>
 				</template>
 				<template v-else>
@@ -87,7 +87,7 @@
 						<view class="empty-icon"><u-icon name="calendar" color="#1677ff" size="30"></u-icon></view>
 						<text class="empty-title">还没有运动方案</text>
 						<text class="empty-desc">请等待健康管理团队制定方案，或联系团队了解进度。</text>
-						<view class="button-wrapper-blue">
+						<view class="button-wrapper-blue" @click="contactTeam">
 							<!-- <u-icon name="clock" color="#ffffff" size="16"></u-icon> -->
 							<u-icon name="phone" color="#ffffff" size="16"></u-icon>
 
@@ -105,20 +105,22 @@
 						<view :class="{ active: mediaTab === 'guide' }" @click="mediaTab = 'guide'">图解</view>
 					</view>
 				</view>
-				<view v-if="mediaTab === 'video' && currentAction" class="video-wrap"
-					:class="'cover-' + currentAction.cover" @click="playVideo">
-
-
+				<view v-if="mediaTab === 'video' && currentAction && currentAction.videoUrl" class="video-wrap">
+					<video style="width: 100%; height: 100%;" :src="currentAction.videoUrl" controls
+						show-center-play-btn object-fit="cover"></video>
+				</view>
+				<view v-else-if="mediaTab === 'video' && currentAction" class="video-wrap"
+					:class="coverClass" @click="playVideo">
 				</view>
 				<view v-else-if="mediaTab === 'video'" class="video-wrap video-empty">
 					<u-icon name="photo" color="#b8c2d5" size="34"></u-icon><text>暂无动作视频</text>
 				</view>
 				<view v-else class="diagram-panel">
-					<view v-for="(step, index) in diagramSteps" :key="index" class="diagram-step">
+					<view v-for="(step, index) in uiDiagramSteps" :key="index" class="diagram-step">
 						<view class="diagram-no">{{ index + 1 }}</view>
 						<view class="diagram-content">
-							<text class="diagram-title">{{ step.title }}</text>
-							<text class="diagram-desc">{{ step.desc }}</text>
+							<text class="diagram-title">{{ stepTitle(step) }}</text>
+							<text class="diagram-desc">{{ stepDesc(step) }}</text>
 						</view>
 					</view>
 				</view>
@@ -169,7 +171,7 @@
 
 						<view class="big-number-box">
 							<template v-if="mode === 'REPS'">
-								<text class="big-number">{{ currentAction.targetReps || 10 }}</text><text
+								<text class="big-number">{{ currentAction.targetReps || 0 }}</text><text
 									class="big-unit">次</text>
 							</template>
 							<template v-else>
@@ -183,7 +185,7 @@
   v-if="showGroupButton" 
   class="primary-btn record-main"
   :class="{ disabled: !canOperate || (mode === 'REPS' && countPaused) }"
-  @click="completeGroup"
+  @click="completeGroup(false)"
 >
   <text>{{ showGroupButtonText }}</text>
 </view>
@@ -214,7 +216,7 @@
 						<text class="card-title">{{ completionTitle }}</text>
 						<text class="card-subtitle">完成后请填写训练后评估</text>
 					</view>
-					<view class="progress-pill">已完成 {{ completedCount }} / {{ exercises.length }} 项</view>
+					<view class="progress-pill">已完成 {{ completedCount }} / {{ items.length }} 项</view>
 				</view>
 				<template v-if="currentAction">
 					<view class="status-rows">
@@ -225,7 +227,7 @@
 						<view class="status-row">
 							<text class="current-label">动作状态</text>
 							<text class="status-tag large"
-								:class="statusTheme(currentAction.status)">{{ statusText(currentAction.status, false) }}</text>
+								:class="statusTheme(currentAction.status)">{{ statusText(currentAction.status, currentAction.completedSets, currentAction.targetSets, false) }}</text>
 						</view>
 					</view>
 					<view v-if="currentAction.status === 'COMPLETED'" class="archive-strip">
@@ -371,7 +373,7 @@
 
 						<text class="week-count">完成 {{ weeklyStats.completedDays }} / {{ weeklyStats.totalDays }}
 							次</text>
-						<text class="week-compare">较上周 +{{ weeklyStats.compare }} 次</text>
+						<text class="week-compare">{{ weeklyStats.trendText }}</text>
 					</view>
 					<view class="trend-line">
 						<view class="trend-dot dot-a"></view>
@@ -383,7 +385,7 @@
 					<view v-for="day in weeklyStats.dailyRecords" :key="day.dateStr" class="day-col"
 						:class="{ today: day.isToday }">
 						<text class="day-name">{{ day.dayName  }}</text>
-						<view class="day-dot" :class="day.completed">
+						<view class="day-dot" :class="{ done: day.completed }">
 							<u-icon v-if="day.completed" name="checkmark" color="#ffffff" size="11"></u-icon>
 						</view>
 						<text class="day-date">{{ day.dateStr}}</text>
@@ -428,92 +430,12 @@
 
 <script>
 	import {
-		getMeExercisePlanApi,
-		postMeExerciseItemsByIdCompleteSetApi,
-		postMeExerciseItemsByIdFinishApi,
-		postMeExerciseItemsByIdPauseApi,
-		postMeExerciseItemsByIdEvaluationApi
+		getMeExercisePlanApi as fetchMeExercisePlanApi,
+		postMeExerciseItemsByIdCompleteSetApi as completeExerciseSetApi,
+		postMeExerciseItemsByIdFinishApi as finishExerciseItemApi,
+		postMeExerciseItemsByIdPauseApi as pauseExerciseItemApi,
+		postMeExerciseItemsByIdEvaluationApi as submitExerciseEvaluationApi
 	} from '@/api/frontApikit.js'
-
-	/**
-	 * 创建【床边步行】动作对象
-	 * @param {Object} [overrides={}] - 自定义覆盖字段
-	 * @returns {Object} 床边步行动作配置
-	 */
-	function createWalk(overrides) {
-		return Object.assign({
-			id: 'walk',
-			order: '01',
-			name: '床边步行（示例）',
-			shortName: '床边步行',
-			mode: 'TIMER',
-			reps: 0,
-			sets: 1,
-			durationMinutes: 5,
-			durationSeconds: 300,
-			remainingSeconds: 0,
-			dose: '5分钟',
-			status: 'COMPLETED',
-			completedAt: '20:04',
-			icon: 'account',
-			cover: 'walk',
-			description: '动作缓慢，保持自然呼吸，以不引起明显不适为前提。双脚踩实地面，目光向前看。'
-		}, overrides || {})
-	}
-
-	/**
-	 * 创建【呼吸放松】动作对象
-	 * @param {Object} [overrides={}] - 自定义覆盖字段
-	 * @returns {Object} 呼吸放松动作配置
-	 */
-	function createBreath(overrides) {
-		return Object.assign({
-			id: 'breath',
-			order: '02',
-			name: '呼吸放松（示例）',
-			shortName: '呼吸放松',
-			mode: 'count',
-			reps: 10,
-			sets: 2,
-			durationMinutes: 4,
-			durationSeconds: 0,
-			remainingSeconds: 0,
-			dose: '10次 × 2组',
-			status: 'pendingEvaluation',
-			completedAt: '',
-			icon: 'heart',
-			cover: 'breath',
-			description: '双肩自然下沉，鼻吸口呼，腹部微隆起。深长平缓，配合胸腹温和起伏舒缓身心。'
-		}, overrides || {})
-	}
-
-	/**
-	 * 创建【康复动作03】动作对象
-	 * @param {Object} [overrides={}] - 自定义覆盖字段
-	 * @returns {Object} 康复动作配置
-	 */
-	function createRehab(overrides) {
-		return Object.assign({
-			id: 'rehab',
-			order: '03',
-			name: '康复动作 03（后台配置）',
-			shortName: '康复动作 03',
-			mode: 'TIMER',
-			reps: 10,
-			sets: 2,
-			durationMinutes: 2,
-			durationSeconds: 60,
-			remainingSeconds: 60,
-			dose: '60秒 × 2组',
-			status: 'pending',
-			completedAt: '',
-			icon: 'checkmark-circle',
-			cover: 'rehab',
-			description: '按后台配置的角度与节奏完成，动作幅度以轻微牵拉为宜，如出现疼痛加重应立即停止。'
-		}, overrides || {})
-	}
-
-
 
 	/**
 	 * 创建训练评估表单默认值
@@ -530,75 +452,72 @@
 	}
 
 	/**
-	 * 创建清空完成状态的周统计数据
-	 * @returns {Object} 重置后的周统计对象
+	 * 空周统计结构
+	 * @returns {Object}
 	 */
-	function createEmptyWeek() {
-		var week = createWeek()
-		week.done = 0
-		week.compare = 0
-		week.todayLogged = false
-		week.days.forEach(function(day) {
-			if (day.status === 'done') {
-				day.status = 'pending'
-			}
-		})
-		return week
+	function createEmptyWeeklyStats() {
+		return {
+			completionRate: 0,
+			completedDays: 0,
+			totalDays: 0,
+			trendText: '',
+			dailyRecords: []
+		}
 	}
 
-	/**
-	 * 创建默认周训练统计数据
-	 * @returns {Object} 周统计对象
-	 */
-	function createWeek() {
+	function normalizeDailyRecord(day) {
+		day = day || {}
 		return {
-			done: 5,
-			target: 6,
-			compare: 1,
-			todayLogged: false,
-			days: [{
-					name: '周一',
-					date: '10-16',
-					status: 'done',
-					isToday: false
-				},
-				{
-					name: '周二',
-					date: '10-17',
-					status: 'done',
-					isToday: false
-				},
-				{
-					name: '周三',
-					date: '10-18',
-					status: 'done',
-					isToday: false
-				},
-				{
-					name: '周四',
-					date: '10-19',
-					status: 'done',
-					isToday: false
-				},
-				{
-					name: '周五',
-					date: '10-20',
-					status: 'done',
-					isToday: false
-				},
-				{
-					name: '周六',
-					date: '10-21',
-					status: 'pending',
-					isToday: true
-				},
-				{
-					name: '周日',
-					date: '10-22',
-					status: 'rest',
-					isToday: false
-				}
-			]
+			dayName: day.dayName || '',
+			dateStr: day.dateStr || '',
+			completed: !!day.completed,
+			isToday: !!day.isToday
+		}
+	}
+
+	function normalizeWeeklyStats(stats) {
+		stats = stats || {}
+		return {
+			completionRate: Number(stats.completionRate || 0),
+			completedDays: Number(stats.completedDays || 0),
+			totalDays: Number(stats.totalDays || 0),
+			trendText: stats.trendText || '',
+			dailyRecords: Array.isArray(stats.dailyRecords) ? stats.dailyRecords.map(normalizeDailyRecord) : []
+		}
+	}
+
+	function normalizeExerciseItem(item) {
+		item = item || {}
+		return {
+			id: item.id === undefined || item.id === null ? '' : item.id,
+			createTime: item.createTime || null,
+			updateTime: item.updateTime || null,
+			deleted: item.deleted === undefined ? 0 : item.deleted,
+			planId: item.planId || null,
+			orderNo: Number(item.orderNo || 0),
+			name: item.name || '',
+			dosage: item.dosage || '',
+			mode: item.mode === 'REPS' ? 'REPS' : 'TIMER',
+			targetSets: Number(item.targetSets || 0),
+			targetReps: item.targetReps === null || item.targetReps === undefined ? null : Number(item.targetReps),
+			targetDurationSec: item.targetDurationSec === null || item.targetDurationSec === undefined ? null : Number(item.targetDurationSec),
+			completedSets: Number(item.completedSets || 0),
+			status: ['PENDING', 'NEED_EVAL', 'COMPLETED', 'PAUSED'].indexOf(item.status) !== -1 ? item.status : 'PENDING',
+			completedAt: item.completedAt || null,
+			description: item.description || '',
+			videoUrl: item.videoUrl || null,
+			steps: Array.isArray(item.steps) ? item.steps : []
+		}
+	}
+
+	function normalizeExercisePlan(plan) {
+		if (!plan) return null
+		return {
+			planId: plan.planId || '',
+			surgeryType: plan.surgeryType || '',
+			generateTime: plan.generateTime || '',
+			items: Array.isArray(plan.items) ? plan.items.map(normalizeExerciseItem) : [],
+			weeklyStats: normalizeWeeklyStats(plan.weeklyStats)
 		}
 	}
 
@@ -609,11 +528,7 @@
 				items: [],
 				planId: '',
 				surgeryType: '',
-				weeklyStats: [],
-				videoUrl: "https://www.bilibili.com/video/BV1jj8czxEvN/",
-				// 小程序需要替换成你自己上传后的mp4地址
-				videoSrc: "",
-				poster: "",
+				weeklyStats: createEmptyWeeklyStats(),
 				toolbarCollapsed: false,
 				activeScenario: 'default',
 
@@ -639,14 +554,19 @@
 					}
 				],
 				hasPlan: true,
-				exercises: [],
-				currentActionId: '2113897402398793729',
+				currentActionId: '',
 				currentGroup: 1,
-				mode: 'REPS',
+				mode: 'TIMER',
 				countPaused: false,
 				running: false,
 				remainingSeconds: 0,
 				timer: null,
+				actionLoading: false,
+				serverEvaluation: {
+					itemId: '',
+					isAbnormal: false,
+					abnormalReasons: []
+				},
 				mediaTab: 'video',
 				assessmentExpanded: true,
 				warningVisible: false,
@@ -655,20 +575,6 @@
 				swellingOptions: ['无', '轻微', '明显'],
 				fatigueOptions: ['轻松', '一般', '很累'],
 				discomfortOptions: ['无', '有，想告诉医护'],
-				diagramSteps: [{
-						title: '准备姿势',
-						desc: '坐稳或站稳，双肩放松，保持自然呼吸，确认周围环境安全。'
-					},
-					{
-						title: '按剂量完成',
-						desc: '跟随组数与次数节奏训练，计时动作以温和持续为主。'
-					},
-					{
-						title: '结束观察',
-						desc: '训练后静息片刻，记录疼痛、肿胀、疲劳及其他不适情况。'
-					}
-				],
-				week: [],
 				toast: {
 					visible: false,
 					text: '已暂存，您可以稍后返回今日方案继续填写',
@@ -680,23 +586,53 @@
 			}
 		},
 		computed: {
- 
-  showGroupButtonText() {
-    const total = this.currentAction.targetSets || 2
-    return this.currentGroup >= total ? '完成本项运动' : '完成这一组'
-  },
+			datePillText: function() {
+				return this.generateTime ? '今日方案 · ' + this.formatDate(this.generateTime, 'MM月DD日') : '今日方案'
+			},
+			isCurrentItem: function() {
+				var self = this
+				return function(item) {
+					return !!item && String(item.id) === String(self.currentActionId)
+				}
+			},
+			startButtonText: function() {
+				if (this.actionLoading) return '加载中...'
+				return this.completedCount === this.items.length ? '今日运动已完成' : '开始今日运动'
+			},
+			coverClass: function() {
+				if (!this.currentAction) return ''
+				var name = this.currentAction.name || ''
+				if (name.indexOf('呼吸') !== -1) return 'cover-breath'
+				if (name.indexOf('步') !== -1) return 'cover-walk'
+				return 'cover-rehab'
+			},
+			uiDiagramSteps: function() {
+				if (this.currentAction && this.currentAction.steps && this.currentAction.steps.length) {
+					return this.currentAction.steps
+				}
+				return [{
+					title: '准备姿势',
+					desc: '坐稳或站稳，双肩放松，保持自然呼吸，确认周围环境安全。'
+				}, {
+					title: '按剂量完成',
+					desc: this.currentAction ? this.currentAction.dosage : '跟随组数与次数节奏训练。'
+				}, {
+					title: '结束观察',
+					desc: '训练后静息片刻，记录疼痛、肿胀、疲劳及其他不适情况。'
+				}]
+			},
+			showGroupButtonText: function() {
+				if (!this.currentAction) return '完成这一组'
+				return this.currentGroup >= this.currentAction.targetSets ? '完成本项运动' : '完成这一组'
+			},
 			/**
 			 * 获取当前选中动作
 			 * @returns {Object|null} 当前动作对象
 			 */
 			currentAction: function() {
-				console.log(this.currentActionId)
-
-				for (var i = 0; i < this.exercises.length; i += 1) {
-					console.log(this.exercises[i].id)
-
-					if (this.exercises[i].id === this.currentActionId) {
-						return this.exercises[i]
+				for (var i = 0; i < this.items.length; i += 1) {
+					if (String(this.items[i].id) === String(this.currentActionId)) {
+						return this.items[i]
 					}
 				}
 				return null
@@ -706,7 +642,7 @@
 			 * @returns {Number} 已完成数量
 			 */
 			completedCount: function() {
-				return this.exercises.filter(function(item) {
+				return this.items.filter(function(item) {
 					return item.status === 'COMPLETED'
 				}).length
 			},
@@ -715,18 +651,19 @@
 			 * @returns {Number} 百分比
 			 */
 			progressPercent: function() {
-				if (!this.exercises.length) {
+				if (!this.items.length) {
 					return 0
 				}
-				return Math.round(this.completedCount / this.exercises.length * 100)
+				return Math.round(this.completedCount / this.items.length * 100)
 			},
 			/**
 			 * 所有动作合计分钟数
 			 * @returns {Number} 总分钟
 			 */
 			totalMinutes: function() {
-				const totalSec = this.exercises.reduce((total, item) => {
-					return total + (item.targetDurationSec || 0)
+				var totalSec = 0
+				this.items.forEach(function(item) {
+					totalSec += (item.targetDurationSec || 0) * (item.targetSets || 0)
 				}, 0)
 				return Math.round(totalSec / 60)
 			},
@@ -734,28 +671,24 @@
 			 * 组点点数组，用于渲染组标识
 			 * @returns {Array<Object>} 组数据
 			 */
-		
-        groupDots() {
-    const total = this.currentAction.targetSets || 2;
-    
-    const arr = []
-    for (let i = 1; i <= total; i++) {
-      arr.push({
-        finished: i < this.currentGroup,
-        active: i === this.currentGroup
-      })
-    }
-    console.log(arr)
-    return arr
-  },
+			groupDots: function() {
+				var total = this.currentAction ? this.currentAction.targetSets : 0
+				var arr = []
+				for (var i = 1; i <= total; i++) {
+					arr.push({
+						finished: i < this.currentGroup,
+						active: i === this.currentGroup
+					})
+				}
+				return arr
+			},
 			/**
 			 * 是否允许操作当前动作
 			 * @returns {Boolean}
 			 */
 			canOperate: function() {
 				return !!this.currentAction &&
-					this.currentAction.status !== 'COMPLETED' &&
-					this.currentAction.status !== 'PAUSED'
+					this.currentAction.status === 'PENDING'
 			},
 			/**
 			 * 是否展示下一组按钮
@@ -765,7 +698,13 @@
 				if (!this.currentAction || !this.canOperate) {
 					return false
 				}
-				return this.currentAction.sets > 1 && this.currentGroup < this.currentAction.sets
+				return this.currentAction.targetSets > 0 && this.currentGroup <= this.currentAction.targetSets
+			},
+			stepTitle: function(step) {
+				return (step && (step.title || step.name)) || ''
+			},
+			stepDesc: function(step) {
+				return (step && (step.desc || step.description)) || ''
 			},
 
 
@@ -814,6 +753,9 @@
 			 * @returns {Boolean}
 			 */
 			hasAbnormal: function() {
+				if (this.currentAction && String(this.serverEvaluation.itemId) === String(this.currentAction.id)) {
+					return !!this.serverEvaluation.isAbnormal || this.currentAction.status === 'PAUSED'
+				}
 				return Number(this.form.pain) >= 6 ||
 					this.form.swelling === '明显' ||
 					this.form.fatigue === '很累' ||
@@ -824,6 +766,14 @@
 			 * @returns {String}
 			 */
 			abnormalReasons: function() {
+				if (this.currentAction && String(this.serverEvaluation.itemId) === String(this.currentAction.id)) {
+					var serverReasons = Array.isArray(this.serverEvaluation.abnormalReasons) ?
+						this.serverEvaluation.abnormalReasons : []
+					if (!serverReasons.length && this.currentAction.status === 'PAUSED') {
+						serverReasons = ['医护团队建议暂停训练']
+					}
+					return serverReasons.length ? serverReasons.join('、') : '暂无异常指标'
+				}
 				var reasons = []
 				if (Number(this.form.pain) >= 6) reasons.push('疼痛程度≥6分')
 				if (this.form.swelling === '明显') reasons.push('患处明显肿胀')
@@ -843,8 +793,8 @@
 			 * @returns {Number}
 			 */
 			weekPercent: function() {
-				if (!this.weeklyStats || !this.weeklyStats.totalDays) return 0
-				return Math.round(this.weeklyStats.completedDays / this.weeklyStats.totalDays * 100)
+				if (!this.weeklyStats) return 0
+				return Number(this.weeklyStats.completionRate || 0)
 			},
 			/**
 			 * 环形进度背景样式
@@ -926,59 +876,148 @@
 			 * 获取我的运动康复方案（动作+本周统计）
 			 */
 			async getMeExercisePlanApi() {
+				this.actionLoading = true
 				try {
-					const meExercisePlan = await getMeExercisePlanApi()
-					this.generateTime = meExercisePlan.generateTime;
-					this.exercises = meExercisePlan.items;
-					this.planId = meExercisePlan.planId;
-					this.surgeryType = meExercisePlan.surgeryType;
-					this.weeklyStats = meExercisePlan.weeklyStats;
-
-					console.log('运动方案', meExercisePlan)
-
+					this.applyExercisePlan(normalizeExercisePlan(await fetchMeExercisePlanApi()))
 				} catch (e) {
-					console.log('报错：', e)
+					this.applyExercisePlan(this.createMockExercisePlan())
+					console.log('运动方案接口异常：', e)
+				} finally {
+					this.actionLoading = false
 				}
 			},
 			/**
-			 * 完成一组动作，达到目标组数后进入待评估
+			 * 应用运动康复方案
 			 */
-			async postMeExerciseItemsByIdCompleteSetApi() {
-				try {
-					await postMeExerciseItemsByIdCompleteSetApi({})
-				} catch (e) {
-					console.log('报错：', e)
+			applyExercisePlan: function(plan) {
+				plan = normalizeExercisePlan(plan)
+				if (!plan || !plan.planId || !plan.items.length) {
+					this.hasPlan = false
+					this.planId = ''
+					this.surgeryType = ''
+					this.generateTime = ''
+					this.items = []
+					this.weeklyStats = createEmptyWeeklyStats()
+					this.serverEvaluation = {
+						itemId: '',
+						isAbnormal: false,
+						abnormalReasons: []
+					}
+					this.currentActionId = ''
+					this.currentGroup = 1
+					this.mode = 'TIMER'
+					this.running = false
+					this.countPaused = false
+					this.remainingSeconds = 0
+					this.clearTimer()
+					return
 				}
+				this.hasPlan = true
+				this.planId = plan.planId
+				this.surgeryType = plan.surgeryType
+				this.generateTime = plan.generateTime
+				this.items = plan.items
+				this.weeklyStats = plan.weeklyStats
+				var current = this.findItemById(this.currentActionId) || this.items[0] || null
+				if (current) {
+					this.selectAction(current)
+				} else {
+					this.currentActionId = ''
+					this.currentGroup = 1
+					this.mode = 'TIMER'
+					this.running = false
+					this.countPaused = false
+				}
+			},
+			findItemById: function(id) {
+				for (var i = 0; i < this.items.length; i += 1) {
+					if (String(this.items[i].id) === String(id)) return this.items[i]
+				}
+			},
+			applyEvaluationResult: function(result, action) {
+				if (!result || !result.itemStatus) return false
+				var statusList = ['PENDING', 'NEED_EVAL', 'COMPLETED', 'PAUSED']
+				if (statusList.indexOf(result.itemStatus) === -1) return false
+
+				action.status = result.itemStatus
+				if (result.itemStatus === 'COMPLETED') {
+					action.completedSets = action.targetSets
+					action.completedAt = action.completedAt || this.nowIsoTime()
+				}
+				if (result.itemStatus === 'NEED_EVAL') {
+					action.completedSets = action.targetSets
+					action.completedAt = null
+				}
+				if (result.itemStatus === 'PAUSED') {
+					action.completedAt = null
+				}
+				this.serverEvaluation = {
+					itemId: action.id,
+					isAbnormal: !!result.isAbnormal,
+					abnormalReasons: Array.isArray(result.abnormalReasons) ? result.abnormalReasons : []
+				}
+				return true
+			},
+			mergeExerciseItem: function(result) {
+				var item = normalizeExerciseItem(this.extractExerciseItem(result))
+				if (!item || item.id === undefined || item.id === null || item.id === '') return null
+				for (var i = 0; i < this.items.length; i += 1) {
+					if (String(this.items[i].id) === String(item.id)) {
+						this.$set(this.items, i, item)
+						if (String(this.currentActionId) === String(item.id)) {
+							this.mode = item.mode
+							this.currentGroup = item.status === 'COMPLETED' ? item.targetSets :
+								Math.max(1, Math.min(item.completedSets + 1, item.targetSets || 1))
+							this.remainingSeconds = item.mode === 'TIMER' && item.status === 'PENDING' ?
+								(item.targetDurationSec || 0) : 0
+						}
+						return item
+					}
+				}
+				return null
+			},
+			extractExerciseItem: function(result) {
+				if (!result) return null
+				if (result.id || result.mode || result.targetSets !== undefined) return result
+				return result.item || result.data || null
+			},
+			completeSetRequest: async function(item) {
+				return await completeExerciseSetApi({ id: item.id })
 			},
 			/**
 			 * 提前结束当前动作，进入待评估
 			 */
-			async postMeExerciseItemsByIdFinishApi() {
-				try {
-					await postMeExerciseItemsByIdFinishApi({})
-				} catch (e) {
-					console.log('报错：', e)
-				}
+			finishItemRequest: async function(item) {
+				return await finishExerciseItemApi({ id: item.id })
 			},
 			/**
 			 * 暂停动作（异常暂停，不可自动恢复）
 			 */
-			async postMeExerciseItemsByIdPauseApi() {
-				try {
-					await postMeExerciseItemsByIdPauseApi({})
-				} catch (e) {
-					console.log('报错：', e)
-				}
+			pauseItemRequest: async function(item) {
+				return await pauseExerciseItemApi({ id: item.id })
 			},
 			/**
 			 * 提交训练后评估表单，异常则标记暂停
 			 */
-			async postMeExerciseItemsByIdEvaluationApi() {
-				try {
-					await postMeExerciseItemsByIdEvaluationApi({})
-				} catch (e) {
-					console.log('报错：', e)
-				}
+			submitEvaluationRequest: async function(item, data) {
+        console.log(item)
+        console.log(data)
+        const data1 = {
+          discomfort
+: 
+"无",
+fatigue
+: 
+"轻松",
+pain
+: 
+4,
+swelling
+: 
+"无",
+        }
+
+				return await submitExerciseEvaluationApi(Object.assign({ id: item.id }, data))
 			},
 			/**
 			 * 折叠/展开工具栏
@@ -1016,10 +1055,13 @@
 			 * @param {Boolean} short 是否简短版本
 			 * @returns {String}
 			 */
-			statusText: function(status, short) {
+			statusText: function(status, completedSets, targetSets, short) {
+				if (status === 'PENDING' && completedSets > 0 && completedSets < targetSets) {
+					return '进行中 ' + completedSets + '/' + targetSets + '组'
+				}
 				const map = {
 					COMPLETED: '已完成',
-					NEED_EVAL: short ? '待评估' : '待填写评估（未完全结项）',
+					NEED_EVAL: short === false ? '待填写评估（未完全结项）' : '待评估',
 					PENDING: '待开始',
 					PAUSED: '已暂停'
 				}
@@ -1044,28 +1086,26 @@
 			 * @param {Object} item 动作对象
 			 */
 			selectAction: function(item) {
-				if (!this.hasPlan) return
+				if (!this.hasPlan || !item) return
 				this.currentActionId = item.id
 				this.mode = item.mode
-				if (item.status === 'PENDING' || item.status === 'inProgress') {
-					this.currentGroup = 1
+				if (item.status === 'COMPLETED') {
+					this.currentGroup = item.targetSets || 1
 				} else {
-					this.currentGroup = item.sets
+					this.currentGroup = 1
+					this.currentGroup = Math.max(1, Math.min(item.completedSets + 1, item.targetSets || 1))
 				}
 				if (item.mode === 'TIMER') {
-					if (item.status === 'PENDING' || item.status === 'inProgress') {
-						item.remainingSeconds = item.durationSeconds
-					} else if (item.status === 'COMPLETED') {
-						item.remainingSeconds = 0
-					}
+					this.remainingSeconds = item.status === 'COMPLETED' ? 0 : (item.targetDurationSec || 0)
+				} else {
+					this.remainingSeconds = 0
 				}
-				this.remainingSeconds = item.mode === 'TIMER' ? item.remainingSeconds || 0 : 0
 				this.running = false
 				this.countPaused = false
 				this.clearTimer()
 				this.form = createForm()
 				this.warningVisible = false
-				this.assessmentExpanded = item.status === 'pendingEvaluation' || item.status === 'PAUSED'
+				this.assessmentExpanded = item.status === 'NEED_EVAL' || item.status === 'PAUSED'
 			},
 			/**
 			 * 查找第一个匹配状态的动作
@@ -1073,9 +1113,9 @@
 			 * @returns {Object|null}
 			 */
 			findFirst: function(statusList) {
-				for (var i = 0; i < this.exercises.length; i += 1) {
-					if (statusList.indexOf(this.exercises[i].status) !== -1) {
-						return this.exercises[i]
+				for (var i = 0; i < this.items.length; i += 1) {
+					if (statusList.indexOf(this.items[i].status) !== -1) {
+						return this.items[i]
 					}
 				}
 				return null
@@ -1088,14 +1128,20 @@
 					this.showToast('今日暂无运动方案，等待健康管理团队后台配置。', 'info')
 					return
 				}
-				if (this.completedCount === this.exercises.length) {
+				if (this.completedCount === this.items.length && this.items.length > 0) {
 					this.showToast('今日运动已全部完成，请遵循术后节律休息。', 'success')
 					return
 				}
-				var target = this.findFirst(['inProgress', 'pending'])
+				var target = this.findFirst(['PENDING', 'NEED_EVAL'])
+				if (target && target.status === 'NEED_EVAL') {
+					this.selectAction(target)
+					this.showToast('存在待填写评估，请先完成训练后评估。', 'warning')
+					this.openEvaluation()
+					return
+				}
 				if (!target) {
 					this.showToast('存在待填写评估，请先完成训练后评估。', 'warning')
-					var evaluate = this.findFirst(['pendingEvaluation'])
+					var evaluate = this.findFirst(['NEED_EVAL'])
 					if (evaluate) {
 						this.selectAction(evaluate)
 						this.openEvaluation()
@@ -1103,12 +1149,8 @@
 					return
 				}
 				this.selectAction(target)
-				target.status = 'inProgress'
 				if (target.mode === 'TIMER') {
-					if (target.remainingSeconds <= 0) {
-						target.remainingSeconds = target.durationSeconds
-						this.remainingSeconds = target.remainingSeconds
-					}
+					this.remainingSeconds = target.targetDurationSec || 0
 					this.startTimer()
 				} else {
 					this.countPaused = false
@@ -1121,26 +1163,7 @@
 			 */
 			switchMode: function(nextMode) {
 				if (!this.currentAction) return
-				if (this.mode === nextMode) return
-				if (!this.canOperate) {
-					this.showToast('当前动作已结项或已暂停，模式仅供查看。', 'info')
-					this.mode = nextMode
-					if (nextMode === 'TIMER') {
-						this.remainingSeconds = this.currentAction.remainingSeconds || this.currentAction
-							.durationSeconds || 120
-					}
-					return
-				}
-				this.mode = nextMode
-				if (nextMode === 'TIMER') {
-					this.countPaused = false
-					this.remainingSeconds = this.currentAction.durationSeconds || 120
-					this.currentAction.remainingSeconds = this.remainingSeconds
-					this.startTimer()
-				} else {
-					this.pauseTimer()
-					this.remainingSeconds = 0
-				}
+				this.showToast('训练模式由后台动作配置决定，当前动作为' + (this.currentAction.mode === 'TIMER' ? '计时模式' : '次数模式') + '。', 'info')
 			},
 			/**
 			 * 启动倒计时定时器
@@ -1155,20 +1178,9 @@
 				this.running = true
 				this.timer = setInterval(function() {
 					self.remainingSeconds = Math.max(0, self.remainingSeconds - 1)
-					if (self.currentAction) {
-						self.currentAction.remainingSeconds = self.remainingSeconds
-					}
 					if (self.remainingSeconds <= 0) {
 						self.pauseTimer()
-						if (self.currentAction && self.currentGroup < self.currentAction.sets) {
-							self.currentGroup += 1
-							self.remainingSeconds = self.currentAction.durationSeconds
-							self.currentAction.remainingSeconds = self.remainingSeconds
-							self.startTimer()
-							self.showToast('第 ' + self.currentGroup + ' 组倒计时结束，请继续下一组。', 'success')
-						} else if (self.currentAction) {
-							self.markPendingEvaluation()
-						}
+						if (self.currentAction) self.completeGroup(true)
 					}
 				}, 1000)
 			},
@@ -1217,52 +1229,68 @@
 					this.showToast('当前状态不可重置。', 'warning')
 					return
 				}
-				var duration = this.currentAction.durationSeconds || 120
+				var duration = this.currentAction.mode === 'TIMER' ? (this.currentAction.targetDurationSec || 0) : 0
 				this.remainingSeconds = duration
-				this.currentGroup = 1
+				this.currentGroup = Math.max(1, Math.min(this.currentAction.completedSets + 1, this.currentAction.targetSets || 1))
 				this.countPaused = false
-				this.currentAction.remainingSeconds = duration
 				this.pauseTimer()
 				this.showToast('本组训练记录已重置。', 'info')
 			},
 			/**
 			 * 完成当前一组
 			 */
-		completeGroup: function() {
-  if (!this.canOperate) {
-    this.showToast('请先恢复训练后再完成本组。', 'warning')
-    return
-  }
-  if (this.mode === 'REPS' && this.countPaused) {
-    this.showToast('训练已暂停，请点击继续后再完成本组。', 'warning')
-    return
-  }
-  // 修改为 targetSets 和模板统一
-  if (this.currentGroup < this.currentAction.targetSets) {
-    this.currentGroup += 1
-    if (this.mode === 'TIMER') {
-      this.remainingSeconds = this.currentAction.targetDurationSec
-      this.currentAction.remainingSeconds = this.remainingSeconds
-      this.startTimer()
-    }
-    this.showToast('第 ' + (this.currentGroup - 1) + ' 组已完成，请继续下一组。', 'success')
-  } else {
-    this.markPendingEvaluation()
-  }
-},
+			completeGroup: async function(autoFromTimer) {
+				if (this.actionLoading) return
+				if (!this.canOperate) {
+					this.showToast('请先恢复训练后再完成本组。', 'warning')
+					return
+				}
+				if (this.mode === 'REPS' && this.countPaused) {
+					this.showToast('训练已暂停，请点击继续后再完成本组。', 'warning')
+					return
+				}
+				var action = this.currentAction
+				var finishedGroup = this.currentGroup
+				this.actionLoading = true
+				try {
+					var result = await this.completeSetRequest(action)
+					var updated = this.mergeExerciseItem(result)
+					if (!updated) {
+						this.showToast('完成单组返回数据异常，请稍后重试。', 'warning')
+						return
+					}
+					action = updated
+					if (action.completedSets < action.targetSets) {
+						this.currentGroup = Math.min(action.completedSets + 1, action.targetSets)
+						if (this.mode === 'TIMER') {
+							this.remainingSeconds = action.targetDurationSec || 0
+							if (autoFromTimer) {
+								this.startTimer()
+							}
+						}
+						this.showToast('第 ' + finishedGroup + ' 组已完成，请继续下一组。', 'success')
+					} else {
+						this.markPendingEvaluation(action)
+					}
+				} catch (e) {
+					console.log('完成单组失败：', e)
+				} finally {
+					this.actionLoading = false
+				}
+			},
 
 			/**
 			 * 标记当前动作待评估，展开评估表单
 			 */
-			markPendingEvaluation: function() {
-				if (!this.currentAction) return
+			markPendingEvaluation: function(item) {
+				item = item || this.currentAction
+				if (!item) return
 				this.pauseTimer()
-				this.currentAction.status = 'pendingEvaluation'
-				this.currentGroup = this.currentAction.sets
-				if (this.currentAction.mode === 'TIMER') {
-					this.currentAction.remainingSeconds = 0
-					this.remainingSeconds = 0
-				}
+				this.currentActionId = item.id
+				item.status = 'NEED_EVAL'
+				this.currentGroup = item.targetSets
+				this.remainingSeconds = 0
+				this.mode = item.mode
 				this.assessmentExpanded = true
 				this.showToast('本项运动已完成训练，请填写训练后评估。', 'info')
 				this.$nextTick(function() {
@@ -1275,21 +1303,65 @@
 			/**
 			 * 直接完成当前动作
 			 */
-			completeCurrentAction: function() {
+			completeCurrentAction: async function() {
+				if (this.actionLoading) return
 				if (!this.canOperate) {
 					this.showToast('当前动作无需再次完成。', 'warning')
 					return
 				}
-				this.markPendingEvaluation()
+				var action = this.currentAction
+				this.actionLoading = true
+				try {
+					var result = await this.finishItemRequest(action)
+					var updated = this.mergeExerciseItem(result)
+					if (!updated) {
+						this.showToast('结束动作返回数据异常，请稍后重试。', 'warning')
+						return
+					}
+					action = updated
+					this.markPendingEvaluation(action)
+				} catch (e) {
+					console.log('结束动作失败：', e)
+				} finally {
+					this.actionLoading = false
+				}
 			},
 			/**
 			 * 身体不适，主动停止训练
 			 */
-			stopBecauseUnwell: function() {
+			stopBecauseUnwell: async function() {
+				if (this.actionLoading) return
 				if (!this.currentAction) return
+				var action = this.currentAction
+				var previousStatus = action.status
+				var previousCompletedSets = action.completedSets
+				var previousCompletedAt = action.completedAt
 				this.pauseTimer()
 				this.countPaused = true
-				this.currentAction.status = 'PAUSED'
+				this.actionLoading = true
+				action.status = 'PAUSED'
+				try {
+					var result = await this.pauseItemRequest(action)
+					var updated = this.mergeExerciseItem(result)
+					if (!updated) {
+						this.showToast('暂停动作返回数据异常，请稍后重试。', 'warning')
+						action.status = previousStatus
+						action.completedSets = previousCompletedSets
+						action.completedAt = previousCompletedAt
+						this.countPaused = false
+						return
+					}
+					action = updated
+				} catch (e) {
+					action.status = previousStatus
+					action.completedSets = previousCompletedSets
+					action.completedAt = previousCompletedAt
+					this.countPaused = false
+					console.log('暂停动作失败：', e)
+					return
+				} finally {
+					this.actionLoading = false
+				}
 				this.form.discomfort = '有，想告诉医护'
 				this.warningVisible = true
 				this.assessmentExpanded = true
@@ -1377,62 +1449,107 @@
 			/**
 			 * 保存评估结果
 			 */
-			saveEvaluation: function() {
+			saveEvaluation: async function() {
+				if (this.actionLoading) return
 				if (!this.currentAction) {
 					this.showToast('暂无可保存评估的训练动作。', 'warning')
 					return
 				}
 				if (!this.validateForm()) return
 				var action = this.currentAction
-				this.pauseTimer()
-				if (this.hasAbnormal) {
-					action.status = 'PAUSED'
-					action.completedAt = ''
-					action.remainingSeconds = action.mode === 'TIMER' ? this.remainingSeconds : 0
-					this.warningVisible = true
-					this.assessmentExpanded = true
-					this.showToast('评估存在异常指标，建议暂停训练并联系医护。', 'warning')
-					return
+				this.actionLoading = true
+				this.serverEvaluation = {
+					itemId: '',
+					isAbnormal: false,
+					abnormalReasons: []
 				}
-				action.status = 'COMPLETED'
-				action.completedAt = this.nowTime()
-				if (action.mode === 'TIMER') {
-					action.remainingSeconds = 0
-				}
-				this.warningVisible = false
-				this.assessmentExpanded = false
-				if (!this.week.todayLogged) {
-					this.week.done = Math.min(this.week.target, this.week.done + 1)
-					this.week.todayLogged = true
-					var today = this.week.days.filter(function(day) {
-						return day.isToday
-					})[0]
-					if (today) {
-						today.status = 'done'
+				try {
+					var result = await this.submitEvaluationRequest(action, this.buildEvaluationPayload())
+					var updated = this.mergeExerciseItem(result)
+					if (!updated) {
+						this.showToast('评估结果返回数据异常，请稍后重试。', 'warning')
+						return
 					}
-				}
-				var pending = this.findFirst(['pending', 'inProgress'])
-				if (pending) {
-					this.selectAction(pending)
-				} else {
-					var first = this.exercises[0]
-					if (first) this.selectAction(first)
-				}
-				if (this.completedCount !== this.exercises.length) {
-					this.showToast('训练后评估已归档保存！数据已加密同步至健康管理团队', 'success')
-				} else {
-					this.showToast('今日运动已全部完成，训练记录已归档。', 'success')
+					action = updated
+					var serverApplied = this.applyEvaluationResult(result, action)
+					if (!serverApplied) {
+						this.showToast('评估结果返回数据异常，请稍后重试。', 'warning')
+						return
+					}
+					var abnormal = serverApplied ? (!!result.isAbnormal || action.status === 'PAUSED') : this.hasAbnormal
+					if (serverApplied && result.itemStatus === 'NEED_EVAL' && !abnormal) {
+						this.pauseTimer()
+						this.remainingSeconds = 0
+						this.assessmentExpanded = true
+						this.showToast('请继续完善训练后评估后再提交。', 'warning')
+						return
+					}
+					this.pauseTimer()
+					if (abnormal) {
+						this.remainingSeconds = 0
+						this.warningVisible = true
+						this.assessmentExpanded = true
+						this.showToast('评估存在异常指标，建议暂停训练并联系医护。', 'warning')
+						return
+					}
+					this.remainingSeconds = 0
+					this.warningVisible = false
+					this.assessmentExpanded = false
+					if (action.status === 'COMPLETED') {
+						this.refreshWeeklyStatsLocally()
+					}
+					var pending = this.findFirst(['PENDING', 'NEED_EVAL'])
+					if (pending) {
+						this.selectAction(pending)
+					} else {
+						var first = this.items[0]
+						if (first) this.selectAction(first)
+					}
+					if (this.completedCount !== this.items.length) {
+						this.showToast('训练后评估已归档保存！数据已加密同步至健康管理团队', 'success')
+					} else {
+						this.showToast('今日运动已全部完成，训练记录已归档。', 'success')
+					}
+				} catch (e) {
+					console.log('保存训练评估失败：', e)
+				} finally {
+					this.actionLoading = false
 				}
 			},
+			buildEvaluationPayload: function() {
+				return {
+					answers: {
+						pain: Number(this.form.pain),
+						swelling: this.form.swelling,
+						fatigue: this.form.fatigue,
+						discomfort: this.form.discomfort
+					},
+					notes: this.form.note
+				}
+			},
+			refreshWeeklyStatsLocally: function() {
+				var stats = this.weeklyStats || createEmptyWeeklyStats()
+				var today = null
+				stats.dailyRecords.forEach(function(day) {
+					if (day.isToday) today = day
+				})
+				if (today && !today.completed) {
+					if (this.completedCount === this.items.length) {
+						today.completed = true
+						stats.completedDays += 1
+					}
+				}
+				stats.completionRate = stats.totalDays ? Math.round(stats.completedDays / stats.totalDays * 100) : 0
+			},
 			/**
-			 * 获取当前时分 HH:mm
+			 * 获取当前 ISO 时间
 			 * @returns {String}
 			 */
-			nowTime: function() {
+			nowIsoTime: function() {
 				var date = new Date()
-				var hour = String(date.getHours()).padStart(2, '0')
-				var minute = String(date.getMinutes()).padStart(2, '0')
-				return hour + ':' + minute
+				var pad = function(num) { return String(num).padStart(2, '0') }
+				return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) +
+					'T' + pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds())
 			},
 			/**
 			 * 拨打健康团队电话
@@ -1494,85 +1611,205 @@
 				}
 			},
 			/**
+			 * 本地预览 mock 数据，字段与接口保持一致
+			 */
+			createMockExercisePlan: function() {
+				return normalizeExercisePlan({
+					planId: '2113897402377822209',
+					surgeryType: '胃恶性肿瘤术后',
+					generateTime: '2026-10-24T15:36:30',
+					items: [{
+						id: '2113897402398793729',
+						createTime: '2026-10-24T15:36:30',
+						updateTime: '2026-10-24T15:36:30',
+						deleted: 0,
+						planId: '2113897402377822209',
+						orderNo: 1,
+						name: '室内步行',
+						dosage: '5分钟 × 2组',
+						mode: 'TIMER',
+						targetSets: 2,
+						targetReps: null,
+						targetDurationSec: 300,
+						completedSets: 0,
+						status: 'PENDING',
+						completedAt: null,
+						description: '匀速慢走，微微出汗即可，如感疲劳立即停止',
+						videoUrl: null,
+						steps: []
+					}, {
+						id: '2113897402415570945',
+						createTime: '2026-10-24T15:36:30',
+						updateTime: '2026-10-24T15:36:30',
+						deleted: 0,
+						planId: '2113897402377822209',
+						orderNo: 2,
+						name: '腹式呼吸',
+						dosage: '60秒 × 2组',
+						mode: 'TIMER',
+						targetSets: 2,
+						targetReps: null,
+						targetDurationSec: 60,
+						completedSets: 0,
+						status: 'PENDING',
+						completedAt: null,
+						description: '鼻吸气鼓腹、口呼气收腹，节奏放慢',
+						videoUrl: null,
+						steps: []
+					}, {
+						id: '2113897402423959554',
+						createTime: '2026-10-24T15:36:30',
+						updateTime: '2026-10-24T15:36:30',
+						deleted: 0,
+						planId: '2113897402377822209',
+						orderNo: 3,
+						name: '仰卧抬腿',
+						dosage: '10次 × 2组',
+						mode: 'REPS',
+						targetSets: 2,
+						targetReps: 10,
+						targetDurationSec: null,
+						completedSets: 0,
+						status: 'PENDING',
+						completedAt: null,
+						description: '双腿缓慢抬起至 30° 后缓慢放下，腰部贴地',
+						videoUrl: null,
+						steps: []
+					}, {
+						id: '2113897402444931074',
+						createTime: '2026-10-24T15:36:30',
+						updateTime: '2026-10-24T15:36:30',
+						deleted: 0,
+						planId: '2113897402377822209',
+						orderNo: 4,
+						name: '全身拉伸',
+						dosage: '5分钟 × 1组',
+						mode: 'TIMER',
+						targetSets: 1,
+						targetReps: null,
+						targetDurationSec: 300,
+						completedSets: 0,
+						status: 'PENDING',
+						completedAt: null,
+						description: '颈肩背腿依次缓慢拉伸，每个部位 20-30 秒',
+						videoUrl: null,
+						steps: []
+					}],
+					weeklyStats: {
+						completionRate: 0,
+						completedDays: 0,
+						totalDays: 2,
+						trendText: '与上周持平',
+						dailyRecords: [{
+							dayName: '周一',
+							dateStr: '10-26',
+							completed: false,
+							isToday: false
+						}, {
+							dayName: '周二',
+							dateStr: '10-27',
+							completed: false,
+							isToday: true
+						}, {
+							dayName: '周三',
+							dateStr: '10-28',
+							completed: false,
+							isToday: false
+						}, {
+							dayName: '周四',
+							dateStr: '10-29',
+							completed: false,
+							isToday: false
+						}, {
+							dayName: '周五',
+							dateStr: '10-30',
+							completed: false,
+							isToday: false
+						}, {
+							dayName: '周六',
+							dateStr: '10-31',
+							completed: false,
+							isToday: false
+						}, {
+							dayName: '周日',
+							dateStr: '11-01',
+							completed: false,
+							isToday: false
+						}]
+					}
+				})
+			},
+			/**
 			 * 切换场景（调试预览用）
 			 * @param {String} key 场景key
 			 */
 			applyScenario: function(key) {
+				var plan
 				this.activeScenario = key
 				this.clearTimer()
 				this.warningVisible = false
-				this.assessmentExpanded = true
+				this.assessmentExpanded = false
 				this.form = createForm()
 				this.mediaTab = 'video'
 
 				if (key === 'noPlan') {
 					this.hasPlan = false
-					this.exercises = []
+					this.planId = ''
+					this.surgeryType = ''
+					this.generateTime = ''
+					this.items = []
+					this.weeklyStats = createEmptyWeeklyStats()
 					this.currentActionId = ''
 					this.currentGroup = 1
 					this.remainingSeconds = 0
 					this.running = false
 					this.countPaused = false
-					this.week = createEmptyWeek()
 					this.assessmentExpanded = false
 					this.showToast('当前状态：今日暂无运动方案。', 'info')
 					return
 				}
 
 				this.hasPlan = true
+				plan = JSON.parse(JSON.stringify(this.createMockExercisePlan()))
+
 				if (key === 'default') {
-					// this.exercises = createDefaultActions()
-					console.log(111111111111, this.exercises)
-					this.week = createWeek()
-					this.selectAction(this.exercises[1])
-					this.form = createForm()
-					this.showToast('已切换到默认流程：呼吸放松待评估。', 'info')
+					this.applyExercisePlan(plan)
+					this.showToast('已切换到默认流程。', 'info')
 				}
 
 				if (key === 'allDone') {
-					this.exercises = [
-						createWalk({
-							status: 'COMPLETED',
-							completedAt: '20:04',
-							remainingSeconds: 0
-						}),
-						createBreath({
-							status: 'COMPLETED',
-							completedAt: '20:08'
-						}),
-						createRehab({
-							status: 'COMPLETED',
-							completedAt: '20:12',
-							remainingSeconds: 0
-						})
-					]
-					console.log(this.exercises)
-					this.week = createWeek()
-					this.week.done = 6
-					this.week.todayLogged = true
-					this.week.days[5].status = 'done'
-					this.selectAction(this.exercises[0])
-					this.mode = 'TIMER'
-					this.remainingSeconds = 0
+					plan.items.forEach(function(item, index) {
+						item.status = 'COMPLETED'
+						item.completedSets = item.targetSets
+						item.completedAt = item.updateTime
+					})
+					plan.weeklyStats.completionRate = 100
+					plan.weeklyStats.completedDays = plan.weeklyStats.totalDays
+					plan.weeklyStats.trendText = '较上周 +1 次'
+					plan.weeklyStats.dailyRecords.forEach(function(day, index) {
+						day.completed = index < plan.weeklyStats.totalDays
+					})
+					this.applyExercisePlan(plan)
 					this.assessmentExpanded = false
 					this.showToast('今日方案已全部完成，评估已归档。', 'success')
 				}
 
 				if (key === 'pendingEvaluation') {
-					// this.exercises = createDefaultActions()
-					// this.week = createWeek()
-					this.selectAction(this.exercises[1])
+					var evalItem = plan.items[1]
+					evalItem.status = 'NEED_EVAL'
+					evalItem.completedSets = evalItem.targetSets
+					this.applyExercisePlan(plan)
+					this.selectAction(evalItem)
 					this.assessmentExpanded = true
 					this.showToast('训练已完成，训练后评估尚未填写。', 'info')
 				}
 
 				if (key === 'abnormal') {
-					// this.exercises = createDefaultActions()
-					this.exercises[1] = createBreath({
-						status: 'PAUSED'
-					})
-					// this.week = createWeek()
-					this.selectAction(this.exercises[1])
+					var pausedItem = plan.items[1]
+					pausedItem.status = 'PAUSED'
+					pausedItem.completedAt = null
+					this.applyExercisePlan(plan)
+					this.selectAction(pausedItem)
 					this.form.pain = 7
 					this.form.swelling = '无'
 					this.form.fatigue = '一般'
