@@ -140,9 +140,17 @@
 
 
 <script>
+	import {
+		getMeMedicalRecordApi,
+		postMeConversationsByIdManualServiceApi,
+		postMeConversationsByIdMessagesApi,
+		getReplyTemplatesApi
+
+	} from '@/api/frontApikit.js'
 	export default {
 		data() {
 			return {
+				id: uni.getStorageSync('userInfo').userId,
 				record: {
 					id: "p1",
 					name: "张三",
@@ -162,7 +170,25 @@
 				},
 			};
 		},
+		onLoad(options) {
+			console.log('onLoad options', options)
+			this.getMeMedicalRecordApi()
+
+			
+		},
 		methods: {
+			// 患者病历
+			async getMeMedicalRecordApi() {
+				try {
+				const PatientsByIdMedicalRecord = 	await getMeMedicalRecordApi({
+						id: this.id
+					})
+					console.log(PatientsByIdMedicalRecord)
+
+				} catch (e) {
+					console.log('报错：', e)
+				}
+			},
 			sexSelect(e) {
 				this.model1.userInfo.sex = e.name
 				this.$refs.uForm.validateField('userInfo.sex')

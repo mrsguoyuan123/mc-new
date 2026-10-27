@@ -246,8 +246,9 @@ import { postAuthLoginApi,postAuthRegisterApi,getAuthMeApi } from '@/api/frontAp
 						this.$safeJump(routeUrl)
 						// 陪诊师  `admin3/1`
 					}else if(res.role == 'CAREGIVER'){
-						
+							alert()
 						let routeUrl = '/pages/index/onsite'
+						
 						this.$safeJump(routeUrl)
 						// 医生  `admin5/1`  新建
 					}else if(res.role == 'DOCTOR'){

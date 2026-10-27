@@ -913,8 +913,6 @@
 				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(data))
 				this.$safeJump(routeUrl)
 
-
-
 			}
 		},
 		onReady() {

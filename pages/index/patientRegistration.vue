@@ -7,6 +7,18 @@
 			<view class="bg-white" v-show="isShow">
 				<u--form :labelStyle="{width:'100px',color:'#909399',fontSize:'20rpx'}" labelPosition="left"
 					:model="model1" :rules="rules" ref="uForm">
+					<u-form-item label="手机号" prop="userInfo.phone" labelPosition="top" ref="itemPhone">
+						<u--input v-model="model1.userInfo.phone" type="number" maxlength="11" placeholder="请输入手机号" prefixIcon="phone"
+							prefixIconStyle="font-size: 22px;color: #909399"></u--input>
+					</u-form-item>
+					<u-form-item label="验证码" prop="userInfo.code" labelPosition="top" ref="itemCode">
+						<u--input v-model="model1.userInfo.code" type="number" maxlength="6" placeholder="请输入验证码" prefixIcon="checkmark-circle"
+							prefixIconStyle="font-size: 22px;color: #909399"></u--input>
+					</u-form-item>
+					<u-form-item label="身份证号" prop="userInfo.idCard" labelPosition="top" ref="itemIdCard">
+						<u--input v-model="model1.userInfo.idCard" maxlength="18" placeholder="请输入身份证号" prefixIcon="account"
+							prefixIconStyle="font-size: 22px;color: #909399"></u--input>
+					</u-form-item>
 					<view class="view-between">
 						<u-form-item class="mr-16" label="患者姓名" prop="userInfo.name" labelPosition="top"
 							:labelStyle="{color:'#606266',fontWeight:'bold'}" ref="itemName">
@@ -82,6 +94,12 @@
 </template>
 
 <script>
+	import {
+		postAuthRegisterApi,
+		getPatientsByIdApi,
+		postAuthWxLoginApi
+	} from '@/api/frontApikit.js'
+
 	export default {
 		options: {
 			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
@@ -101,9 +119,20 @@
 						hospital: '',
 						department: '',
 						operateType: '',
-						doctor: ''
+						doctor: '',
+						phone: '',
+						code: '',
+						idCard: '',
+						hospitalId: '',
+						departmentId: '',
+						doctorId: '',
+						diseaseIntro: '',
+						bindToken: ''
 					},
 				},
+				submitting: false,
+				patientId: '',
+				detailLoading: false,
 				actions: [{
 						name: '男',
 					},
@@ -165,7 +194,91 @@
 				switchVal: false
 			};
 		},
+		async onLoad(options) {
+			this.patientId = uni.getStorageSync('userInfo').userId;
+			
+			
+				// await this.loadPatientDetail(this.patientId)
+
+		},
 		methods: {
+			resetRegisterForm() {
+				const userInfo = this.model1.userInfo
+				userInfo.name = ''
+				userInfo.sex = ''
+				userInfo.age = ''
+				userInfo.area = ''
+				userInfo.hospital = ''
+				userInfo.department = ''
+				userInfo.operateType = ''
+				userInfo.doctor = ''
+				userInfo.phone = ''
+				userInfo.code = ''
+				userInfo.idCard = ''
+				userInfo.hospitalId = ''
+				userInfo.departmentId = ''
+				userInfo.doctorId = ''
+				userInfo.diseaseIntro = ''
+				userInfo.bindToken = ''
+			},
+			async loadPatientDetail(id) {
+				console.log(uni.getStorageSync('userInfo').userId)
+				console.log(id)
+				this.detailLoading = true
+				uni.showLoading({
+					title: '加载中...',
+					mask: true
+				})
+				try {
+					const res = await getPatientsByIdApi({
+						id
+					})
+					const patient = res && res.data ? res.data : res
+					this.fillPatientForm(patient || {})
+				} catch (err) {
+					console.log('患者详情加载失败', err)
+					uni.showToast({
+						title: (err && err.message) || '患者信息加载失败',
+						icon: 'none'
+					})
+				} finally {
+					this.detailLoading = false
+					uni.hideLoading()
+				}
+			},
+			fillPatientForm(data) {
+				const userInfo = this.model1.userInfo
+				const fields = ['phone', 'name', 'idCard', 'hospitalId', 'departmentId', 'doctorId', 'diseaseIntro']
+				fields.forEach(field => {
+					const value = data[field]
+					userInfo[field] = value === null || value === undefined ? '' : value
+				})
+				userInfo.sex = data.gender === '男' || data.gender === '女' ? data.gender : ''
+				userInfo.code = ''
+				userInfo.bindToken = ''
+			},
+			async ensureBindToken() {
+				if (this.model1.userInfo.bindToken) return
+				// #ifdef MP-WEIXIN
+				try {
+					const loginRes = await new Promise((resolve, reject) => {
+						uni.login({
+							provider: 'weixin',
+							success: resolve,
+							fail: reject
+						})
+					})
+					const loginResult = await postAuthWxLoginApi({
+						code: loginRes.code
+					})
+					if (loginResult && loginResult.bindToken) {
+						this.model1.userInfo.bindToken = loginResult.bindToken
+					}
+				} catch (err) {
+					console.log('微信登录凭证获取失败', err)
+				}
+				// #endif
+			},
 			sexclick(){
 				console.log(11111111111)
 				this.showSex=true
@@ -175,25 +288,102 @@
 				this.$refs.uForm.validateField('userInfo.sex')
 			},
 			async handleClick() {
+				if (this.submitting) return
+				const userInfo = this.model1.userInfo
+				let requestStarted = false
+				if (!userInfo.phone || !String(userInfo.phone).trim()) {
+					return uni.showToast({
+						title: '请输入手机号',
+						icon: 'none'
+					})
+				}
+				if (!/^1[3-9]\d{9}$/.test(String(userInfo.phone).trim())) {
+					return uni.showToast({
+						title: '请输入正确的手机号',
+						icon: 'none'
+					})
+				}
+				if (!userInfo.code || !String(userInfo.code).trim()) {
+					return uni.showToast({
+						title: '请输入验证码',
+						icon: 'none'
+					})
+				}
+				if (!userInfo.name || !String(userInfo.name).trim()) {
+					return uni.showToast({
+						title: '请输入姓名',
+						icon: 'none'
+					})
+				}
+				if (!userInfo.idCard || !String(userInfo.idCard).trim()) {
+					return uni.showToast({
+						title: '请输入身份证号',
+						icon: 'none'
+					})
+				}
 				try {
 					await this.$refs.uForm.validate()
-					//校验全部通过才切换页面
-					this.isShow = false;
-					this.message1 = "资料已就绪";
-					this.message2 = "您的档案已审核通过，现在可以进入系统"
+					this.submitting = true
+					requestStarted = true
+					uni.showLoading({
+						title: '提交中...',
+						mask: true
+					})
+					await this.ensureBindToken()
+					const registerData = {
+						phone: String(userInfo.phone).trim(),
+						code: String(userInfo.code).trim(),
+						name: String(userInfo.name).trim(),
+						gender: userInfo.sex || '',
+						idCard: String(userInfo.idCard).trim(),
+						hospitalId: this.normalizeId(userInfo.hospitalId),
+						departmentId: this.normalizeId(userInfo.departmentId),
+						doctorId: this.normalizeId(userInfo.doctorId),
+						diseaseIntro: userInfo.diseaseIntro || '',
+						bindToken: userInfo.bindToken || '',
+						age: userInfo.age === '' || userInfo.age === null || userInfo.age === undefined ? null : Number(userInfo.age),
+						surgeryRegion: userInfo.area || '',
+						surgeryType: userInfo.operateType || ''
+					}
+					const result = await postAuthRegisterApi(registerData)
+					if (result && result.token) {
+						uni.setStorageSync('token', result.token)
+						uni.setStorageSync('accessToken', result.token)
+						if (result.refreshToken) {
+							uni.setStorageSync('refreshToken', result.refreshToken)
+						}
+						if (result.user) {
+							uni.setStorageSync('userInfo', result.user)
+						}
+						uni.removeStorageSync('pendingPatientRegister')
+					}
+					setTimeout(() => {
+						uni.showToast({
+							title: '注册成功',
+							icon: 'success'
+						})
+						uni.reLaunch({
+							url: result && result.token ? '/pages/index/home' : '/pages/index/login'
+						})
+					}, 300)
 				} catch (err) {
 					console.log('表单校验失败', err)
+				} finally {
+					this.submitting = false
+					if (requestStarted) uni.hideLoading()
 				}
 			},
-			routeTo() {
-				uni.showLoading()
-				uni.hideLoading()
-				let data = {
-					title: 'hello',
-					id: 1
+			normalizeId(value) {
+				if (value === '' || value === undefined || value === null) return null
+				if (typeof value === 'number') {
+					return Number.isSafeInteger(value) ? value : String(value)
 				}
-				let routeUrl = "/pages/index/home?data=" + encodeURIComponent(JSON.stringify(data))
-				this.$safeJump(routeUrl)
+				return String(value)
+			},
+			routeTo() {
+				uni.reLaunch({
+					url: '/pages/index/home'
+				})
 			}
 
 		},

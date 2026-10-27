@@ -962,7 +962,8 @@
 			applyEvaluationResult: function(result, action) {
 				var evaluation = normalizeEvaluationResult(result)
 				if (!evaluation.itemStatus || !action) return false
-				this.$set(action, 'evaluation', evaluation)
+				var target = this.findItemById(action.id) || action
+				this.$set(target, 'evaluation', evaluation)
 				return true
 			},
 			mergeExerciseItem: function(result) {
@@ -1464,6 +1465,7 @@
 						this.showToast('评估结果返回数据异常，请稍后重试。', 'warning')
 						return
 					}
+					action = this.findItemById(action.id) || action
 					var evaluation = action.evaluation
 					var abnormal = !!evaluation.isAbnormal || evaluation.itemStatus === 'PAUSED'
 					if (evaluation.itemStatus === 'NEED_EVAL' && !abnormal) {

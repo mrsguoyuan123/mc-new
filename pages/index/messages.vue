@@ -39,7 +39,7 @@
 		<view class="msg-item radius-15 card-top bg-white card-border card-border-gray"
 			v-for="(item,index) in chatHistory" :key="index" @click="routeTo(item)">
 			<!-- 左侧图标 -->
-			<view class="msg-icon-wrap  badge-blue-bg  mr-30" :style="{backgroundColor:item.bgColor}"
+			<view class="msg-icon-wrap  badge-blue-bg  mr-16" :style="{backgroundColor:item.bgColor}"
 				v-if="item.type=='human'">
 				<view class="massage-icon-left ">
 					<text class="custom-icon custom-icon-Headset1 icon-bold"
@@ -48,7 +48,7 @@
 				<!-- <text class="msg-icon">{{item.icon}}</text> -->
 				<view v-if="item.showDot" class="online-dot"></view>
 			</view>
-			<view class="msg-icon-wrap badge-orange-bg  mr-30" :style="{backgroundColor:item.bgColor}"
+			<view class="msg-icon-wrap badge-orange-bg  mr-16" :style="{backgroundColor:item.bgColor}"
 				v-else-if="item.type=='system'">
 				<view class="massage-icon-left  ">
 					<text class="custom-icon custom-icon-order icon-bold" style="font-size:40rpx;color:#ff6900;"></text>
@@ -72,8 +72,9 @@
 
 			</view>
 
-			<!-- ✅最右侧箭头，独立列，垂直居中 -->
-			<u-icon name="arrow-right"></u-icon>
+			<!-- 最右侧箭头，独立列，垂直居中 -->
+			<u-icon name="arrow-right" class="ml-16"></u-icon>
+			
 		</view>
 		<!-- 	<view v-for="(item,index) in chatHistory" class="radius-15 card-top bg-white card-border card-border-gray"
 			@click="routeTo('consultation')">
@@ -111,6 +112,9 @@
 	</view>
 </template>
 <script>
+import {
+		getMeConversationsApi as fetchConversationsApi,
+	} from '@/api/frontApikit.js'
 	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
 	// import { toRaw } from 'vue'
 	export default {
@@ -118,7 +122,9 @@
 			mainTabbar
 		},
 		data() {
+			const userInfo = uni.getStorageSync('userInfo') || {}
 			return {
+				id: userInfo.userId || '',
 				current: 0,
 				tabList: [{
 					id: 1,
@@ -161,56 +167,142 @@
 					type: "system",
 
 				}],
-				chatHistory: [{
-						id: "group-1",
-						name: "健康管理团队",
-						lastMsg: "张先生，您的手术切口照片已收到，主刀团队正在审核，稍后给您回复。",
-						time: "10:05",
-						unread: true,
-						unreadCount: 1,
-						type: "human",
-						status: "在线",
-						showDot: true
-					},
-					{
-						id: "sys-1",
-						name: "服务到期续费",
-						lastMsg: "您的术后康复尊享包还有3天到期，为避免服务中断，请及时续费。",
-						time: "昨天",
-						unread: true,
-						unreadCount: 1,
-						type: "system",
-						status: ""
-					},
-					{
-						id: "sys-2",
-						name: "宣教资料更新",
-						lastMsg: "《心血管术后饮食与活动指南》已下发，请您查收并按要求执行。",
-						time: "09:30",
-						unread: true,
-						unreadCount: 1,
-						type: "system",
-						status: ""
-					},
-					{
-						id: "sys-3",
-						name: "系统更新公告",
-						lastMsg: "V2.4.0版本已上线，优化了多端响应速度及专家团队回复效率。",
-						time: "周一",
-						unread: false,
-						unreadCount: 0,
-						type: "system",
-						status: ""
-					}
-				]
-
-
+				loading: false,
+				activeCategory: '',
+				keyword: '',
+				conversationList: [],
+				systemNotificationList: [],
+				allMessageList: [],
+				chatHistory: []
 			};
 		},
+		onLoad() {
+			this.loadConversations()
+		},
+		mounted() {
+			this.$nextTick(() => {
+				this.bindSearchInput(this.$children)
+			})
+		},
 		methods: {
+			
+			async loadConversations() {
+				this.loading = true
+				uni.showLoading({
+					title: '加载中...',
+					mask: true
+				})
+				try {
+					const result = await fetchConversationsApi()
+					const data = result || {}
+					this.conversationList = this.normalizeConversations(data.conversations || [])
+					this.systemNotificationList = this.normalizeNotifications(data.systemNotifications || [])
+					this.allMessageList = this.conversationList.concat(this.systemNotificationList)
+					this.applyFilters()
+					console.log(this.conversationList)
+					if (!this.allMessageList.length) {
+						uni.showToast({
+							title: '暂无消息',
+							icon: 'none'
+						})
+					}
+				} catch (e) {
+					console.log('获取消息列表失败：', e)
+					this.conversationList = []
+					this.systemNotificationList = []
+					this.allMessageList = []
+					this.chatHistory = []
+					uni.showToast({
+						title: (e && e.message) || '消息加载失败',
+						icon: 'none'
+					})
+				} finally {
+					this.loading = false
+					uni.hideLoading()
+				}
+			},
+			normalizeConversations(list) {
+				return (list || []).map(item => {
+					const unreadCount = Number(item.unread || 0)
+					return {
+						id: item.id,
+						name: item.name || '私人健康顾问',
+						type: item.type || 'human',
+						lastMsg: item.lastMsg || '',
+						rawTime: item.time || '',
+						time: this.formatTime(item.time),
+						unreadCount: unreadCount,
+						showDot: unreadCount > 0,
+						bgColor: '#E8F0FF'
+					}
+					
+				})
+			
+			},
+			normalizeNotifications(list) {
+				return (list || []).map(item => {
+					const unreadCount = item.isRead ? 0 : 1
+					return {
+						id: item.id,
+						name: item.title || '系统通知',
+						type: 'system',
+						title: item.title || '系统通知',
+						content: item.content || '',
+						lastMsg: item.content || '',
+						rawTime: item.time || '',
+						time: this.formatTime(item.time),
+						unreadCount: unreadCount,
+						showDot: false,
+						isRead: !!item.isRead,
+						bgColor: '#FFF3E8'
+					}
+				})
+			},
+			applyFilters() {
+				let sourceList = this.allMessageList
+				if (this.activeCategory === 'human') {
+					sourceList = this.conversationList
+				} else if (this.activeCategory === 'system') {
+					sourceList = this.systemNotificationList
+				}
+				const keyword = (this.keyword || '').trim().toLowerCase()
+				if (!keyword) {
+					this.chatHistory = sourceList
+					return
+				}
+				this.chatHistory = sourceList.filter(item => {
+					const name = item.name || ''
+					const lastMsg = item.lastMsg || ''
+					const title = item.title || ''
+					return name.toLowerCase().indexOf(keyword) > -1 ||
+						lastMsg.toLowerCase().indexOf(keyword) > -1 ||
+						title.toLowerCase().indexOf(keyword) > -1
+				})
+			},
 
 			tabClick(item) {
-				console.log('item', item);
+				const tab = item && item.index !== undefined ? this.list1[item.index] : item
+				this.activeCategory = tab && tab.type ? tab.type : ''
+				this.applyFilters()
+			},
+			bindSearchInput(children) {
+				;(children || []).forEach(child => {
+					if (!child) return
+					if (child.$options && child.$options.name === 'u--input' && !child.__searchInputBound) {
+						child.__searchInputBound = true
+						const originalEmit = child.$emit.bind(child)
+						child.$emit = (eventName, value) => {
+							if (eventName === 'input' || eventName === 'change') {
+								this.keyword = value === undefined || value === null ? '' : String(value)
+								this.applyFilters()
+							}
+							return originalEmit(eventName, value)
+						}
+					}
+					if (child.$children && child.$children.length) {
+						this.bindSearchInput(child.$children)
+					}
+				})
 			},
 			getIconName(baseName, index) {
 				// console.log((baseName,index))
@@ -223,14 +315,58 @@
 				return baseName;
 			},
 			routeTo(res) {
-				// console.log(toRaw(res))
-				let data = {
-					title: 'hello',
-					id: res.id
+			
+				if (typeof res === 'string') {
+					this.$safeJump(res)
+					return
 				}
-				let routeUrl = "/pages/index/consultation?data=" + encodeURIComponent(JSON.stringify(data))
-				this.$safeJump(routeUrl)
-			}
+				if (!res) return
+				if (res.type === 'system') {
+					uni.showModal({
+						title: res.title || res.name || '系统通知',
+						content: res.content || res.lastMsg || '暂无通知内容',
+						showCancel: false,
+						confirmText: '我知道了'
+					})
+					return
+				}
+				uni.navigateTo({
+					url: '/pages/index/consultation?conversationId=' + encodeURIComponent(res.id)
+				})
+			},
+			
+			formatTime(value) {
+  if (!value) return ''
+  if (typeof value === 'number') {
+    const date = new Date(value)
+    return isNaN(date.getTime()) ? '' : this.formatDate(date)
+  }
+  let text = String(value)
+  // 专门兼容 ISO 2026-10-27T18:38:06 格式，优先处理T分隔
+  if (text.includes('T')) {
+    text = text.replace('T', ' ')
+  } else {
+    text = text.replace(/-/g, '/')
+  }
+  const date = new Date(text)
+  if (isNaN(date.getTime())) return String(value)
+  return this.formatDate(date)
+},
+formatDate(date) {
+  const now = new Date()
+  const pad = num => (Number(num) < 10 ? '0' + num : '' + num)
+  const timeText = pad(date.getHours()) + ':' + pad(date.getMinutes())
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+  const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
+  const dayDiff = Math.round((startOfToday - startOfDate) / 86400000)
+  if (dayDiff === 0) return timeText
+  if (dayDiff === 1) return '昨天 ' + timeText
+  if (date.getFullYear() === now.getFullYear()) {
+    return pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + ' ' + timeText
+  }
+  return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + ' ' + timeText
+}
+
 
 		},
 		onReady() {
@@ -245,8 +381,8 @@
 	.msg-desc {
 		flex: 1;
 		min-width: 0;
-		font-size: 28rpx;
-		color: #666;
+		font-size: 24rpx;
+		color: #909399;
 		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
@@ -302,7 +438,7 @@
 	}
 
 	.msg-title {
-		font-size: 34rpx;
+		font-size: 26rpx;
 		font-weight: bold;
 		color: #111;
 		overflow: hidden;
@@ -341,12 +477,11 @@
 		justify-content: center;
 	}
 
-	/* ✅最右侧箭头 */
+	/* 最右侧箭头 */
 	.icon-arrow {
-		font-size: 36rpx;
+		font-size: 30rpx;
 		color: #cccccc;
 		flex-shrink: 0;
-		/* 如果你用uview，替换成 <u-icon name="arrow-right"></u-icon> */
-		content: ">";
+		margin-left: 20rpx;
 	}
 </style>

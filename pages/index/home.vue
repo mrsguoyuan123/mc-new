@@ -921,6 +921,7 @@
 			};
 		},
 		onShow() {
+
 			// # H5环境手动解析hash后的query
 			// #ifdef H5
 			const fullUrl = window.location.href
@@ -933,6 +934,8 @@
 				if (dataStr && dataStr !== 'undefined') {
 					try {
 						const data = JSON.parse(decodeURIComponent(dataStr))
+						console.log(111111111111111,data)
+
 						this.id = data.id
 						this.id = 910005
 						// console.log('onShow H5解析参数成功', this.id);
@@ -948,12 +951,13 @@
 			// #endif
 		},
 		onLoad(options) {
+			console.log(222222222222,options)
 			// 1.先判断 data 是否存在，并且不是字符串"undefined"
 			if (options.data && options.data !== "undefined") {
 				try {
 					const raw = decodeURIComponent(options.data)
 					const obj = JSON.parse(raw);
-					// console.log(obj)
+					
 					if (obj.dataName) {
 						this.caregiverOption = obj
 					}
