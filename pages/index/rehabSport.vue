@@ -59,19 +59,19 @@
 					</view>
 					<view class="exercise-list">
 						<view v-for="item in items" :key="item.id" class="exercise-item"
-							:class="{ active: isCurrentItem(item), completed: item.status === 'COMPLETED' }"
+							:class="{ active: isCurrentItem(item), completed: getItemDisplayStatus(item) === 'COMPLETED' }"
 							@click="selectAction(item)">
 							<!-- {{ currentActionId }} -->
 							<!-- {{ item.id }} -->
 
-							<view class="item-index" :class="statusTheme(item.status)">{{ item.orderNo }}</view>
+							<view class="item-index" :class="statusTheme(getItemDisplayStatus(item))">{{ item.orderNo }}</view>
 							<view class="item-info">
 								<text class="item-name">{{ item.name }}</text>
 								<text class="item-dose">剂量：{{ item.dosage }}</text>
 							</view>
 							<view class="item-right">
 								<text class="status-tag"
-								:class="statusTheme(item.status)">{{ statusText(item.status, item.completedSets, item.targetSets, true) }}</text>
+								:class="statusTheme(getItemDisplayStatus(item))">{{ statusText(getItemDisplayStatus(item), item.completedSets, item.targetSets, true) }}</text>
 								<u-icon name="arrow-right" color="#9aa7ba" size="14"></u-icon>
 							</view>
 						</view>
@@ -227,14 +227,14 @@
 						<view class="status-row">
 							<text class="current-label">动作状态</text>
 							<text class="status-tag large"
-								:class="statusTheme(currentAction.status)">{{ statusText(currentAction.status, currentAction.completedSets, currentAction.targetSets, false) }}</text>
+								:class="statusTheme(currentDisplayStatus)">{{ statusText(currentDisplayStatus, currentAction.completedSets, currentAction.targetSets, false) }}</text>
 						</view>
 					</view>
-					<view v-if="currentAction.status === 'COMPLETED'" class="archive-strip">
+					<view v-if="currentDisplayStatus === 'COMPLETED'" class="archive-strip">
 						<u-icon name="checkmark-circle-fill" color="#1677ff" size="17"></u-icon>
 						<text>该动作训练已达成，训练后评估已归档</text>
 					</view>
-					<view v-if="currentAction.status === 'PAUSED'" class="warning-box">
+					<view v-if="currentDisplayStatus === 'PAUSED'" class="warning-box">
 						<view class="warning-title">
 							<u-icon name="error-circle-fill" color="#d77b00" size="18"></u-icon>
 							<text>建议暂停训练，并联系健康管理团队确认</text>
@@ -244,7 +244,7 @@
 							<u-icon name="phone" color="#ffffff" size="16"></u-icon><text>联系健康管理团队</text>
 						</view>
 					</view>
-					<view v-if="currentAction.status !== 'COMPLETED'" class="primary-btn assessment-entry"
+					<view v-if="currentDisplayStatus !== 'COMPLETED'" class="primary-btn assessment-entry"
 						@click="openEvaluation">
 						<u-icon name="edit-pen" color="#ffffff" size="16"></u-icon><text>填写训练后评估</text>
 					</view>
@@ -443,9 +443,9 @@
 	 */
 	function createForm() {
 		return {
-			pain: 2,
-			swelling: '轻微',
-			fatigue: '一般',
+			pain: 0,
+			swelling: '无',
+			fatigue: '无',
 			discomfort: '无',
 			note: ''
 		}
@@ -486,6 +486,24 @@
 		}
 	}
 
+	function createEmptyEvaluation() {
+		return {
+			isAbnormal: false,
+			abnormalReasons: [],
+			itemStatus: ''
+		}
+	}
+
+	function normalizeEvaluationResult(result) {
+		result = result || {}
+		var statusList = ['PENDING', 'NEED_EVAL', 'COMPLETED', 'PAUSED']
+		return {
+			isAbnormal: !!result.isAbnormal,
+			abnormalReasons: Array.isArray(result.abnormalReasons) ? result.abnormalReasons.slice() : [],
+			itemStatus: statusList.indexOf(result.itemStatus) !== -1 ? result.itemStatus : ''
+		}
+	}
+
 	function normalizeExerciseItem(item) {
 		item = item || {}
 		return {
@@ -506,7 +524,8 @@
 			completedAt: item.completedAt || null,
 			description: item.description || '',
 			videoUrl: item.videoUrl || null,
-			steps: Array.isArray(item.steps) ? item.steps : []
+			steps: Array.isArray(item.steps) ? item.steps : [],
+			evaluation: item.evaluation ? normalizeEvaluationResult(item.evaluation) : createEmptyEvaluation()
 		}
 	}
 
@@ -562,18 +581,13 @@
 				remainingSeconds: 0,
 				timer: null,
 				actionLoading: false,
-				serverEvaluation: {
-					itemId: '',
-					isAbnormal: false,
-					abnormalReasons: []
-				},
 				mediaTab: 'video',
 				assessmentExpanded: true,
 				warningVisible: false,
 				activeTab: 'health',
 				form: createForm(),
 				swellingOptions: ['无', '轻微', '明显'],
-				fatigueOptions: ['轻松', '一般', '很累'],
+				fatigueOptions: ['无', '轻松', '一般', '很累'],
 				discomfortOptions: ['无', '有，想告诉医护'],
 				toast: {
 					visible: false,
@@ -637,14 +651,21 @@
 				}
 				return null
 			},
+			currentEvaluationStatus: function() {
+				return this.currentAction && this.currentAction.evaluation ?
+					this.currentAction.evaluation.itemStatus : ''
+			},
+			currentDisplayStatus: function() {
+				return this.getItemDisplayStatus(this.currentAction)
+			},
 			/**
 			 * 统计已完成动作数量
 			 * @returns {Number} 已完成数量
 			 */
 			completedCount: function() {
-				return this.items.filter(function(item) {
-					return item.status === 'COMPLETED'
-				}).length
+				return this.items.filter((function(item) {
+					return this.getItemDisplayStatus(item) === 'COMPLETED'
+				}).bind(this)).length
 			},
 			/**
 			 * 整体完成百分比
@@ -717,10 +738,10 @@
 				if (!this.currentAction) {
 					return '暂无训练动作'
 				}
-				if (this.currentAction.status === 'PAUSED') {
+				if (this.currentDisplayStatus === 'PAUSED') {
 					return '训练已暂停'
 				}
-				if (this.currentAction.status === 'COMPLETED') {
+				if (this.currentDisplayStatus === 'COMPLETED') {
 					return '本项训练已完成'
 				}
 				if (this.running) {
@@ -753,8 +774,10 @@
 			 * @returns {Boolean}
 			 */
 			hasAbnormal: function() {
-				if (this.currentAction && String(this.serverEvaluation.itemId) === String(this.currentAction.id)) {
-					return !!this.serverEvaluation.isAbnormal || this.currentAction.status === 'PAUSED'
+				if (this.currentAction && this.currentAction.evaluation && this.currentAction.evaluation.itemStatus) {
+					return !!this.currentAction.evaluation.isAbnormal ||
+						this.currentAction.evaluation.itemStatus === 'PAUSED' ||
+						this.currentAction.status === 'PAUSED'
 				}
 				return Number(this.form.pain) >= 6 ||
 					this.form.swelling === '明显' ||
@@ -766,10 +789,10 @@
 			 * @returns {String}
 			 */
 			abnormalReasons: function() {
-				if (this.currentAction && String(this.serverEvaluation.itemId) === String(this.currentAction.id)) {
-					var serverReasons = Array.isArray(this.serverEvaluation.abnormalReasons) ?
-						this.serverEvaluation.abnormalReasons : []
-					if (!serverReasons.length && this.currentAction.status === 'PAUSED') {
+				if (this.currentAction && this.currentAction.evaluation && this.currentAction.evaluation.itemStatus) {
+					var serverReasons = Array.isArray(this.currentAction.evaluation.abnormalReasons) ?
+						this.currentAction.evaluation.abnormalReasons : []
+					if (!serverReasons.length && this.currentDisplayStatus === 'PAUSED') {
 						serverReasons = ['医护团队建议暂停训练']
 					}
 					return serverReasons.length ? serverReasons.join('、') : '暂无异常指标'
@@ -786,7 +809,7 @@
 			 * @returns {String}
 			 */
 			completionTitle: function() {
-				return this.currentAction && this.currentAction.status === 'COMPLETED' ? '本项运动已完成' : '完成本项运动'
+				return this.currentDisplayStatus === 'COMPLETED' ? '本项运动已完成' : '完成本项运动'
 			},
 			/**
 			 * 周完成百分比
@@ -898,11 +921,6 @@
 					this.generateTime = ''
 					this.items = []
 					this.weeklyStats = createEmptyWeeklyStats()
-					this.serverEvaluation = {
-						itemId: '',
-						isAbnormal: false,
-						abnormalReasons: []
-					}
 					this.currentActionId = ''
 					this.currentGroup = 1
 					this.mode = 'TIMER'
@@ -934,28 +952,17 @@
 					if (String(this.items[i].id) === String(id)) return this.items[i]
 				}
 			},
+			getItemEvaluationStatus: function(item) {
+				return item && item.evaluation ? item.evaluation.itemStatus : ''
+			},
+			getItemDisplayStatus: function(item) {
+				if (!item) return 'PENDING'
+				return this.getItemEvaluationStatus(item) || item.status || 'PENDING'
+			},
 			applyEvaluationResult: function(result, action) {
-				if (!result || !result.itemStatus) return false
-				var statusList = ['PENDING', 'NEED_EVAL', 'COMPLETED', 'PAUSED']
-				if (statusList.indexOf(result.itemStatus) === -1) return false
-
-				action.status = result.itemStatus
-				if (result.itemStatus === 'COMPLETED') {
-					action.completedSets = action.targetSets
-					action.completedAt = action.completedAt || this.nowIsoTime()
-				}
-				if (result.itemStatus === 'NEED_EVAL') {
-					action.completedSets = action.targetSets
-					action.completedAt = null
-				}
-				if (result.itemStatus === 'PAUSED') {
-					action.completedAt = null
-				}
-				this.serverEvaluation = {
-					itemId: action.id,
-					isAbnormal: !!result.isAbnormal,
-					abnormalReasons: Array.isArray(result.abnormalReasons) ? result.abnormalReasons : []
-				}
+				var evaluation = normalizeEvaluationResult(result)
+				if (!evaluation.itemStatus || !action) return false
+				this.$set(action, 'evaluation', evaluation)
 				return true
 			},
 			mergeExerciseItem: function(result) {
@@ -1000,23 +1007,6 @@
 			 * 提交训练后评估表单，异常则标记暂停
 			 */
 			submitEvaluationRequest: async function(item, data) {
-        console.log(item)
-        console.log(data)
-        const data1 = {
-          discomfort
-: 
-"无",
-fatigue
-: 
-"轻松",
-pain
-: 
-4,
-swelling
-: 
-"无",
-        }
-
 				return await submitExerciseEvaluationApi(Object.assign({ id: item.id }, data))
 			},
 			/**
@@ -1087,16 +1077,17 @@ swelling
 			 */
 			selectAction: function(item) {
 				if (!this.hasPlan || !item) return
+				var displayStatus = this.getItemDisplayStatus(item)
 				this.currentActionId = item.id
 				this.mode = item.mode
-				if (item.status === 'COMPLETED') {
+				if (displayStatus === 'COMPLETED') {
 					this.currentGroup = item.targetSets || 1
 				} else {
 					this.currentGroup = 1
 					this.currentGroup = Math.max(1, Math.min(item.completedSets + 1, item.targetSets || 1))
 				}
 				if (item.mode === 'TIMER') {
-					this.remainingSeconds = item.status === 'COMPLETED' ? 0 : (item.targetDurationSec || 0)
+					this.remainingSeconds = displayStatus === 'COMPLETED' ? 0 : (item.targetDurationSec || 0)
 				} else {
 					this.remainingSeconds = 0
 				}
@@ -1105,7 +1096,7 @@ swelling
 				this.clearTimer()
 				this.form = createForm()
 				this.warningVisible = false
-				this.assessmentExpanded = item.status === 'NEED_EVAL' || item.status === 'PAUSED'
+				this.assessmentExpanded = displayStatus === 'NEED_EVAL' || displayStatus === 'PAUSED'
 			},
 			/**
 			 * 查找第一个匹配状态的动作
@@ -1114,41 +1105,49 @@ swelling
 			 */
 			findFirst: function(statusList) {
 				for (var i = 0; i < this.items.length; i += 1) {
-					if (statusList.indexOf(this.items[i].status) !== -1) {
+					if (statusList.indexOf(this.getItemDisplayStatus(this.items[i])) !== -1) {
 						return this.items[i]
 					}
 				}
 				return null
 			},
 			/**
-			 * 开始训练流程，自动寻找待训练动作
+			 * 开始当前选中的训练动作
 			 */
 			startTraining: function() {
 				if (!this.hasPlan) {
 					this.showToast('今日暂无运动方案，等待健康管理团队后台配置。', 'info')
 					return
 				}
-				if (this.completedCount === this.items.length && this.items.length > 0) {
-					this.showToast('今日运动已全部完成，请遵循术后节律休息。', 'success')
+				if (!this.items.length) {
+					this.showToast('暂无可开始的训练动作。', 'warning')
 					return
 				}
-				var target = this.findFirst(['PENDING', 'NEED_EVAL'])
-				if (target && target.status === 'NEED_EVAL') {
+				var target = this.currentAction
+				if (!target) {
+					target = this.items[0]
 					this.selectAction(target)
-					this.showToast('存在待填写评估，请先完成训练后评估。', 'warning')
+				}
+				var status = this.getItemDisplayStatus(target)
+				if (status === 'COMPLETED') {
+					this.showToast('该动作已完成，请选择其他训练动作。', 'warning')
+					return
+				}
+				if (status === 'PAUSED') {
+					this.showToast('该动作已暂停，请先联系健康管理团队确认。', 'warning')
 					this.openEvaluation()
 					return
 				}
-				if (!target) {
-					this.showToast('存在待填写评估，请先完成训练后评估。', 'warning')
-					var evaluate = this.findFirst(['NEED_EVAL'])
-					if (evaluate) {
-						this.selectAction(evaluate)
-						this.openEvaluation()
-					}
+				if (status === 'NEED_EVAL') {
+					this.showToast('该动作待填写训练后评估。', 'warning')
+					this.openEvaluation()
 					return
 				}
-				this.selectAction(target)
+				if (status !== 'PENDING') {
+					this.showToast('当前动作暂不能开始训练。', 'warning')
+					return
+				}
+				this.currentActionId = target.id
 				if (target.mode === 'TIMER') {
 					this.remainingSeconds = target.targetDurationSec || 0
 					this.startTimer()
@@ -1372,12 +1371,12 @@ swelling
 			 */
 			openEvaluation: function() {
 				this.assessmentExpanded = true
-				this.$nextTick(function() {
+				setTimeout(function() {
 					uni.pageScrollTo({
 						selector: '#assessmentCard',
-						duration: 260
+						duration: 300
 					})
-				})
+				}, 80)
 			},
 			/**
 			 * 疼痛滑块input事件
@@ -1458,26 +1457,16 @@ swelling
 				if (!this.validateForm()) return
 				var action = this.currentAction
 				this.actionLoading = true
-				this.serverEvaluation = {
-					itemId: '',
-					isAbnormal: false,
-					abnormalReasons: []
-				}
 				try {
 					var result = await this.submitEvaluationRequest(action, this.buildEvaluationPayload())
-					var updated = this.mergeExerciseItem(result)
-					if (!updated) {
-						this.showToast('评估结果返回数据异常，请稍后重试。', 'warning')
-						return
-					}
-					action = updated
 					var serverApplied = this.applyEvaluationResult(result, action)
 					if (!serverApplied) {
 						this.showToast('评估结果返回数据异常，请稍后重试。', 'warning')
 						return
 					}
-					var abnormal = serverApplied ? (!!result.isAbnormal || action.status === 'PAUSED') : this.hasAbnormal
-					if (serverApplied && result.itemStatus === 'NEED_EVAL' && !abnormal) {
+					var evaluation = action.evaluation
+					var abnormal = !!evaluation.isAbnormal || evaluation.itemStatus === 'PAUSED'
+					if (evaluation.itemStatus === 'NEED_EVAL' && !abnormal) {
 						this.pauseTimer()
 						this.remainingSeconds = 0
 						this.assessmentExpanded = true
@@ -1495,7 +1484,7 @@ swelling
 					this.remainingSeconds = 0
 					this.warningVisible = false
 					this.assessmentExpanded = false
-					if (action.status === 'COMPLETED') {
+					if (evaluation.itemStatus === 'COMPLETED') {
 						this.refreshWeeklyStatsLocally()
 					}
 					var pending = this.findFirst(['PENDING', 'NEED_EVAL'])
