@@ -29,104 +29,8 @@
 		</view>
 		<!-- 饮食分析 -->
 		<view v-if="activeTab2 == 1">
-			<view
-				class="my-card radius-15 card-top bg-white card-border card-border-gray  u-flex space-between u-flex-column ">
-				<view class="view-icon badge-blue-bg badge-circle margin-bottom-2">
-					<u-icon name="camera" color="#155DFC" size="80rpx"></u-icon>
-				</view>
-				<view>
-
-					<view class="view-text">
-						<view class="view-text1 font-l margin-bottom-2 text-center ">
-							上传今日膳食照片
-						</view>
-						<view class="view-text2 font-info font-s margin-bottom-2 text-center ">
-							实时拍照分析食物营养与食物含量分析
-						</view>
-					</view>
-
-				</view>
-				<view class="margin-top-1">
-					<u-button style="padding: 0 40px;" color="#155DFC" type="primary" text="立即拍照/上传"
-						shape="circle"></u-button>
-				</view>
-
-			</view>
-
-			<view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between u-flex-column ">
-				<view class="header-text">
-					<view class="header-icon ">
-						<view class="header-name font-bold font-m">
-							饮食分析报告
-						</view>
-					</view>
-					<view class="font-green font-s font-bold">
-						今日累计
-					</view>
-				</view>
-				<view class="float-wrapper">
-					<view class="u-float-left u-width-50">
-						<view class="font-s font-info margin-bottom-5">总热量</view>
-						<view class="u-flex  column-center">
-							<view class="font-l font-bold  margin-right-5">546</view>
-							<view class="font-s font-info  ">kal</view>
-						</view>
-					</view>
-					<view class="u-float-left u-width-50">
-						<view class="font-s font-info margin-bottom-5">蛋白质</view>
-						<view class="u-flex  column-center">
-							<view class="font-l font-bold  margin-right-5">546</view>
-							<view class="font-s font-info  ">g</view>
-						</view>
-					</view>
-				</view>
-				<view class="radius-15 bg-gray gray-content">
-					<view class="font-bold font-s margin-bottom-1">营养占比分析</view>
-					<view class="u-flex  space-between u-badge">
-						<view class="badge-blue-bg radius-1 padding-10">
-							<view class="font-l font-bold">24.4</view>
-							<view class="font-s font-info">蛋白质（g)</view>
-						</view>
-						<view class="badge-orange-bg radius-1 padding-10">
-							<view class="font-l font-bold">24.4</view>
-							<view class="font-s font-info">碳物（g)</view>
-						</view>
-						<view class="badge-green-bg radius-1 padding-10">
-							<view class="font-l font-bold">24.4</view>
-							<view class="font-s font-info">维生素</view>
-						</view>
-					</view>
-					<view class="radius-1 bg-white margin-top-1 padding-1">
-						<view class="float-wrapper ">
-							<text class="custom-icon custom-icon-trending-up icon-bold"
-								style="font-size:20rpx;color:#00a63e;"></text>
-
-							<text class=" font-green font-s margin-left-5">
-								医学专业评估：
-							</text>
-							<text class="  font-s margin-left-5">
-								当前膳食结构符合术后康复标准，蛋白质占比 24% 处于理想区间。
-							</text>
-						</view>
-
-					</view>
-					<view class="radius-1 bg-white margin-top-1 padding-1 border-blue bg-linear-blue">
-						<view class="u-flex space-start">
-							<u-icon name="checkmark-circle" color="#155DFC" :bold="true" size="20rpx"></u-icon>
-							<text class=" font-bold font-s margin-left-5">
-								本周饮食汇总
-							</text>
-						</view>
-						<view class="  font-s margin-top-10">
-							本周平均热量摄入符合建议。建议适当增加深海鱼类摄入。
-						</view>
-						<view class="font-blue font-s margin-top-10 font-bold">
-							查看详细报告 →
-						</view>
-					</view>
-
-				</view>
-			</view>
+<mealDetail></mealDetail>
+			
 		</view>
 		<!-- 运动处方 -->
 		<view v-else-if="activeTab2 == 2">
@@ -500,53 +404,7 @@
 		<view v-else-if="activeTab2 == 6" class="">
 			
 			<sleepManagement />
-			<!-- <view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between u-flex-column ">
-				<view class="radius-1   padding-1  bg-gray-dark gray-content width-100-2rem">
-					<view class="  font-m margin-bottom-1">
-						睡眠评估
-					</view>
-					<view class="u-flex space-start">
-						<u-icon name="checkmark-circle" color="#00a63e" :size="fontSize1"></u-icon>
-						<text class="  font-s margin-left-5">
-							睡眠质量良好
-						</text>
-					</view>
-
-
-				</view>
-				<view class="font-blue font-s margin-top-10 font-bold width-100">
-					记录今日睡眠 →
-				</view>
-			</view>
-			<view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between u-flex-column ">
-				<view class="header-text">
-					<view class="header-icon ">
-						<view class="font-m font-bold">
-							心理健康内容
-						</view>
-					</view>
-
-				</view>
-				<view
-					class="card-list  radius-1 card-top  card-border card-border-gray no-shadow bg-gray margin-bottom-1"
-					v-for="item in articleList" :key="item.id">
-					<view class="massage-list heath-6 u-flex space-between align-center">
-
-						<view class="massage-icon-left view-icon badge-blue-bg">
-							<u-icon name="file-text" color="#155DFC" :bold="true" size="40rpx"></u-icon>
-						</view>
-						<view class="article-list ">
-							<u--text size="28rpx" :bold="true" class=" font-s  font-black font-bold " lines="1"
-								:text="item.title"></u--text>					
-							<view class="u-flex space-start margin-top-1 tag-row">
-								<u-tag plain plainFill size="mini" :text="item.type" class="margin-right-5"></u-tag>
-								<u--text size="22rpx" class="font-info" :lines="1" :text="item.duration"></u--text>
-							</view>
-						</view>
-					</view
-				</view>
-			</view> -->
-
+		
 		</view>
 		<view v-if="activeTab2 != 5" class="button-wrapper u-flex flex-center font-s" @click="showToast()" ref="uToast">
 			<text class="custom-icon custom-icon-navigation icon-bold" style="color:#155DFC;margin-right: 5px;"></text>
@@ -593,12 +451,15 @@
 		getMeMedicationTodayApi,
 		postMeMedicationApi,
 		postMeMedicationByIdTakeApi,
-		deleteMeMedicationByIdApi
+		deleteMeMedicationByIdApi,
+		getHospitalPatientsByIdHealthDetailApi
 
 	} from '@/api/frontApikit.js'
 	import weightControl from './weightControl.vue'
 	import sleepManagement from './sleepManagement.vue'
 	import rehabSport from './rehabSport.vue'
+	import mealDetail from './mealDetail.vue'
+
 
 	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
 
@@ -607,7 +468,7 @@
 			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
 		},
 		components: {
-			mainTabbar,weightControl,sleepManagement,rehabSport
+			mainTabbar,weightControl,sleepManagement,rehabSport,mealDetail
 		},
 		computed: {
     isAllTaken() {
@@ -615,8 +476,12 @@
       return this.medicationList.every(item => item.status === 'TAKEN')
     }
   },
+
 		data() {
+				const userInfo = JSON.parse(uni.getStorageSync('userInfo')) || {}
+
 			return {
+				id: userInfo.userId || '',
 				showModal: false,
 				showModal2: false,
 				drugName: '',
@@ -675,32 +540,6 @@
 				activeTab: 1,
 				activeTab2: 2,
 				medicationList: [],
-		
-				tabList: [{
-					id: 1,
-					name: "首页",
-					icon: "home",
-					badge: "",
-					route: "home"
-				}, {
-					id: 2,
-					name: "健康",
-					icon: "heart",
-					badge: "",
-					route: "healthCenter"
-				}, {
-					id: 3,
-					name: "消息",
-					icon: "chat",
-					badge: "3",
-					route: "messages"
-				}, {
-					id: 4,
-					name: "我的",
-					icon: "account",
-					badge: "",
-					route: "profile"
-				}],
 
 				tabList2: [{
 					id: 1,
@@ -741,8 +580,8 @@
 		},
 		onLoad(options) {
 			this.getMeMedicationTodayApi()
-			// this.getMeExercisePlan()
-
+			// this.getHospitalPatientsByIdHealthDetail()
+		
 		},
 		methods: {
 			openModal(item) {
@@ -767,7 +606,22 @@
 				console.log('确认服用', this.drugName)
 				this.closeModal()
 			},
-		
+			//  患者健康详情（饮食/运动/体重/血糖血压7天；检查指标30天；其他附件）
+			async getHospitalPatientsByIdHealthDetail() {
+				try {
+					console.log(this.id)
+
+					const mealDetail = await getHospitalPatientsByIdHealthDetailApi({
+						id:this.id
+					})
+
+			
+					console.log(mealDetail)
+
+				} catch (e) {
+					console.log('报错：', e)
+				}
+			},
 			//  今日用药列表（status 由当日打卡推导）
 			async getMeMedicationTodayApi() {
 				try {

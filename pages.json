@@ -11,7 +11,8 @@
 		{
 			"path": "pages/index/login",
 			"style": {
-				"navigationBarTitleText": ""
+				"navigationBarTitleText": "",
+				"disableScroll": true
 			}
 		},
 		{
@@ -21,12 +22,7 @@
 			}
 		},
 		
-		{
-			"path": "pages/index/weightManagement",
-			"style": {
-				"navigationBarTitleText": ""
-			}
-		},
+		
 		{
 			"path": "pages/index/patientRegistration", //创建档案
 			"style": {

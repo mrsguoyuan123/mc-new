@@ -1,10 +1,10 @@
 <template>
 	<view class="page-content page-message">
-		<u-tabbar :value="activeTab" :placeholder="false" @change="id => activeTab = id" :fixed="true"
+		<!-- <u-tabbar :value="activeTab" :placeholder="false" @change="id => activeTab = id" :fixed="true"
 			activeColor="rgb(21, 93, 252)" inactiveColor="#d2d6dd" :safeAreaInsetBottom="false">
 			<u-tabbar-item v-for="item in tabList" :key="item.id" :text="item.name" :icon="item.icon"
 				:badge="item.badge" @click="routeTo(item.route)"></u-tabbar-item>
-		</u-tabbar>
+		</u-tabbar> -->
 		<view class=" u-flex space-between align-center margin-bottom-1">
 			<view>
 				<view class="view-text1 font-l">
@@ -25,7 +25,7 @@
 				prefixIconStyle="font-size: 22px;color: #909399"></u--input>
 		</view>
 		<view class="margin-bottom-1">
-			<u-tabs @click="tabClick" :list="list1" lineWidth="20" lineHeight="7" lineColor="#155DFC" :activeStyle="{
+			<u-tabs @click="tabClick" :list="messageList" lineWidth="20" lineHeight="7" lineColor="#155DFC" :activeStyle="{
 		        color: '#303133',
 		        fontWeight: 'bold',
 		        transform: 'scale(1.05)'
@@ -76,39 +76,8 @@
 			<u-icon name="arrow-right" class="ml-16"></u-icon>
 			
 		</view>
-		<!-- 	<view v-for="(item,index) in chatHistory" class="radius-15 card-top bg-white card-border card-border-gray"
-			@click="routeTo('consultation')">
-			<view class=" massage-list">
-				<view class="massage-icon-left view-icon badge-blue-bg" v-if="item.type=='human'">
-					<text class="custom-icon custom-icon-Headset1 icon-bold"
-						style="font-size:40rpx;color:#155DFC;"></text>
-				</view>
-				<view class="massage-icon-left view-icon badge-orange-bg" v-else-if="item.type=='system'">
-
-					<text class="custom-icon custom-icon-order icon-bold" style="font-size:40rpx;color:#ff6900;"></text>
-				</view>
-				<view class="massage-content">
-					<view class="view-text">
-						<view class="view-text1 font-l">
-							{{item.name}}
-						</view>
-						<u--text size="12" class="font-info font-s" :lines="1" :text="item.lastMsg"></u--text>
-					</view>
-					<view class="massage-time u-flex align-center space-between  u-flex-column">
-						<view class="font-info font-s">{{item.time}}</view>
-						<view>
-							<u-badge numberType="limit" max="99" :value="item.unreadCount"></u-badge>
-						</view>
-					</view>
-				</view>
-				<view class="massage-icon-right">
-					<u-icon name="arrow-right" color="#909399" size="30rpx"></u-icon>
-				</view>
-
-			</view>
-
-		</view> -->
-		<main-tabbar :current="2"></main-tabbar>
+		
+		<main-tabbar :current="2" :totalUnread="totalUnread"></main-tabbar>
 	</view>
 </template>
 <script>
@@ -122,8 +91,9 @@ import {
 			mainTabbar
 		},
 		data() {
-			const userInfo = uni.getStorageSync('userInfo') || {}
+			const userInfo = JSON.parse(uni.getStorageSync('userInfo')) || {}
 			return {
+				totalUnread: 0,
 				id: userInfo.userId || '',
 				current: 0,
 				tabList: [{
@@ -142,7 +112,7 @@ import {
 					id: 3,
 					name: "消息",
 					icon: "chat",
-					badge: "3",
+					badge: "",
 					route: "messages"
 				}, {
 					id: 4,
@@ -152,11 +122,10 @@ import {
 					route: "profile"
 				}],
 				activeTab: 2,
-				list1: [{
+				messageList: [{
 					name: '全部',
-
 					badge: {
-						value: 5,
+						value: 0,
 					}
 				}, {
 					name: '健康管理团队',
@@ -185,6 +154,15 @@ import {
 			})
 		},
 		methods: {
+			// 新增：计算全部未读总和，赋值给消息tab badge
+			calcTotalUnread() {
+		let total = 0
+		this.allMessageList.forEach(item=>{
+			total += Number(item.unreadCount || 0)
+		})
+		this.totalUnread = total
+		
+	},
 			
 			async loadConversations() {
 				this.loading = true
@@ -194,12 +172,17 @@ import {
 				})
 				try {
 					const result = await fetchConversationsApi()
+					
 					const data = result || {}
 					this.conversationList = this.normalizeConversations(data.conversations || [])
 					this.systemNotificationList = this.normalizeNotifications(data.systemNotifications || [])
 					this.allMessageList = this.conversationList.concat(this.systemNotificationList)
 					this.applyFilters()
-					console.log(this.conversationList)
+					this.messageList[0].badge.value = this.allMessageList.length;
+
+					// 计算未读总数，更新tab红点
+					this.calcTotalUnread()
+					
 					if (!this.allMessageList.length) {
 						uni.showToast({
 							title: '暂无消息',
@@ -212,6 +195,8 @@ import {
 					this.systemNotificationList = []
 					this.allMessageList = []
 					this.chatHistory = []
+					// 清空角标
+					this.tabList[2].badge = ''
 					uni.showToast({
 						title: (e && e.message) || '消息加载失败',
 						icon: 'none'
@@ -281,7 +266,7 @@ import {
 			},
 
 			tabClick(item) {
-				const tab = item && item.index !== undefined ? this.list1[item.index] : item
+				const tab = item && item.index !== undefined ? this.messageList[item.index] : item
 				this.activeCategory = tab && tab.type ? tab.type : ''
 				this.applyFilters()
 			},
@@ -305,8 +290,7 @@ import {
 				})
 			},
 			getIconName(baseName, index) {
-				// console.log((baseName,index))
-				// console.log((baseName,index))
+			
 				// 如果当前选中，使用 fill 结尾的实心图标，否则使用空心图标
 				if (this.current === index) {
 					console.log(baseName)

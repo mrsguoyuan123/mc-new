@@ -129,7 +129,8 @@
 	import {
 		getMeProfileApi,
 		putMeProfileApi,
-		getDictOptionsApi
+		getDictOptionsApi,
+		postAuthLogoutApi
 	} from '@/api/frontApikit.js'
 	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
 	import {
@@ -224,6 +225,7 @@
 				isShow: true,
 				showSex: false,
 				saving: false,
+				logoutLoading: false,
 				message1: "完善专业档案",
 				message2: "您好，患者。请填写以下信息以提供精准服务",
 				meProfile: null,
@@ -509,18 +511,49 @@
 				this.$safeJump(routeUrl)
 			},
 
-			logOut(res) {
+			logOut() {
 				uni.showModal({
 					title: '提示',
-					content: '确定退出账号？',
-					success: resp => {
-						if (resp.confirm) {
-							uni.reLaunch({
-								url: '/pages/index/login'
-							})
+					content: '确定退出当前账号？',
+					success: async (res) => {
+						if (res.confirm) {
+							await this.requestLogout()
 						}
 					}
 				})
+			},
+			async requestLogout() {
+				if (this.logoutLoading) return
+				this.logoutLoading = true
+				let logoutFailed = false
+				uni.showLoading({
+					title: '退出中...',
+					mask: true
+				})
+				try {
+					const refreshToken = uni.getStorageSync('refreshToken')
+					await postAuthLogoutApi(refreshToken ? {
+						refreshToken
+					} : {})
+				} catch (error) {
+					logoutFailed = true
+					uni.showToast({
+						title: '退出失败，已清空登录状态',
+						icon: 'none',
+						duration: 800
+					})
+				} finally {
+					uni.removeStorageSync('accessToken')
+					uni.removeStorageSync('refreshToken')
+					uni.removeStorageSync('userInfo')
+					this.logoutLoading = false
+					uni.hideLoading()
+					setTimeout(() => {
+						uni.reLaunch({
+							url: '/pages/index/login'
+						})
+					}, logoutFailed ? 600 : 0)
+				}
 			}
 		},
 		// 删除 onReady setRules，uview2不需要手动设置

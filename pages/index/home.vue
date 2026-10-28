@@ -624,7 +624,7 @@
 				<!-- 底部来源 -->
 
 				<!-- 确认按钮 -->
-				<view class="confirm-btn" @click="showNotice = false">
+				<view class="confirm-btn" @click="MeInformedConsentByIdConfirm()">
 					<text>我已阅读并知晓</text>
 				</view>
 			</view>
@@ -639,9 +639,11 @@
 	import {
 		getMeHomeApi,
 		getMeHealthArchiveApi,
-
+getMeMedicalRecordApi,
 		getMeInformedConsentApi,
-		getAppArticlesApi
+		getAppArticlesApi,
+		postMeInformedConsentByIdConfirmApi,
+		
 	} from '@/api/frontApikit.js'
 	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
 
@@ -654,8 +656,10 @@
 			mainTabbar
 		},
 		data() {
+				const userInfo = JSON.parse(uni.getStorageSync('userInfo')) || {}
 			return {
-				id: '',
+				
+				id: userInfo.userId || '',
 				archivePatient: {},
 				archiveScans: [],
 				archiveGroups: [],
@@ -921,37 +925,16 @@
 			};
 		},
 		onShow() {
-
-			// # H5环境手动解析hash后的query
-			// #ifdef H5
-			const fullUrl = window.location.href
-			// console.log('完整url：', fullUrl)
-			const hashPart = fullUrl.split('#')[1]
-			if (hashPart && hashPart.includes('?')) {
-				const queryStr = hashPart.split('?')[1]
-				const sp = new URLSearchParams(queryStr)
-				const dataStr = sp.get('data')
-				if (dataStr && dataStr !== 'undefined') {
-					try {
-						const data = JSON.parse(decodeURIComponent(dataStr))
-						console.log(111111111111111,data)
-
-						this.id = data.id
-						this.id = 910005
-						// console.log('onShow H5解析参数成功', this.id);
-						this.getData()
-						this.getMeHealthArchiveApi()
-						this.getMeInformedConsentApi()
-						this.getAppArticlesApi()
-					} catch (err) {
-						console.error('解析data失败', err)
-					}
-				}
-			}
-			// #endif
+					
+			
 		},
 		onLoad(options) {
-			console.log(222222222222,options)
+			
+			this.getData()
+			this.getMeHealthArchiveApi()
+			this.getMeInformedConsentApi()
+			this.getAppArticlesApi()
+			this.getMeMedicalRecordApi()
 			// 1.先判断 data 是否存在，并且不是字符串"undefined"
 			if (options.data && options.data !== "undefined") {
 				try {
@@ -971,6 +954,19 @@
 		},
 
 		methods: {
+			// 患者病历  目前是null
+			async getMeMedicalRecordApi() {
+				console.log('病例',this.id)
+				try {
+				const PatientsByIdMedicalRecord = 	await getMeMedicalRecordApi({
+						id: this.id
+					})
+					console.log(PatientsByIdMedicalRecord)
+
+				} catch (e) {
+					console.log('报错：', e)
+				}
+			},
 			getPeriodText(val) {
 				const map = {
 					MORNING: '上午',
@@ -1072,7 +1068,7 @@
 					})
 					// console.log(' 患者首页聚合（术后天数/顾问名片/健康监测/陪诊/待确认告知书）', data)
 
-					// console.log('待确认告知书', data.consentPending)
+					console.log('待确认告知书', data.consentPending)
 					console.log('陪诊', data.escort)
 					console.log('术后天数', data.postopDays)
 					this.postopDays = data.postopDays ?? null
@@ -1097,6 +1093,22 @@
 					})
 					this.getMeInformedConsent = getMeInformedConsent[0]
 					// console.log('getMeInformedConsent：', this.getMeInformedConsent)
+				} catch (e) {
+					console.log('报错：', e)
+				}
+			},
+			// 确认告知书
+			async MeInformedConsentByIdConfirm() {
+				console.log(this.consentPending.id)
+				try {
+					if (!this.consentPending.id) {
+						console.warn('id为空，跳过请求')
+						return
+					}
+					await postMeInformedConsentByIdConfirmApi({
+						id: this.consentPending.id
+					})
+					this.showNotice = false
 				} catch (e) {
 					console.log('报错：', e)
 				}

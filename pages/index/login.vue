@@ -1,417 +1,623 @@
 <template>
-	<view class="login-page">
-		<view class="login-header">
-			<view class="bg-blue-dark margin-right-10">
-				<text class="custom-icon custom-icon-stethoscope icon-bold" style="font-size:80rpx;color:#ffff;"></text>
-			</view>
-			<text class="title text-center">术后康复管理</text>
-			<text class="desc text-center">链接医生与患者的康复桥梁</text>
-		</view>
-		<view class="login-form">
-			<view v-show="isPwdLogin">
-				<view class="input-item">
-					<u-input v-model="username" placeholder="请输入用户名" border="surround" />
-				</view>
+    <view class="login-page">
+        <view v-if="stage === 'oneKey'" class="one-key-page">
+            <view class="one-key-card">
+                <view class="app-logo"><u-icon name="phone-fill" color="#fff" size="46"></u-icon></view>
+                <view class="app-name">术后康复管理</view>
+                <button class="primary-btn" :disabled="loginLoading" @click="handleOneKeyLogin">本机号码一键登录</button>
+                <view class="code-login" @click="enterSmsLogin">验证码登录</view>
+            </view>
+            <view class="agreement bottom-agreement">
+                <view class="check-box" :class="{ checked: agreed }" @click.stop="toggleAgreement">
+                    <u-icon v-if="agreed" name="checkmark" color="#fff" size="12"></u-icon>
+                </view>
+                <view class="agreement-text" @click="openAgreementOnly">
+                    <text>我已阅读并同意</text><text class="agreement-link">《用户协议》</text><text>和</text><text class="agreement-link">《隐私政策》</text>
+                </view>
+            </view>
+        </view>
 
-				<!-- 密码登录输入框 -->
-				<view class="input-item">
-					<u-input v-model="password" placeholder="请输入密码" type="password" border="surround" />
-				</view>
-				<!-- 密码登录按钮 -->
-				<view class="margin-bottom-2" v-show="isPwdLogin">
-					<u-button type="primary" @click="handleLogin" :disabled="!canLogin">
-						密码登录
-					</u-button>
-				</view>
-			</view>
-			<view v-show="!isPwdLogin">
-				<!-- 手机号 -->
-				<view class="input-item">
-					<u-input v-model="phone" placeholder="请输入手机号" type="number" maxlength="11" border="surround" />
-				</view>
+        <view v-else class="form-page">
+            <view class="login-card">
+                <view class="tabs">
+                    <view class="tab-item" :class="{ active: loginMode === 'sms' }" @click="switchMode('sms')">短信登录</view>
+                    <view class="tab-item" :class="{ active: loginMode === 'password' }" @click="switchMode('password')">密码登录</view>
+                </view>
+                <view v-if="loginMode === 'sms'" class="form-panel">
+                    <view class="field-row"><u-icon name="phone" color="#20a464" size="22"></u-icon><u-input v-model="phone" type="number" maxlength="11" border="none" placeholder="请输入手机号" placeholderStyle="color:#a8abb2" :customStyle="{ paddingLeft: '12rpx' }"></u-input></view>
+                    <view class="field-row code-field"><u-icon name="lock" color="#20a464" size="22"></u-icon>
+                        <u-input v-model="code" type="number" maxlength="6" border="none" placeholder="请输入验证码" placeholderStyle="color:#a8abb2" :customStyle="{ paddingLeft: '12rpx' }"></u-input><view class="send-code" :class="{ disabled: codeCountDown > 0 || smsSending }" @click="getCode">{{ codeCountDown > 0 ? codeCountDown + 's后重发' : '获取验证码' }}</view></view>
+                    <button class="primary-btn login-btn" :disabled="loginLoading" @click="submitLogin">登录</button>
+                    <view class="forgot-password" @click="forgotPassword">返回一键登录</view>
+                </view>
+                <view v-else class="form-panel">
+                    <view class="field-row"><u-icon name="account" color="#20a464" size="22"></u-icon><u-input v-model="username" border="none" placeholder="请输入账号" placeholderStyle="color:#a8abb2" :customStyle="{ paddingLeft: '12rpx' }"></u-input></view>
+                    <view class="field-row"><u-icon name="lock" color="#20a464" size="22"></u-icon><u-input v-model="password" password border="none" placeholder="请输入密码" placeholderStyle="color:#a8abb2" :customStyle="{ paddingLeft: '12rpx' }"></u-input></view>
+                    <button class="primary-btn login-btn" :disabled="loginLoading" @click="submitLogin">登录</button>
+                    <view class="forgot-password" @click="forgotPassword">返回一键登录</view>
+                </view>
+            </view>
+            <view class="agreement form-agreement">
+                <view class="check-box" :class="{ checked: agreed }" @click.stop="toggleAgreement"><u-icon v-if="agreed" name="checkmark" color="#fff" size="12"></u-icon></view>
+                <view class="agreement-text" @click="openAgreementOnly"><text>已阅读并同意</text><text class="agreement-link">《用户协议》</text><text>和</text><text class="agreement-link">《隐私政策》</text></view>
+            </view>
+        </view>
 
-				<!-- 验证码登录行 -->
-				<view class="code-row">
-					<view class="code-input-wrap">
-						<u-input v-model="code" placeholder="请输入验证码" type="number" maxlength="6" border="surround" />
-					</view>
-					<view class="code-btn-wrap">
-						<u-button :disabled="codeCountDown > 0 || !validPhone" @click="getCode" type="primary"
-							size="small">
-							{{ codeCountDown > 0 ? `${codeCountDown}s后重发` : '获取验证码' }}
-						</u-button>
-					</view>
-				</view>
-
-			</view>
-
-			<!-- 验证码登录按钮 -->
-			<view class="margin-bottom-2" v-show="!isPwdLogin">
-				<u-button type="primary" @click="handleLogin" :disabled="!canLogin">
-					验证码登录
-				</u-button>
-			</view>
-
-			<view class="register-wrap margin-bottom-2" v-if="isPwdLogin">
-				<text class="tip">忘记密码？</text>
-				<text class="register-text" @click="switchLoginMode">验证码登录</text>
-			</view>
-			<view class="register-wrap margin-bottom-2" v-else>
-				<!-- <text class="tip">忘记密码？</text> -->
-				<text class="register-text" @click="switchLoginMode">密码登录</text>
-			</view>
-
-			<!-- 一键登录 -->
-			<view class="margin-bottom-2">
-				<u-button type="info" @click="handleOneKeyLogin">一键登录</u-button>
-			</view>
-
-			<!-- 跳转注册 -->
-			<view class="register-wrap">
-				<text class="tip">还没有账号？</text>
-				<text class="register-text" @click="goRegister">去注册</text>
-			</view>
-		</view>
-
-		<!-- 协议提示 -->
-		<view class="protocol">
-			<u-checkbox-group v-model="checkArr">
-				<u-checkbox name="agree" shape="circle"></u-checkbox>
-			</u-checkbox-group>
-			<view class="u-flex flex-start align-center">
-				<text class="protocol-text">我已阅读并同意 </text>
-				<text class="protocol-text font-blue" @click="openUserAgreement">《用户服务协议》</text>
-				<text class="protocol-text">与 </text>
-				<text class="protocol-text font-blue" @click="openPrivacy">《隐私条款》</text>
-			</view>
-		</view>
-	</view>
+        <view v-if="showAgreement" class="modal-mask">
+            <view class="agreement-modal">
+                <view class="modal-title">服务协议及隐私保护</view>
+                <scroll-view scroll-y class="modal-body">
+                    <view class="modal-section-title">一、用户协议</view>
+                    <view class="modal-paragraph">欢迎使用术后康复管理服务。请您在注册和登录前仔细阅读<text class="modal-link">《用户协议》</text>。您点击“同意并注册”后，即可使用手机号验证码或账号密码登录平台。</view>
+                    <view class="modal-paragraph">1. 平台为患者、医生、客服、驻点及医院管理人员提供康复随访、病历查看、复诊预约、在线沟通等服务，具体功能以您实际开通的角色权限为准。</view>
+                    <view class="modal-paragraph">2. 您应保证注册、登录及使用服务时提交的信息真实、准确、完整，不得冒用他人手机号、账号或身份信息。</view>
+                    <view class="modal-paragraph">3. 您应妥善保管账号、密码、短信验证码及登录设备，不应将验证码、账号密码提供给他人使用。因主动泄露或保管不当造成的损失，由您自行承担。</view>
+                    <view class="modal-paragraph">4. 使用平台服务时，您应遵守法律法规和医疗服务秩序，不得发布违法违规内容，不得侵犯他人隐私，不得干扰系统正常运行。</view>
+                    <view class="modal-paragraph">5. 平台会根据服务需要对登录状态、操作记录、访问权限进行安全校验和留痕管理，以保障账号与医疗数据安全。</view>
+                    <view class="modal-section-title">二、隐私政策</view>
+                    <view class="modal-paragraph">请您同时仔细阅读<text class="modal-link">《隐私政策》</text>。我们重视您的个人信息和敏感个人信息保护。</view>
+                    <view class="modal-paragraph">1. 为完成注册登录、身份识别、康复管理、服务沟通和安全验证，我们会收集您的手机号码、账号信息、姓名、病历资料、康复记录、预约信息以及必要的设备和网络信息。</view>
+                    <view class="modal-paragraph">2. 病历、诊断、手术、康复情况等信息属于敏感个人信息。我们仅在提供医疗健康服务所必需的最小范围内收集和使用，并采取权限控制、身份校验、安全传输、操作留痕等措施进行保护。</view>
+                    <view class="modal-paragraph">3. 未经您的同意，我们不会向无关第三方共享您的个人信息；但法律法规另有规定、医疗服务所必需，或为保护生命健康安全所必需的情形除外。</view>
+                    <view class="modal-paragraph">4. 您可以依法查询、更正、补充、删除自己的个人信息，也可以申请注销账号或撤回授权。账号注销后，我们将按照法律法规要求处理或删除相关信息。</view>
+                    <view class="modal-paragraph">5. 如您不同意相关内容，将无法完成注册、登录及使用相关服务；您点击“不同意”将停留在当前页面。</view>
+                </scroll-view>
+                <view class="modal-actions">
+                    <button class="modal-btn disagree-btn" @click="disagreeAgreement">不同意</button>
+                    <button class="modal-btn agree-btn" @click="agreeAgreement">同意并注册</button>
+                </view>
+            </view>
+        </view>
+    </view>
 </template>
-
-
 <script>
-//用户名密码，发送验证码，
-import { postAuthLoginApi,postAuthRegisterApi,getAuthMeApi } from '@/api/frontApikit.js'
-	export default {
-		data() {
-			return {
-				username: 'admin2',
-				password: '1',
-				isPwdLogin: true,
-				phone: '18841452206',
-				code: '',
-				codeCountDown: 0,
-				checkArr: [], // checkbox-group绑定数组，选中会存入name:"agree"
-				timer: null
-			}
-		},
-		computed: {
-			validPhone() {
-				return /^1[3-9]\d{9}$/.test(this.phone)
-			},
-			canLogin() {
-				const isAgree = this.checkArr.includes('agree')
-				if (!isAgree) return false
-				if (this.isPwdLogin) {
-					return !!this.username && !!this.password
-				} else {
-					return this.validPhone && this.code.length === 6
-				}
-			}
-		},
-		methods: {
-	
-			switchLoginMode() {
-				console.log('切换登录方式')
-				this.isPwdLogin = !this.isPwdLogin
-				if (this.isPwdLogin) {
-					this.code = ''
-					this.phone = ''
-					this.clearTimer()
-				} else {
-					this.password = ''
-					this.username = ''
-				}
-			},
-			async getCode() {
-				if (!this.validPhone) {
-					return uni.showToast({
-						title: '请输入正确手机号',
-						icon: 'none'
-					})
-				}
-				
-				try {
-					const res =await postAuthLoginApi({
-						phone: this.phone
-					})
-					console.log(res)
-					uni.showToast({
-						title: '验证码已发送',
-						icon: 'success'
-					})
-					this.codeCountDown = 60
-					this.clearTimer()
-					this.timer = setInterval(() => {
-						this.codeCountDown--
-						if (this.codeCountDown <= 0) {
-							this.clearTimer()
-						}
-					}, 1000)
-				} catch (err) {
-					console.error('获取验证码失败：', err)
-				}
-			},
-		async handleLogin() {
-  if (!this.checkArr.includes('agree')) {
-    return uni.showToast({
-      title: '请同意协议!',
-      icon: 'none'
-    })
-  }
-  this.clearTimer()
-  uni.showLoading({
-    title: '登录中...',
-    mask: true
-  })
-
-  try {
-    let res
-    // 用户名密码登录
-    if (this.isPwdLogin) {
-      const postData = {
-        username: this.username,
-        password: this.password
-      }
-      res = await postAuthLoginApi(postData);
-      console.log('密码登录返回：', res)
-    } else {
-      // 验证码登录
-      if (!this.code || this.code.length !== 6) {
-        uni.hideLoading()
-        return uni.showToast({
-          title: '请输入6位验证码',
-          icon: 'none'
-        })
-      }
-      res = await authSmsLogin({
-        phone: this.phone,
-        code: this.code
-      })
-      console.log('验证码登录返回：', res)
+import { postAuthSmsCodeApi, postAuthSmsLoginApi, postAuthLoginApi, postAuthWxLoginApi } from '@/api/frontApikit.js'
+export default {
+    data() {
+        return { stage: 'oneKey', loginMode: 'sms', phone: '', code: '', username: '', password: '', agreed: false, showAgreement: false, pendingAction: '', codeCountDown: 0, timer: null, loginLoading: false, smsSending: false }
+    },
+    computed: {
+        validPhone() { return /^1[3-9]\d{9}$/.test(String(this.phone).trim()) }
+    },
+    beforeDestroy() { this.clearTimer() },
+    onUnload() { this.clearTimer() },
+    methods: {
+        switchMode(mode) {
+            this.loginMode = mode
+        },
+        enterSmsLogin() {
+            this.stage = 'form'
+            this.loginMode = 'sms'
+        },
+        toggleAgreement() {
+            this.agreed = !this.agreed
+        },
+        openAgreementOnly() {
+            this.pendingAction = ''
+            this.showAgreement = true
+        },
+        disagreeAgreement() {
+            this.showAgreement = false
+            this.pendingAction = ''
+        },
+        agreeAgreement() {
+            this.agreed = true
+            this.showAgreement = false
+            const action = this.pendingAction
+            this.pendingAction = ''
+            this.$nextTick(() => {
+                if (action === 'oneKey') {
+                    this.wxLogin()
+                } else if (action === 'login') {
+                    this.submitLogin()
+                }
+            })
+        },
+        handleOneKeyLogin() {
+            if (this.loginLoading) return
+            if (!this.agreed) {
+                this.pendingAction = 'oneKey'
+                this.showAgreement = true
+                return
+            }
+            // 一键登录直接走wxLogin，不执行表单校验validateForm
+            this.wxLogin()
+        },
+        wxLogin() {
+            if (this.loginLoading) return
+            this.loginLoading = true
+            uni.showLoading({ title: '登录中...', mask: true })
+            uni.login({
+                provider: 'weixin',
+                success: async (res) => {
+                    try {
+                        const result = await postAuthWxLoginApi({ code: res.code })
+                        this.saveLoginResult(result)
+                        uni.showToast({ title: '登录成功', icon: 'success' })
+                        setTimeout(() => {
+                            this.redirectByRole(result)
+                        }, 300)
+                    } catch (err) {
+                        console.log('微信登录失败：', err)
+                    } finally {
+                        this.loginLoading = false
+                        uni.hideLoading()
+                    }
+                },
+                fail: (err) => {
+                    console.log('uni.login失败', err)
+                    this.loginLoading = false
+                    uni.hideLoading()
+                }
+            })
+        },
+        forgotPassword() {
+            this.stage = 'oneKey'
+        },
+        showTip(title) {
+            uni.showToast({ title, icon: 'none' })
+        },
+        validateForm() {
+            if (this.loginMode === 'password') {
+                if (!String(this.username).trim()) {
+                    this.showTip('请输入账号')
+                    return false
+                }
+                if (!String(this.password).trim()) {
+                    this.showTip('请输入密码')
+                    return false
+                }
+                return true
+            }
+            if (!String(this.phone).trim()) {
+                this.showTip('请输入手机号')
+                return false
+            }
+            if (!this.validPhone) {
+                this.showTip('请输入正确手机号')
+                return false
+            }
+            if (!String(this.code).trim()) {
+                this.showTip('请输入验证码')
+                return false
+            }
+            if (!/^\d{6}$/.test(String(this.code).trim())) {
+                this.showTip('请输入6位数字验证码')
+                return false
+            }
+            return true
+        },
+        async getCode() {
+            if (this.smsSending || this.codeCountDown > 0) return
+            if (!String(this.phone).trim()) {
+                this.showTip('请输入手机号')
+                return
+            }
+            if (!this.validPhone) {
+                this.showTip('请输入正确手机号')
+                return
+            }
+            // 获取验证码不校验协议，不弹窗
+            this.smsSending = true
+            try {
+                await postAuthSmsCodeApi({ phone: String(this.phone).trim() })
+                this.showTip('验证码已发送')
+                this.startCountDown()
+            } catch (err) {
+                console.log('获取验证码失败：', err)
+                this.showTip('验证码发送失败，请稍后重试')
+            } finally {
+                this.smsSending = false
+            }
+        },
+        startCountDown() {
+            this.clearTimer()
+            this.codeCountDown = 60
+            this.timer = setInterval(() => {
+                this.codeCountDown -= 1
+                if (this.codeCountDown <= 0) this.clearTimer()
+            }, 1000)
+        },
+        clearTimer() {
+            if (this.timer) {
+                clearInterval(this.timer)
+                this.timer = null
+            }
+            this.codeCountDown = Math.max(this.codeCountDown, 0)
+        },
+        submitLogin() {
+            if (this.loginLoading) return
+            if (!this.validateForm()) return
+            if (!this.agreed) {
+                this.pendingAction = 'login'
+                this.showAgreement = true
+                return
+            }
+            this.handleLogin()
+        },
+        async handleLogin() {
+            let result
+            this.loginLoading = true
+            uni.showLoading({ title: '登录中...', mask: true })
+            try {
+                if (this.loginMode === 'password') {
+                    result = await postAuthLoginApi({
+                        username: String(this.username).trim(),
+                        password: String(this.password).trim()
+                    })
+                } else {
+                    result = await postAuthSmsLoginApi({
+                        phone: String(this.phone).trim(),
+                        code: String(this.code).trim()
+                    })
+                }
+                this.saveLoginResult(result)
+                uni.showToast({ title: '登录成功', icon: 'success' })
+                setTimeout(() => {
+                    this.redirectByRole(result)
+                }, 300)
+            } catch (err) {
+                console.log('登录失败：', err)
+            } finally {
+                this.loginLoading = false
+                uni.hideLoading()
+            }
+        },
+        saveLoginResult(result) {
+            const data = result || {}
+            const token = data.accessToken || data.token || ''
+            const refreshToken = data.refreshToken || ''
+            const user = data.user || data.userInfo || {}
+            if (token) uni.setStorageSync('accessToken', token)
+            if (refreshToken) uni.setStorageSync('refreshToken', refreshToken)
+            uni.setStorageSync('userInfo', JSON.stringify(user))
+        },
+        redirectByRole(result) {
+            const data = result || {}
+            const user = data.user || data.userInfo || {}
+            const role = data.role || user.role
+            const roleUrlMap = {
+                PATIENT: '/pages/index/home',
+                CS: '/pages/index/workBench',
+                CAREGIVER: '/pages/index/onsite'
+            }
+            const url = roleUrlMap[role];
+            console.log(roleUrlMap)
+            if (!url) {
+                this.showTip('当前角色暂未配置入口')
+                return
+            }
+            uni.reLaunch({ url })
+        }
     }
-
-
-    uni.setStorageSync('token', res.token)
-    uni.setStorageSync('refreshToken', res.refreshToken);
-    this.getAuth()
-    uni.showToast({
-      title: '登录成功',
-      icon: 'success'
-    })
-  } catch (err) {
-    console.log('登录报错：', err)
-    let errMsg = err?.message || '登录失败，请检查信息'
-    uni.showToast({
-      title: errMsg,
-      icon: 'none'
-    })
-  } finally {
-    uni.hideLoading()
-  }
-},
-
-			// 获取角色
-			async getAuth() {
-				try {
-					let res
-					res = await getAuthMeApi()
-					console.log(res);
-					const data = {
-						id: res.userId
-					}
-					
-					//患者  `admin2/1` 
-					if(res.role == 'PATIENT'){
-						if(!res.isRegistered){
-
-						}
-				
-						let routeUrl = `/pages/index/home` + `?data=` + encodeURIComponent(JSON.stringify(data))
-						this.$safeJump(routeUrl)
-					// 客服  `admin/1`
-					}else if(res.role == 'CS'){
-						
-						let routeUrl = '/pages/index/workBench'
-						this.$safeJump(routeUrl)
-						// 陪诊师  `admin3/1`
-					}else if(res.role == 'CAREGIVER'){
-							alert()
-						let routeUrl = '/pages/index/onsite'
-						
-						this.$safeJump(routeUrl)
-						// 医生  `admin5/1`  新建
-					}else if(res.role == 'DOCTOR'){
-						
-						let routeUrl = '/pages/index/home'
-						this.$safeJump(routeUrl)
-					}
-				} catch (err) {
-					let errMsg = err?.message || '失败'
-					uni.showToast({
-						title: errMsg,
-						icon: 'none'
-					})
-				} 
-			},
-			// 一键登录
-			async handleOneKeyLogin() {
-				if (!this.checkArr.includes('agree')) {
-					return uni.showToast({
-						title: '请同意协议!',
-						icon: 'none'
-					})
-				}
-				this.clearTimer()
-				try {
-					// const res = await getAppBanners({});
-					// console.log(res)
-					let routeUrl = '/pages/index/loginFirst'
-					this.$safeJump(routeUrl)
-				} catch (err) {
-					console.error(err)
-				}
-			},
-			// 注册
-			goRegister() {
-				this.clearTimer()
-				let routeUrl = '/pages/index/register'
-				this.$safeJump(routeUrl)
-			},
-			// 用户服务协议
-			openUserAgreement() {
-				let routeUrl = '/pages/index/user'
-				this.$safeJump(routeUrl)
-			},
-			// 隐私条款
-			openPrivacy() {
-				let routeUrl = '/pages/index/privacy'
-				this.$safeJump(routeUrl)
-			},
-			clearTimer() {
-				if (this.timer) {
-					clearInterval(this.timer)
-					this.timer = null
-				}
-			}
-		},
-		beforeDestroy() {
-			this.clearTimer()
-		},
-		onUnload() {
-			this.clearTimer()
-			this.phone = ''
-			this.password = ''
-			this.code = ''
-			this.username = ''
-		}
-	}
+}
 </script>
-
 <style scoped>
-	.login-page {
-		padding: 80rpx 60rpx;
-		max-width: 500px;
-		min-width: 300px;
-		margin: 0 auto;
-	}
+.login-page {
+    min-height: 100vh;
+    background-image: url("/static/img/login.jpeg");
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
 
-	.login-header {
-		margin-bottom: 80rpx;
-	}
+.one-key-page,
+.form-page {
+    position: relative;
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 400rpx 40rpx ;
+}
 
-	.bg-blue-dark {
-		padding: 40rpx;
-		border-radius: 40rpx;
-		text-align: center;
-		width: 90rpx;
-		margin: 0 auto 30rpx auto;
-		background-color: #155dfc;
-	}
+.page-title {
+    color: #ffffff;
+    font-size: 44rpx;
+    font-weight: 700;
+    line-height: 64rpx;
+}
 
-	.title {
-		font-size: 40rpx;
-		font-weight: bold;
-		color: #333;
-		display: block;
-		margin-bottom: 15rpx;
-		text-align: center;
-	}
+.one-key-card {
+    margin: 0 36rpx;
+    padding: 58rpx 50rpx 78rpx;
+    border-radius: 22rpx;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.08);
+    box-sizing: border-box;
+}
 
-	.desc {
-		font-size: 25rpx;
-		color: #999;
-		display: block;
-		text-align: center;
-	}
+.app-logo {
+    width: 112rpx;
+    height: 112rpx;
+    margin: 0 auto 12rpx;
+    border-radius: 26rpx;
+    background: #18b98c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-	.input-item {
-		margin-bottom: 30rpx;
-	}
+.app-name {
+    text-align: center;
+    color: #19a87c;
+    font-size: 26rpx;
+    line-height: 38rpx;
+}
 
-	.code-row {
-		display: flex;
-		width: 100%;
-		align-items: center;
-		margin-bottom: 40rpx;
-	}
+.mask-phone {
+    margin-top: 56rpx;
+    text-align: center;
+    color: #111827;
+    font-size: 44rpx;
+    font-weight: 700;
+    letter-spacing: 2rpx;
+}
 
-	.code-row ::v-deep .code-input-wrap:first-child {
-		margin-right: 20rpx;
-	}
+.carrier-name {
+    margin-top: 16rpx;
+    text-align: center;
+    color: #8b8f99;
+    font-size: 26rpx;
+}
 
+.primary-btn {
+    width: 100%;
+    height: 88rpx;
+    margin: 48rpx 0 0;
+    padding: 0;
+    border: 0;
+    border-radius: 20rpx;
+    background: #18bd95;
+    color: #ffffff;
+    font-size: 32rpx;
+    font-weight: 600;
+    line-height: 88rpx;
+}
 
+.primary-btn::after,
+.modal-btn::after {
+    border: none;
+}
 
-	.code-input-wrap {
-		flex: 1;
-	}
+.primary-btn[disabled] {
+    background: #76d4ba;
+    color: rgba(255, 255, 255, 0.88);
+}
 
-	.code-btn-wrap {
-		width: 220rpx;
-		flex-shrink: 0;
-	}
+.code-login {
+    margin-top: 38rpx;
+    text-align: right;
+    color: #5f9d88;
+    font-size: 28rpx;
+}
 
-	.register-wrap {
-		display: flex;
-		justify-content: center;
+.agreement {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24rpx;
+    line-height: 38rpx;
+}
 
-		margin-top: 20rpx;
-	}
+.bottom-agreement {
+    position: absolute;
+    left: 44rpx;
+    right: 44rpx;
+    bottom: calc(48rpx + constant(safe-area-inset-bottom));
+    bottom: calc(48rpx + env(safe-area-inset-bottom));
+    align-items: flex-start;
+}
 
-	.tip {
-		font-size: 28rpx;
-		color: #666;
-		margin-right: 10rpx;
-	}
+.form-agreement {
+    margin: 34rpx 40rpx 0;
+    color: #60646b;
+}
 
-	.register-text {
-		font-size: 28rpx;
-		color: #155dfc;
-	}
+.check-box {
+    width: 30rpx;
+    height: 30rpx;
+    margin: 4rpx 12rpx 0 0;
+    border: 2rpx solid rgba(0, 0, 0, 0.9);
+    border-radius: 6rpx;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
 
-	.protocol {
-		margin-top: 60rpx;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
+.form-agreement .check-box {
+    border-color: #9ca3af;
+}
 
-	.protocol-text {
-		font-size: 24rpx;
-		color: #666;
-	}
+.check-box.checked {
+    border-color: #18bd95;
+    background: #18bd95;
+}
 
-	.font-blue {
-		color: #155dfc;
-	}
+.agreement-text {
+    flex: 1;
+}
+
+.agreement-link {
+    color: #73f0c8;
+}
+
+.form-agreement .agreement-link,
+.modal-link {
+    color: #14b992;
+}
+
+.form-page {
+    padding: 400rpx 40rpx ;
+}
+
+.login-card {
+    padding: 40rpx 30rpx ;
+    border-radius: 24rpx;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.10);
+    box-sizing: border-box;
+}
+
+.tabs {
+    height: 82rpx;
+    margin-bottom: 36rpx;
+    border-radius: 18rpx;
+    background: #eef2f5;
+    display: flex;
+    overflow: hidden;
+}
+
+.tab-item {
+    flex: 1;
+    height: 82rpx;
+    border-radius: 18rpx;
+    color: #777e88;
+    font-size: 28rpx;
+    line-height: 82rpx;
+    text-align: center;
+}
+
+.tab-item.active {
+    background: #18bd95;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.form-panel {
+    padding-top: 8rpx;
+}
+
+.field-row {
+    height: 86rpx;
+    margin-bottom: 28rpx;
+    padding: 0 24rpx;
+    border-radius: 18rpx;
+    background: #f3f6f8;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.field-row ::v-deep .u-input {
+    flex: 1;
+}
+
+.code-field {
+    padding-right: 18rpx;
+}
+
+.send-code {
+    padding-left: 20rpx;
+    border-left: 2rpx solid #d8dee5;
+    color: #17aa82;
+    font-size: 26rpx;
+    white-space: nowrap;
+}
+
+.send-code.disabled {
+    color: #9aa1aa;
+}
+
+.login-btn {
+    margin-top: 42rpx;
+    border-radius: 44rpx;
+}
+
+.forgot-password {
+    margin-top: 26rpx;
+    text-align: right;
+    color: #7b8088;
+    font-size: 26rpx;
+    
+}
+
+.modal-mask {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99;
+    background: rgba(0, 0, 0, 0.58);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48rpx;
+    box-sizing: border-box;
+}
+
+.agreement-modal {
+    width: 100%;
+    max-height: 78vh;
+    padding: 38rpx 34rpx 34rpx;
+    border-radius: 24rpx;
+    background: #ffffff;
+    box-sizing: border-box;
+}
+
+.modal-title {
+    display: block;
+    margin-bottom: 28rpx;
+    color: #30343b;
+    font-size: 34rpx;
+    font-weight: 700;
+    line-height: 48rpx;
+    text-align: center;
+}
+
+.modal-body {
+    max-height: 56vh;
+}
+
+.modal-section-title {
+    margin: 20rpx 0 12rpx;
+    color: #1f2937;
+    font-size: 28rpx;
+    font-weight: 600;
+    line-height: 42rpx;
+}
+
+.modal-paragraph {
+    margin-bottom: 12rpx;
+    color: #4b5563;
+    font-size: 26rpx;
+    line-height: 42rpx;
+    text-align: justify;
+}
+
+.modal-actions {
+    display: flex;
+    margin-top: 30rpx;
+}
+
+.modal-btn {
+    flex: 1;
+    height: 82rpx;
+    margin: 0;
+    padding: 0;
+    border-radius: 42rpx;
+    font-size: 28rpx;
+    line-height: 82rpx;
+}
+
+.disagree-btn {
+    margin-right: 24rpx;
+    border: 2rpx solid #18bd95;
+    background: #ffffff;
+    color: #18bd95;
+}
+
+.agree-btn {
+    border: 0;
+    background: #18bd95;
+    color: #ffffff;
+}
 </style>

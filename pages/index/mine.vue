@@ -45,12 +45,15 @@
 </template>
 <script>
 	import customTabbar from "@/components/custom-tabbar/custom-tabbar.vue";
+	import { postAuthLogoutApi } from '@/api/frontApikit.js'
 	export default {
 		components: {
 			customTabbar
 		},
 		data() {
-			return {}
+			return {
+				logoutLoading: false
+			}
 		},
 		methods: {
 			routeTo(res) {
@@ -66,15 +69,45 @@
 				uni.showModal({
 					title: '提示',
 					content: '确认退出登录？',
-					success(res) {
+					success: async (res) => {
 						if (res.confirm) {
-							uni.clearStorageSync()
-							uni.reLaunch({
-								url: '/pages/index/login'
-							})
+							await this.requestLogout()
 						}
 					}
 				})
+			},
+			async requestLogout() {
+				if (this.logoutLoading) return
+				this.logoutLoading = true
+				let logoutFailed = false
+				uni.showLoading({
+					title: '退出中...',
+					mask: true
+				})
+				try {
+					const refreshToken = uni.getStorageSync('refreshToken')
+					await postAuthLogoutApi(refreshToken ? {
+						refreshToken
+					} : {})
+				} catch (error) {
+					logoutFailed = true
+					uni.showToast({
+						title: '退出失败，已清空登录状态',
+						icon: 'none',
+						duration: 800
+					})
+				} finally {
+					uni.removeStorageSync('accessToken')
+					uni.removeStorageSync('refreshToken')
+					uni.removeStorageSync('userInfo')
+					this.logoutLoading = false
+					uni.hideLoading()
+					setTimeout(() => {
+						uni.reLaunch({
+							url: '/pages/index/login'
+						})
+					}, logoutFailed ? 600 : 0)
+				}
 			}
 		}
 	}

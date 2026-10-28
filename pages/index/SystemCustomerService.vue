@@ -123,7 +123,7 @@
 			</view>
 			<view class="divider"></view>
 			<view class="menu-item" @click="handleLogoutAccount">
-				<text class="item-title danger">注销账户</text>
+				<text class="item-title danger">退出登录</text>
 				<text class="arrow">
 					<u-icon class="arrow" name="arrow-right" color="#ddd" size="26rpx"></u-icon>
 				</text>
@@ -134,6 +134,8 @@
 	</view>
 </template>
 <script>
+	import { putAuthPasswordApi,getMeSettingsApi,putMeSettingsApi,putAccountsSecurityApi,postAuthLogoutApi } from '@/api/frontApikit.js'
+
 	import myTabbar from '@/components/my‑tabbar/my‑tabbar.vue'
 	import {
 		mapState
@@ -162,10 +164,92 @@
 				'navBarTotalHeight'
 			])
 		},
-		mounted() {
+		
+		onLoad() {
 			this.getCacheSize()
+			this.getMeSettings()
 		},
 		methods: {
+			// 退出登录
+				async requestLogout() {
+				if (this.logoutLoading) return
+				this.logoutLoading = true
+				let logoutFailed = false
+				uni.showLoading({
+					title: '退出中...',
+					mask: true
+				})
+				try {
+					const refreshToken = uni.getStorageSync('refreshToken')
+					await postAuthLogoutApi(refreshToken ? {
+						refreshToken
+					} : {})
+				} catch (error) {
+					logoutFailed = true
+					uni.showToast({
+						title: '退出失败，已清空登录状态',
+						icon: 'none',
+						duration: 800
+					})
+				} finally {
+					uni.removeStorageSync('accessToken')
+					uni.removeStorageSync('refreshToken')
+					uni.removeStorageSync('userInfo')
+					this.logoutLoading = false
+					uni.hideLoading()
+					setTimeout(() => {
+						uni.reLaunch({
+							url: '/pages/index/login'
+						})
+					}, logoutFailed ? 600 : 0)
+				}
+			},
+			// 修改自己的密码（员工/患者共用）
+				async putAuthPassword() {
+		
+				try {
+				
+					await putAuthPasswordApi()
+				} catch (error) {
+					
+					
+				} 
+			},
+			// 系统设定（骨架占位）
+			async getMeSettings() {
+		
+				try {
+				
+				const setting = 	await getMeSettingsApi()
+				console.log(setting)
+				} catch (error) {
+					
+					
+				} 
+			},
+			// 更新系统设定（骨架占位）
+			async putMeSettings() {
+		
+				try {
+				
+					await putMeSettingsApi()
+				} catch (error) {
+					
+					
+				} 
+			},
+			// 安全选项
+			async putAccountsSecurity() {
+		
+				try {
+				
+					await putAccountsSecurityApi()
+				} catch (error) {
+					
+					
+				} 
+			},
+			
 			handleBack() {
 				const pages = getCurrentPages()
 				console.log('页面栈长度', pages.length)

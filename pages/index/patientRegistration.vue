@@ -195,7 +195,8 @@
 			};
 		},
 		async onLoad(options) {
-			this.patientId = uni.getStorageSync('userInfo').userId;
+			const userInfo = JSON.parse(uni.getStorageSync('userInfo')) || {}
+			this.patientId = userInfo.userId;
 			
 			
 				// await this.loadPatientDetail(this.patientId)
