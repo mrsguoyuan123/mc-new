@@ -186,7 +186,10 @@
 <script>
 	import {
 		getCsPatientsByIdApi,
-		getCsPatientsByIdAiSummaryApi
+		getCsPatientsByIdAiSummaryApi,
+		getCsFaqApi,
+		getCsPatientsByIdAiPredictionApi,
+		
 	} from '@/api/frontApikit.js'
 	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
 	import {
@@ -282,6 +285,7 @@
 
 		},
 		methods: {
+			// 患者详情（手术档案+AI摘要缓存+时间线）
 			async getCsPatientsById() {
 				console.log(this.id)
 				try {
@@ -298,6 +302,7 @@
 					console.log('报错：', e)
 				}
 			},
+			// AI 沟通关键点总结（30 分钟缓存，失败降级 mock）
 			async getCsPatientsByIdAiSummary() {
 
 				try {

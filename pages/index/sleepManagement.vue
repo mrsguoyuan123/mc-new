@@ -38,6 +38,23 @@
 					<text class="score-advice">{{ reportSummary }}</text>
 				</view>
 
+				<view class="submission-toolbar">
+					<view :class="['refresh-record-btn', (submissionLoading || questionsLoading) ? 'is-loading' : '']" @click="refreshLatestSubmission">
+						<view class="ic ic-refresh-blue"></view>
+						<text>{{ (submissionLoading || questionsLoading) ? '刷新中...' : '刷新记录' }}</text>
+					</view>
+				<text v-if="submissionsLoaded" class="submission-count">已提交 {{ submissionTotal }} 次</text>
+				</view>
+
+				<view v-if="!pageLoading && submissionError" class="submission-state is-error">
+					<text>{{ submissionError }}</text>
+					<text class="submission-state-tip">请检查网络后点击“刷新记录”重试</text>
+				</view>
+				<view v-else-if="!pageLoading && submissionsLoaded && !hasReport" class="submission-state">
+					<text>暂无 PSQI 提交记录</text>
+					<text class="submission-state-tip">完成睡眠评估后，将在这里展示最新评分与报告</text>
+				</view>
+
 				<view class="blue-btn report-btn" @click="handlePrimaryAction">
 					<text>{{ primaryActionText }}</text>
 					<view class="ic ic-arrow-right-white"></view>
@@ -111,13 +128,24 @@
 			</view>
 
 			<scroll-view scroll-y class="question-scroll">
-				<view v-if="stepIndex === 0" class="question-card">
-					<text class="part-kicker">第一部分·作息规律</text>
-					<text class="part-title">作息信息采集</text>
-					<text class="part-desc">请回忆您在最近1个月中大多数晚上的习惯作息：</text>
+				<view v-if="questionsLoaded && !questionError && !questionList.length" class="question-empty-state">
+					<view class="ic ic-alert-orange"></view>
+					<text class="question-empty-title">暂无 PSQI 量表题目</text>
+					<text class="question-empty-desc">请稍后点击刷新按钮重新拉取，或联系健康顾问确认量表配置</text>
+					<view class="blue-btn question-refresh-btn" @click="refreshLatestSubmission">刷新题目和记录</view>
+				</view>
+
+				<view v-if="stepIndex === 0 && hasQuestions" class="question-card">
+					<text class="part-kicker">{{ stepSection(0).kicker }}</text>
+					<text class="part-title">{{ stepSection(0).title }}</text>
+					<text class="part-desc">{{ stepSection(0).desc }}</text>
+					<view v-if="questionError" class="question-api-tip is-error">
+						<text>{{ questionError }}</text>
+						<text class="question-api-tip-sub">当前显示默认题目，可点击“刷新记录”重试</text>
+					</view>
 
 					<view class="question-block time-question">
-						<text class="question-text">1. 通常晚上上床准备睡觉的时间：</text>
+						<text class="question-text">{{ displayQuestion('q1').text }}</text>
 						<picker mode="time" :value="answers.bedTime" @change="onBedTimeChange">
 							<view class="time-field"><text>{{ answers.bedTime }}</text>
 								<view class="ic ic-clock-dark"></view>
@@ -127,18 +155,18 @@
 
 					<view class="question-block option-question">
 						<view class="question-head">
-							<text class="question-text">2. 从上床到顺利入睡通常需要：</text>
+							<text class="question-text">{{ displayQuestion('q2').text }}</text>
 							<text class="selected-summary">{{ selectedLatencySummary }}</text>
 						</view>
 						<view class="option-row">
-							<view v-for="opt in latencyOptions" :key="opt.value"
+							<view v-for="opt in displayQuestion('q2').options" :key="opt.value"
 								:class="['option-btn', answers.latency === opt.value ? 'selected' : '']"
 								@click="answers.latency = opt.value">{{ opt.label }}</view>
 						</view>
 					</view>
 
 					<view class="question-block time-question">
-						<text class="question-text">3. 通常早上起床时间：</text>
+						<text class="question-text">{{ displayQuestion('q3').text }}</text>
 						<picker mode="time" :value="answers.wakeTime" @change="onWakeTimeChange">
 							<view class="time-field"><text>{{ answers.wakeTime }}</text>
 								<view class="ic ic-clock-dark"></view>
@@ -148,60 +176,81 @@
 
 					<view class="question-block option-question no-divider">
 						<view class="question-head">
-							<text class="question-text">4. 每夜通常实际睡眠时间（不包括醒着赖床）：</text>
+							<text class="question-text">{{ displayQuestion('q4').text }}</text>
 							<text class="selected-summary">{{ selectedDurationSummary }}</text>
 						</view>
 						<view class="option-row">
-							<view v-for="opt in durationOptions" :key="opt.value"
+							<view v-for="opt in displayQuestion('q4').options" :key="opt.value"
 								:class="['option-btn', answers.duration === opt.value ? 'selected' : '']"
 								@click="answers.duration = opt.value">{{ opt.label }}</view>
 						</view>
 					</view>
 				</view>
 
-				<view v-else-if="stepIndex === 1" class="question-card">
-					<text class="part-kicker">第二部分·睡眠困扰 (第5题 a-e 项)</text>
-					<text class="part-title">夜间身体与生理困扰</text>
-					<text class="part-desc">在过去1个月中，您因为下列原因导致睡眠受阻的频率：</text>
-					<view v-for="item in troubleAGroups" :key="item.key" class="trouble-block">
+				<view v-else-if="stepIndex === 1 && hasQuestions" class="question-card">
+					<text class="part-kicker">{{ stepSection(1).kicker }}</text>
+					<text class="part-title">{{ stepSection(1).title }}</text>
+					<text class="part-desc">{{ stepSection(1).desc }}</text>
+					<view v-if="questionError" class="question-api-tip is-error">
+						<text>{{ questionError }}</text>
+						<text class="question-api-tip-sub">当前显示默认题目，可点击“刷新记录”重试</text>
+					</view>
+					<view v-if="!dynamicTroubleAGroups.length" class="question-api-tip">
+						<text>暂无睡眠困扰题目</text>
+					</view>
+					<view v-for="item in dynamicTroubleAGroups" :key="item.key" class="trouble-block">
 						<view>
 							<text class="question-text">{{ item.code }}. {{ item.title }}</text>
 							<text class="question-desc">{{ item.desc }}</text>
 						</view>
 						<view class="option-row four-options">
-							<view v-for="opt in frequencyOptions" :key="opt.label"
+							<view v-for="opt in item.options" :key="opt.value"
 								:class="['option-btn', answers[item.key] === opt.value ? 'selected' : '']"
 								@click="answers[item.key] = opt.value">{{ opt.label }}</view>
 						</view>
 					</view>
 				</view>
 
-				<view v-else-if="stepIndex === 2" class="question-card">
-					<text class="part-kicker">第二部分·睡眠困扰 (第5题 f-j 项)</text>
-					<text class="part-title">术后疼痛与身心困扰</text>
-					<text class="part-desc">特别是术后恢复期的切口疼痛与呼吸情况：</text>
-					<view v-for="item in troubleBGroups" :key="item.key" class="trouble-block">
+				<view v-else-if="stepIndex === 2 && hasQuestions" class="question-card">
+					<text class="part-kicker">{{ stepSection(2).kicker }}</text>
+					<text class="part-title">{{ stepSection(2).title }}</text>
+					<text class="part-desc">{{ stepSection(2).desc }}</text>
+					<view v-if="questionError" class="question-api-tip is-error">
+						<text>{{ questionError }}</text>
+						<text class="question-api-tip-sub">当前显示默认题目，可点击“刷新记录”重试</text>
+					</view>
+					<view v-if="!dynamicTroubleBGroups.length" class="question-api-tip">
+						<text>暂无睡眠困扰题目</text>
+					</view>
+					<view v-for="item in dynamicTroubleBGroups" :key="item.key" class="trouble-block">
 						<view>
 							<text class="question-text">{{ item.code }}. {{ item.title }}</text>
 							<text class="question-desc">{{ item.desc }}</text>
 						</view>
 						<view class="option-row four-options">
-							<view v-for="opt in frequencyOptions" :key="opt.label"
+							<view v-for="opt in item.options" :key="opt.value"
 								:class="['option-btn', answers[item.key] === opt.value ? 'selected' : '']"
 								@click="answers[item.key] = opt.value">{{ opt.label }}</view>
 						</view>
 					</view>
 				</view>
 
-				<view v-else class="question-card last-card">
-					<text class="part-kicker">第三部分·药物与日间感受 (6-9题)</text>
-					<text class="part-title">主观体验与日间机能</text>
-					<text class="part-desc">完成以下4题即可生成最终医学睡眠评估报告：</text>
-					<view v-for="block in finalBlocks" :key="block.key" class="question-block option-question"
+				<view v-else-if="stepIndex === 3 && hasQuestions" class="question-card last-card">
+					<text class="part-kicker">{{ stepSection(3).kicker }}</text>
+					<text class="part-title">{{ stepSection(3).title }}</text>
+					<text class="part-desc">{{ stepSection(3).desc }}</text>
+					<view v-if="questionError" class="question-api-tip is-error">
+						<text>{{ questionError }}</text>
+						<text class="question-api-tip-sub">当前显示默认题目，可点击“刷新记录”重试</text>
+					</view>
+					<view v-if="!dynamicFinalBlocks.length" class="question-api-tip">
+						<text>暂无睡眠评估题目</text>
+					</view>
+					<view v-for="block in dynamicFinalBlocks" :key="block.key" class="question-block option-question"
 						:class="{ 'no-divider': block.key === 'energy' }">
 						<text class="question-text">{{ block.title }}</text>
 						<view class="option-row four-options">
-							<view v-for="opt in block.options" :key="opt.label"
+							<view v-for="opt in block.options" :key="opt.value"
 								:class="['option-btn', answers[block.key] === opt.value ? 'selected' : '']"
 								@click="answers[block.key] = opt.value">{{ opt.label }}</view>
 						</view>
@@ -209,7 +258,7 @@
 				</view>
 			</scroll-view>
 
-			<view class="question-bottom">
+			<view v-if="hasQuestions" class="question-bottom">
 				<view class="prev-btn" @click="prevStep">上一题</view>
 				<view class="next-btn" @click="nextStep">
 					<view v-if="stepIndex === 3" class="ic ic-spark-white"></view>
@@ -407,7 +456,8 @@ import {
 		getMeScalesPsqiStatusApi,
 		postMeScalesPsqiDraftApi,
 		postMeScalesPsqiSubmissionsApi,
-		getMeScalesPsqiApi
+		getMeScalesPsqiApi,
+		getMeScalesPsqiSubmissionsApi
 	} from '@/api/frontApikit.js'
 	export default {
 		data() {
@@ -419,6 +469,20 @@ import {
 				pageLoading: false,
 				submitting: false,
 				savingDraft: false,
+				submissionLoading: false,
+				submissionsLoaded: false,
+				submissionError: '',
+				submissionList: [],
+				submissionTotal: 0,
+				questionsLoading: false,
+				questionsLoaded: false,
+				questionError: '',
+				questionGuide: '',
+				questionTimeWindow: '',
+				questionList: [],
+				remoteFreqOptions: [],
+				remoteFreq8Options: [],
+				remoteFreq9Options: [],
 				statusState: 'UNASSESSED',
 				assessmentProgress: {
 					completed: 0,
@@ -776,6 +840,36 @@ import {
 			progressPercent() {
 				return [25, 50, 75, 100][this.stepIndex]
 			},
+			hasQuestions() {
+				return !this.questionsLoaded || this.questionList.length > 0
+			},
+			questionMap() {
+				const map = {}
+				this.questionList.forEach(item => {
+					if (!item || typeof item !== 'object') return
+					const key = this.normalizeQuestionKey(item.key || item.code || item.id || item.prdKey)
+					const prdKey = this.normalizeQuestionKey(item.prdKey)
+					if (key) map[key] = item
+					if (prdKey && prdKey !== key) map[prdKey] = item
+				})
+				return map
+			},
+			dynamicTroubleAGroups() {
+				return this.troubleAGroups.map(item => this.mergeRemoteQuestion(item, `q5${item.key.slice(-1).toLowerCase()}`))
+			},
+			dynamicTroubleBGroups() {
+				const letterMap = { F: 'f', G: 'g', H: 'h', I: 'i', J: 'j' }
+				return this.troubleBGroups.map(item => this.mergeRemoteQuestion(item, `q5${letterMap[item.key.slice(-1)] || ''}`))
+			},
+			dynamicFinalBlocks() {
+				const keyMap = {
+					quality: 'q6',
+					medicine: 'q7',
+					daySleepy: 'q8',
+					energy: 'q9'
+				}
+				return this.finalBlocks.map(item => this.mergeRemoteQuestion(item, keyMap[item.key]) || item)
+			},
 			hasReport() {
 				return !!this.latestResult
 			},
@@ -797,12 +891,12 @@ import {
 				return '开始睡眠评估'
 			},
 			selectedLatencySummary() {
-				const selected = this.latencyOptions.find(item => item.value === this.answers.latency)
-				return selected ? selected.minutes : ''
+				const selected = this.displayQuestion('q2').options.find(item => item.value === this.answers.latency)
+				return selected ? (selected.minutes || selected.label || '') : ''
 			},
 			selectedDurationSummary() {
-				const selected = this.durationOptions.find(item => item.value === this.answers.duration)
-				return selected ? selected.hours : ''
+				const selected = this.displayQuestion('q4').options.find(item => item.value === this.answers.duration)
+				return selected ? (selected.hours || selected.label || '') : ''
 			}
 		},
 		beforeDestroy() {
@@ -813,23 +907,267 @@ import {
 			this.initPsqiPage()
 		},
 		methods: {
+			fetchQuestions() {
+				return getMeScalesPsqiApi()
+			},
+			loadQuestions(showLoading, isManualRefresh) {
+				const loadingEnabled = showLoading !== false
+				if (this.questionsLoading) return Promise.resolve(null)
+				this.questionsLoading = true
+				if (loadingEnabled) {
+					uni.showLoading({
+						title: isManualRefresh ? '刷新题目中...' : '加载题目中...',
+						mask: true
+					})
+				}
+				return this.fetchQuestions().then(result => {
+					this.applyQuestionsResponse(result)
+					return result
+				}).catch(error => {
+					this.questionError = 'PSQI题目加载失败'
+					if (!error || !error.isApiError) {
+						uni.showToast({ title: this.questionError, icon: 'none' })
+					}
+					return null
+				}).finally(() => {
+					this.questionsLoading = false
+					this.questionsLoaded = true
+					if (loadingEnabled) uni.hideLoading()
+				})
+			},
+			applyQuestionsResponse(result) {
+				const payload = result && result.data && typeof result.data === 'object' ? result.data : result
+				const list = payload && Array.isArray(payload.questions) ? payload.questions : []
+				this.questionGuide = payload && payload.guide ? payload.guide : ''
+				this.questionTimeWindow = payload && payload.timeWindow ? payload.timeWindow : ''
+				this.remoteFreqOptions = this.normalizeQuestionOptions(payload && payload.freqOptions, this.frequencyOptions)
+				this.remoteFreq8Options = this.normalizeQuestionOptions(payload && payload.freq8Options, this.frequencyOptions)
+				this.remoteFreq9Options = this.normalizeQuestionOptions(payload && payload.freq9Options, this.energyOptions)
+				this.questionList = list
+				this.questionsLoaded = true
+				this.questionError = list.length ? '' : '暂无PSQI题目'
+			},
+			normalizeQuestionKey(key) {
+				if (key === undefined || key === null) return ''
+				const text = String(key).trim()
+				const map = {
+					bedTime: 'q1',
+					bedtime: 'q1',
+					q1: 'q1',
+					latencyMinutes: 'q2',
+					latency: 'q2',
+					q2: 'q2',
+					wakeTime: 'q3',
+					waketime: 'q3',
+					q3: 'q3',
+					actualSleepHours: 'q4',
+					duration: 'q4',
+					q4: 'q4',
+					troubleA: 'q5a',
+					a_cantFallAsleep30min: 'q5a',
+					q5a: 'q5a',
+					troubleB: 'q5b',
+					b_wakeNightOrEarly: 'q5b',
+					q5b: 'q5b',
+					troubleC: 'q5c',
+					c_bathroomNight: 'q5c',
+					q5c: 'q5c',
+					troubleD: 'q5d',
+					d_coughOrSnore: 'q5d',
+					q5d: 'q5d',
+					troubleE: 'q5e',
+					e_feelCold: 'q5e',
+					q5e: 'q5e',
+					troubleF: 'q5f',
+					f_feelHot: 'q5f',
+					q5f: 'q5f',
+					troubleG: 'q5g',
+					g_badDreams: 'q5g',
+					q5g: 'q5g',
+					troubleH: 'q5h',
+					h_painDiscomfort: 'q5h',
+					q5h: 'q5h',
+					troubleI: 'q5i',
+					i_breathDifficult: 'q5i',
+					q5i: 'q5i',
+					troubleJ: 'q5j',
+					j_otherReasons: 'q5j',
+					q5j: 'q5j',
+					quality: 'q6',
+					overallQuality: 'q6',
+					q6: 'q6',
+					medicine: 'q7',
+					hypnoticMeds: 'q7',
+					q7: 'q7',
+					daySleepy: 'q8',
+					daytimeSleepiness: 'q8',
+					q8: 'q8',
+					energy: 'q9',
+					daytimeEnthusiasm: 'q9',
+					q9: 'q9'
+				}
+				return map[text] || map[String(text).toLowerCase()] || text.toLowerCase().replace(/^q(?=\d)/, 'q')
+			},
+			findRemoteQuestion(key) {
+				return this.questionMap[this.normalizeQuestionKey(key)] || null
+			},
+			getFallbackQuestion(key) {
+				const fallbackMap = {
+					q1: { text: '1. 通常晚上上床准备睡觉的时间：', options: [] },
+					q2: { text: '2. 从上床到顺利入睡通常需要：', options: this.latencyOptions },
+					q3: { text: '3. 通常早上起床时间：', options: [] },
+					q4: { text: '4. 每夜通常实际睡眠时间（不包括醒着赖床）：', options: this.durationOptions }
+				}
+				return fallbackMap[key] || { text: '', options: [] }
+			},
+			stripQuestionNumber(text) {
+				return String(text || '').replace(/^\s*(?:第?[0-9一二三四五六七八九十]+[题.、]?|[0-9]+[a-jA-J]?[\.、]?)\s*/, '')
+			},
+			remoteQuestionText(question, fallbackText) {
+				if (!question) return fallbackText
+				const text = question.label || question.title || question.name || question.content || question.question || ''
+				return text ? this.stripQuestionNumber(text) : fallbackText
+			},
+			getRemoteOptionsByKey(key) {
+				if (/^q5[a-j]$/.test(key) || key === 'q6' || key === 'q7') return this.remoteFreqOptions
+				if (key === 'q8') return this.remoteFreq8Options
+				if (key === 'q9') return this.remoteFreq9Options
+				return []
+			},
+			mergeOptions(remoteOptions, fallbackOptions) {
+				if (!Array.isArray(remoteOptions) || !remoteOptions.length) return fallbackOptions || []
+				return remoteOptions.map(option => {
+					const fallback = (fallbackOptions || []).find(item => Number(item.value) === Number(option.value))
+					return Object.assign({}, fallback || {}, option, {
+						value: Number(option.value),
+						label: option.label
+					})
+				})
+			},
+			displayQuestion(key) {
+				const normalizedKey = this.normalizeQuestionKey(key)
+				const fallback = this.getFallbackQuestion(normalizedKey)
+				const remote = this.findRemoteQuestion(normalizedKey)
+				const questionOptions = remote && Array.isArray(remote.options) ? remote.options : []
+				const remoteOptions = questionOptions.length ? questionOptions : this.getRemoteOptionsByKey(normalizedKey)
+				return {
+					key: normalizedKey,
+					type: remote && remote.type ? remote.type : '',
+					text: this.remoteQuestionText(remote, fallback.text),
+					options: this.mergeOptions(remoteOptions, fallback.options)
+				}
+			},
+			mergeRemoteQuestion(staticItem, key) {
+				const normalizedKey = this.normalizeQuestionKey(key)
+				const remote = this.findRemoteQuestion(normalizedKey)
+				const questionOptions = remote && Array.isArray(remote.options) ? remote.options : []
+				const remoteOptions = questionOptions.length ? questionOptions : this.getRemoteOptionsByKey(normalizedKey)
+				return Object.assign({}, staticItem, {
+					questionKey: normalizedKey,
+					title: this.remoteQuestionText(remote, staticItem.title),
+					desc: (remote && (remote.description || remote.desc || remote.remark)) || staticItem.desc,
+					options: this.mergeOptions(remoteOptions, staticItem.options || this.frequencyOptions)
+				})
+			},
+			stepSection(index) {
+				const sections = [{
+						kicker: '第一部分·作息规律',
+						title: '作息信息采集',
+						desc: this.questionGuide || '请回忆您在最近1个月中大多数晚上的习惯作息：'
+					},
+					{
+						kicker: '第二部分·睡眠困扰 (第5题 a-e 项)',
+						title: '夜间身体与生理困扰',
+						desc: '在过去1个月中，您因为下列原因导致睡眠受阻的频率：'
+					},
+					{
+						kicker: '第二部分·睡眠困扰 (第5题 f-j 项)',
+						title: '术后疼痛与身心困扰',
+						desc: '特别是术后恢复期的切口疼痛与呼吸情况：'
+					},
+					{
+						kicker: '第三部分·药物与日间感受 (6-9题)',
+						title: '主观体验与日间机能',
+						desc: '完成以下4题即可生成最终医学睡眠评估报告：'
+					}
+				]
+				return sections[index]
+			},
+			normalizeQuestionOptions(options, fallback) {
+				if (!Array.isArray(options) || !options.length) return fallback || []
+				const normalized = options.map((item, index) => ({
+					value: item && item.value !== undefined ? Number(item.value) : index,
+					label: item && item.label ? String(item.label) : `选项${index + 1}`
+				})).filter(item => !Number.isNaN(item.value))
+				return normalized.length ? normalized : (fallback || [])
+			},
+			fetchSubmissionList(showLoading, isManualRefresh) {
+				const loadingEnabled = showLoading !== false
+				if (this.submissionLoading) return Promise.resolve(null)
+				this.submissionLoading = true
+				this.submissionError = ''
+				if (loadingEnabled) {
+					uni.showLoading({
+						title: isManualRefresh ? '刷新记录中...' : '加载提交记录...',
+						mask: true
+					})
+				}
+				return getMeScalesPsqiSubmissionsApi({
+					page: 1,
+					pageSize: 20
+				}).then(result => {
+					this.applySubmissionResponse(result)
+					return result
+				}).catch(error => {
+					this.submissionError = 'PSQI提交记录加载失败'
+					if (!error || !error.isApiError) {
+						uni.showToast({
+							title: this.submissionError,
+							icon: 'none'
+						})
+					}
+					return null
+				}).finally(() => {
+					this.submissionLoading = false
+					this.submissionsLoaded = true
+					if (loadingEnabled) uni.hideLoading()
+				})
+			},
+			refreshLatestSubmission() {
+				uni.showLoading({ title: '刷新中...', mask: true })
+				Promise.all([
+					this.loadQuestions(false, true),
+					this.fetchSubmissionList(false, true)
+				]).then(() => {
+					if (!this.questionError && !this.submissionError) {
+						uni.showToast({ title: '题目和记录已刷新', icon: 'success' })
+					} else if (this.questionError || this.submissionError) {
+						uni.showToast({ title: this.questionError || this.submissionError, icon: 'none' })
+					}
+				}).finally(() => {
+					uni.hideLoading()
+				})
+			},
 			async initPsqiPage() {
 				this.pageLoading = true
 				uni.showLoading({ title: '加载中...', mask: true })
 				try {
-					const questionsPromise = this.fetchQuestions()
+					const questionPromise = this.loadQuestions(false, false)
+					const submissionPromise = this.fetchSubmissionList(false, false)
 					const statusPromise = getMeScalesPsqiStatusApi().then(function(result) {
 						return { ok: true, value: result }
 					}, function(error) {
 						return { ok: false, reason: error }
 					})
 					const results = await Promise.all([
-						questionsPromise,
+						questionPromise,
+						submissionPromise,
 						statusPromise
 					])
-					const statusState = results[1]
+					const statusState = results[2]
 					const statusResult = statusState.ok ? statusState.value : null
 					this.applyStatus(statusResult)
+					if (results[1]) this.applySubmissionResponse(results[1])
 					if (!statusState.ok && (!statusState.reason || !statusState.reason.isApiError)) {
 						uni.showToast({ title: '评估状态加载失败', icon: 'none' })
 					}
@@ -840,12 +1178,63 @@ import {
 					uni.hideLoading()
 				}
 			},
-			async fetchQuestions() {
+			extractSubmissionList(result) {
+				if (!result) return []
+				if (Array.isArray(result)) return result
+				if (Array.isArray(result.list)) return result.list
+				if (Array.isArray(result.records)) return result.records
+				if (Array.isArray(result.items)) return result.items
+				if (Array.isArray(result.rows)) return result.rows
+				if (result.data) return this.extractSubmissionList(result.data)
+				return []
+			},
+			parseJsonField(value) {
+				if (!value) return []
+				if (Array.isArray(value) || (value && typeof value === 'object')) return value
+				if (typeof value !== 'string') return []
 				try {
-					return await getMeScalesPsqiApi()
+					return JSON.parse(value)
 				} catch (error) {
-					return null
+					return []
 				}
+			},
+			isSubmittedRecord(item) {
+				if (!item || typeof item !== 'object') return false
+				if (item.status && item.status !== 'SUBMITTED') return false
+				if (item.valid === 0 || item.valid === false) return false
+				return item.score !== undefined && item.score !== null && item.score !== ''
+			},
+			normalizeSubmissionRecord(item) {
+				const dimensionPayload = this.parseJsonField(item.dimensionsJson || item.dimensions)
+				const dimensions = this.normalizeDimensionPayload(dimensionPayload)
+				const focusDimensions = this.normalizeDimensionPayload(
+					this.parseJsonField(item.topConcernDimensionsJson || item.topConcernDimensions || item.topConcernsJson || item.topConcerns)
+				)
+				const assessedAt = item.assessedAt || item.submittedAt || item.updateTime || item.createTime
+				return Object.assign({}, item, {
+					totalScore: item.totalScore !== undefined && item.totalScore !== null ? item.totalScore : item.score,
+					levelTitle: item.levelTitle || item.tier || '',
+					interpretation: item.interpretation || item.tierText || item.tier || '本次 PSQI 评估已完成。',
+					dimensions,
+					topConcernDimensions: focusDimensions,
+					assessedAt
+				})
+			},
+			applySubmissionResponse(result) {
+				const rawList = this.extractSubmissionList(result)
+				const submittedList = rawList
+					.filter(item => this.isSubmittedRecord(item))
+					.map(item => this.normalizeSubmissionRecord(item))
+					.sort((a, b) => {
+						const timeA = new Date(a.assessedAt || 0).getTime()
+						const timeB = new Date(b.assessedAt || 0).getTime()
+						return timeB - timeA
+					})
+				this.submissionList = submittedList
+				this.submissionTotal = submittedList.length
+				this.submissionError = ''
+				this.submissionsLoaded = true
+				this.applyLatestResult(submittedList[0] || null)
 			},
 			applyStatus(result) {
 				if (!result) {
@@ -894,7 +1283,7 @@ import {
 				this.reportScore = Number.isNaN(score) ? 0 : score
 				this.reportLevel = latest.levelTitle || latest.tier || latest.tierText || ''
 				this.reportSummary = latest.interpretation || latest.tierText || '本次 PSQI 评估已完成。'
-				this.reportDate = this.formatDateTime(latest.assessedAt || latest.createdAt || latest.submittedAt)
+				this.reportDate = this.formatDateTime(latest.assessedAt || latest.updateTime || latest.createTime || latest.createdAt || latest.submittedAt)
 				if (Array.isArray(latest.dimensions) && latest.dimensions.length) {
 					this.dimensions = this.normalizeDimensions(latest.dimensions)
 				}
@@ -1034,21 +1423,69 @@ import {
 				return payload
 			},
 			normalizeDimensions(serverDimensions) {
+				const dimensions = this.normalizeDimensionPayload(serverDimensions)
 				const defaults = this.dimensions
+				if (!dimensions.length) return defaults
+				return defaults.map(item => {
+					const serverItem = dimensions.find(dimension => dimension.id === item.key)
+					return serverItem ? Object.assign({}, item, {
+						score: serverItem.score,
+						hot: serverItem.score >= 2
+					}) : item
+				})
+			},
+			normalizeDimensionPayload(payload) {
 				const mapping = {
 					quality: 'quality',
+					sleepQuality: 'quality',
 					latency: 'latency',
+					sleepLatency: 'latency',
 					duration: 'duration',
+					sleepDuration: 'duration',
 					efficiency: 'efficiency',
+					sleepEfficiency: 'efficiency',
+					disturbance: 'disturbance',
 					disturbances: 'disturbance',
+					sleepDisturbance: 'disturbance',
 					meds: 'medicine',
-					daytime: 'daytime'
+					medicine: 'medicine',
+					hypnoticMeds: 'medicine',
+					daytime: 'daytime',
+					dayDysfunction: 'daytime'
 				}
-				if (!Array.isArray(serverDimensions) || !serverDimensions.length) return defaults
-				return defaults.map(item => {
-					const serverItem = serverDimensions.find(dimension => dimension.id === item.key || mapping[dimension.id] === item.key)
-					return serverItem ? Object.assign({}, item, { score: Number(serverItem.score) || 0 }) : item
-				})
+				const list = []
+				const pushDimension = (id, score, source) => {
+					if (!id) return
+					const key = mapping[id] || mapping[source] || id
+					const numberScore = Number(score)
+					if (!mapping[key] || Number.isNaN(numberScore)) return
+					list.push({
+						id: key,
+						key,
+						score: Math.max(0, Math.min(3, numberScore)),
+						name: source && source.name ? source.name : ''
+					})
+				}
+				if (Array.isArray(payload)) {
+					payload.forEach(item => {
+						if (!item || typeof item !== 'object') return
+						const id = item.id || item.key || item.dimension || item.name
+						const score = item.score !== undefined ? item.score : item.value
+						pushDimension(id, score, item)
+					})
+					return list
+				}
+				if (payload && typeof payload === 'object') {
+					Object.keys(payload).forEach(key => {
+						const value = payload[key]
+						if (value && typeof value === 'object') {
+							pushDimension(value.id || value.key || value.dimension || key, value.score !== undefined ? value.score : value.value, value)
+						} else {
+							pushDimension(key, value)
+						}
+					})
+				}
+				return list
 			},
 			normalizeFocusDimensions(serverFocusDimensions, topConcerns) {
 				if (Array.isArray(serverFocusDimensions) && serverFocusDimensions.length) {
@@ -1106,7 +1543,9 @@ import {
 			},
 			formatDateTime(value) {
 				if (!value) return ''
-				const date = new Date(value)
+				if (typeof value === 'number') return this.formatDateTime(new Date(value))
+				const normalizedValue = String(value).replace(/-/g, '/').replace('T', ' ')
+				const date = new Date(normalizedValue)
 				if (Number.isNaN(date.getTime())) return String(value)
 				const year = date.getFullYear()
 				const month = this.padTwo(date.getMonth() + 1)
@@ -1400,6 +1839,77 @@ import {
 	@keyframes page-spin {
 		from { transform: rotate(0deg); }
 		to { transform: rotate(360deg); }
+	}
+
+	.submission-toolbar {
+		margin-top: 22rpx;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16rpx;
+	}
+
+	.refresh-record-btn {
+		min-width: 168rpx;
+		height: 60rpx;
+		padding: 0 22rpx;
+		border: 1rpx solid #bfd4ff;
+		border-radius: 999rpx;
+		background: #f4f7ff;
+		color: #165dff;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 23rpx;
+		font-weight: 800;
+		box-sizing: border-box;
+	}
+
+	.refresh-record-btn.is-loading {
+		opacity: 0.72;
+	}
+
+	.refresh-record-btn .ic {
+		width: 26rpx;
+		height: 26rpx;
+		margin-right: 8rpx;
+	}
+
+	.submission-count {
+		flex: 1;
+		color: #98a2b3;
+		font-size: 22rpx;
+		text-align: right;
+	}
+
+	.submission-state {
+		margin-top: 20rpx;
+		padding: 22rpx 24rpx;
+		border: 1rpx solid #e2e8f2;
+		border-radius: 24rpx;
+		background: #f8fafc;
+		color: #475467;
+		font-size: 25rpx;
+		font-weight: 800;
+		line-height: 1.5;
+	}
+
+	.submission-state.is-error {
+		border-color: #fecaca;
+		background: #fef2f2;
+		color: #dc2626;
+	}
+
+	.submission-state-tip {
+		display: block;
+		margin-top: 8rpx;
+		color: #98a2b3;
+		font-size: 22rpx;
+		font-weight: 400;
+	}
+
+	.ic-refresh-blue {
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23165DFF' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12a9 9 0 1 1-2.64-6.36'/%3E%3Cpath d='M21 3v6h-6'/%3E%3C/svg%3E");
 	}
 
 	.home-view,
@@ -1987,6 +2497,62 @@ import {
 
 	.question-card.last-card {
 		padding-bottom: 26rpx;
+	}
+
+	.question-api-tip,
+	.question-empty-state {
+		margin: 22rpx 0;
+		padding: 22rpx 24rpx;
+		border: 1rpx solid #e2e8f2;
+		border-radius: 22rpx;
+		background: #f8fafc;
+		color: #475467;
+		font-size: 25rpx;
+		font-weight: 800;
+		line-height: 1.5;
+		box-sizing: border-box;
+	}
+
+	.question-api-tip.is-error {
+		border-color: #fecaca;
+		background: #fef2f2;
+		color: #dc2626;
+	}
+
+	.question-api-tip-sub,
+	.question-empty-desc {
+		display: block;
+		margin-top: 8rpx;
+		color: #98a2b3;
+		font-size: 22rpx;
+		font-weight: 400;
+	}
+
+	.question-empty-state {
+		margin: 0;
+		padding: 56rpx 34rpx;
+		text-align: center;
+	}
+
+	.question-empty-state .ic {
+		width: 58rpx;
+		height: 58rpx;
+		margin: 0 auto 18rpx;
+	}
+
+	.question-empty-title {
+		display: block;
+		color: #1f2937;
+		font-size: 30rpx;
+		font-weight: 900;
+	}
+
+	.question-refresh-btn {
+		margin: 30rpx auto 0;
+		width: 280rpx;
+		height: 72rpx;
+		border-radius: 999rpx;
+		font-size: 25rpx;
 	}
 
 	.part-kicker {

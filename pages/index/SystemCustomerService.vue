@@ -134,7 +134,7 @@
 	</view>
 </template>
 <script>
-	import { putAuthPasswordApi,getMeSettingsApi,putMeSettingsApi,putAccountsSecurityApi,postAuthLogoutApi } from '@/api/frontApikit.js'
+	import { putAuthPasswordApi,getMeSettingsApi,putMeSettingsApi,putAccountsSecurityApi,postAuthLogoutApi,getNotificationsApi,putNotificationsReadApi } from '@/api/frontApikit.js'
 
 	import myTabbar from '@/components/my‑tabbar/my‑tabbar.vue'
 	import {
@@ -152,7 +152,8 @@
 					name: '系统客服',
 					phone: '13800000000'
 				},
-				cacheSizeText: '0 MB'
+				cacheSizeText: '0 MB',
+				logoutLoading: false
 			}
 		},
 
@@ -168,8 +169,35 @@
 		onLoad() {
 			this.getCacheSize()
 			this.getMeSettings()
+			this.getNotifications()
 		},
 		methods: {
+			
+				// 通知列表
+				async getNotifications() {
+		
+				try {
+				
+					const notifications =  await getNotificationsApi()
+					console.log(notifications)
+				} catch (error) {
+					
+					
+				} 
+			},
+			// 全部标记已读
+			async putNotificationsRead() {
+		
+				try {
+				
+					 await putNotificationsReadApi()
+					
+				} catch (error) {
+					
+					
+				} 
+			},
+			
 			// 退出登录
 				async requestLogout() {
 				if (this.logoutLoading) return
@@ -306,39 +334,17 @@
 					}
 				})
 			},
-			// 注销账户
+			// 退出登录
 			handleLogoutAccount() {
 				uni.showModal({
-					title: '注销账户',
-					content: '注销账号将清空账号所有数据，此操作不可恢复，确定继续吗？',
-					confirmText: '确认注销',
+					title: '退出登录',
+					content: '确定退出当前账号？',
+					confirmText: '确认退出',
 					confirmColor: '#f53f3f',
 					cancelText: '取消',
 					success: async (res) => {
 						if (!res.confirm) return
-						uni.showLoading({
-							title: '处理中...'
-						})
-						try {
-							// 此处替换为你的后端注销接口
-							// await api.user.accountCancel()
-							// 模拟请求，联调时删除
-							uni.clearStorageSync()
-							uni.showToast({
-								title: '账号已注销',
-								icon: 'success'
-							})
-							uni.reLaunch({
-								url: '/pages/index/login' // 修改为你的真实登录页路径
-							})
-						} catch (err) {
-							uni.showToast({
-								title: '注销失败，请稍后重试',
-								icon: 'none'
-							})
-						} finally {
-							uni.hideLoading()
-						}
+						await this.requestLogout()
 					}
 				})
 			}
