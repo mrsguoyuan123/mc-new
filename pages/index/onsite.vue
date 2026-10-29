@@ -3,15 +3,19 @@
 		<view class="u-grid">
 			<view class="radius-15 card-border-gray text-center mr-16">
 				<view class="font-bold font-l font-green">6</view>
-				<view class="font-s font-info">已服务</view>
+				<view class="font-s font-info">用户列表</view>
+			</view>
+			<view class="radius-15 card-border-gray text-center mr-16">
+				<view class="font-bold font-l font-green">6</view>
+				<view class="font-s font-info">待服务</view>
 			</view>
 			<view class="radius-15 card-border-gray text-center  mr-16">
 				<view class="font-bold font-l font-purple">3</view>
-				<view class="font-s font-info">待服务</view>
+				<view class="font-s font-info">待接单</view>
 			</view>
 			<view class="radius-15 card-border-gray text-center ">
 				<view class="font-bold font-l font-red">6</view>
-				<view class="font-s font-info">待接单</view>
+				<view class="font-s font-info">已服务</view>
 			</view>
 		</view>
 
@@ -47,6 +51,7 @@
 				{{item.label}}
 			</view>
 		</view>
+		
 		<!-- 已服务 -->
 		<view class="list-wrap list-wrap-green" v-if="currentIndex == 0">
 			<view v-for="(item,idx) in userList" :key="idx" class="patient-card">
