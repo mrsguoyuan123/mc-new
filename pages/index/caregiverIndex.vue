@@ -177,7 +177,7 @@
 								@click="acceptOrder(order)"
 							></u-button>
 							<u-button
-								v-if="order.status === 'CONFIRMED'"
+								v-if="order.status === 'CONFIRMED' || order.status === 'PENDING'"
 								type="primary"
 								size="mini"
 								shape="circle"
@@ -781,6 +781,7 @@ export default {
 			statusTextMap: {
 				WAIT_ACCEPT: '待接单',
 				CONFIRMED: '待服务',
+				PENDING: '待服务',
 				IN_SERVICE: '服务中',
 				COMPLETED: '已服务',
 				CANCELLED: '已取消'
@@ -788,6 +789,7 @@ export default {
 			statusTypeMap: {
 				WAIT_ACCEPT: 'warning',
 				CONFIRMED: 'primary',
+				PENDING: 'primary',
 				IN_SERVICE: 'primary',
 				COMPLETED: 'success',
 				CANCELLED: 'info'
@@ -800,7 +802,7 @@ export default {
 			const pendingCount = Number(this.stats.pending || 0) + Number(this.stats.inService || 0)
 			return [
 				{ key: 'users', label: '用户列表', count: this.stats.users || 0, statuses: [], emptyText: '暂无可服务用户' },
-				{ key: 'pending', label: '待服务', count: pendingCount, statuses: ['CONFIRMED', 'IN_SERVICE'], emptyText: '暂无待服务订单' },
+				{ key: 'pending', label: '待服务', count: pendingCount, statuses: ['CONFIRMED', 'PENDING', 'IN_SERVICE'], emptyText: '暂无待服务订单' },
 				{ key: 'waitAccept', label: '待接单', count: this.stats.waitAccept || 0, statuses: ['WAIT_ACCEPT'], emptyText: '暂无待接单订单' },
 				{ key: 'completed', label: '已服务', count: this.stats.completed || 0, statuses: ['COMPLETED'], emptyText: '暂无已服务订单' }
 			]
