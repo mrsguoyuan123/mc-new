@@ -279,7 +279,7 @@ export default {
             const roleUrlMap = {
                 PATIENT: '/pages/index/home',
                 CS: '/pages/index/workBench',
-                CAREGIVER: '/pages/index/onsite'
+                CAREGIVER: '/pages/index/caregiverIndex'
             }
             const url = roleUrlMap[role];
             console.log(roleUrlMap)

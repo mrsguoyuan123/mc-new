@@ -17,7 +17,7 @@
 				</view>
 
 			</view>
-			<view @click="routeTo(item)" :class="item.routeto=='onsite'?'list-outside':'list-home'"
+			<view @click="routeTo(item)" :class="item.routeto=='caregiverIndex'?'list-outside':'list-home'"
 				v-for="(item,index) in userList"
 				class="card-list radius-15 card-top bg-white card-border card-border-gray">
 				<view class=" massage-list">
@@ -25,7 +25,7 @@
 						<u-icon name="account" color="#16c288" :bold="true" size="40rpx"></u-icon>
 					</view>
 					<view class="massage-icon-left view-icon bg-white1 margin-right-10 "
-						v-else-if="item.routeto=='onsite'">
+						v-else-if="item.routeto=='caregiverIndex'">
 						<u-icon name="map" color="#155DFC" :bold="true" size="40rpx"></u-icon>
 					</view>
 
@@ -67,7 +67,7 @@
 						id: "sys-1",
 						name: "我是驻点",
 						lastMsg: "提供陪诊服务、协调院内资源",
-						routeto: "onsite",
+						routeto: "caregiverIndex",
 
 					},
 					{
@@ -88,9 +88,9 @@
 
 
 				console.log(item.routeto)
-				if (item.routeto == 'onsite') {
+				if (item.routeto == 'caregiverIndex') {
 					uni.switchTab({
-						url: "/pages/index/onsite"
+						url: "/pages/index/caregiverIndex"
 					})
 				} else {
 					

@@ -24,7 +24,7 @@
 				color: "#c0c4cc",
 				selectedColor: "#9810fa",
 				tabList: [{
-						pagePath: "/pages/index/onsite",
+						pagePath: "/pages/index/caregiverIndex",
 						icon: "home",
 						text: "首页"
 					},
