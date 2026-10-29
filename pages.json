@@ -168,8 +168,13 @@
 			"style": {
 				"navigationStyle": "custom"
 			}
+		},
+		{
+			"path": "pages/index/caregiverIndex",
+			"style": {
+				"navigationStyle": "custom"
+			}
 		}
-		
 		
 
 
