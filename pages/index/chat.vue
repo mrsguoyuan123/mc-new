@@ -351,7 +351,7 @@
 				</view>
 			</view>
 		</u-popup>
-		<!-- <main-tabbar :current="2"></main-tabbar> -->
+	
 	</view>
 </template>
 
@@ -372,7 +372,7 @@
 		postConversationsByIdReadApi,
 		postFilesUploadApi
 	} from '@/api/frontApikit.js'
-	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
+
 	import {
 		mapState
 	} from 'vuex'
@@ -381,7 +381,7 @@
 			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
 		},
 		components: {
-			mainTabbar
+			
 		},
 		computed: {
 			...mapState([

@@ -26,7 +26,7 @@
 					@change="onMonthPickerChange"
 				>
 					<view class="calendar-tool-btn">
-						<u-icon name="calendar" color="#2563ff" size="25"></u-icon>
+						<u-icon name="calendar" color="#1f2937" size="25"></u-icon>
 					</view>
 				</picker>
 			</view>
@@ -40,13 +40,14 @@
 				<view class="stat-label">{{ card.label }}</view>
 				<view class="stat-value">{{ card.value }}</view>
 				<view class="stat-trend" :class="card.direction">
+					<view class="font-info">较上月</view>
 					<u-icon
 						v-if="card.direction === 'up' || card.direction === 'down'"
-						:name="card.direction === 'up' ? 'arrow-up' : 'arrow-down'"
+						:name="card.direction === 'up' ? 'arrow-upward' : 'arrow-downward'"
 						:color="card.direction === 'up' ? '#ef4444' : '#16a34a'"
 						size="13"
 					></u-icon>
-					<text>较上月 {{ card.trendText }}</text>
+					<text> {{ card.trendText }}</text>
 				</view>
 			</view>
 		</view>
@@ -88,14 +89,14 @@
 					<view v-if="day.events.length" class="day-tag" :class="day.events[0].statusClass">
 						{{ day.label }}
 					</view>
-					<view v-if="day.events.length" class="day-dots">
+					<!-- <view v-if="day.events.length" class="day-dots">
 						<text
 							v-for="(dot, dotIndex) in day.dotColors"
 							:key="day.date + '-dot-' + dotIndex"
 							class="day-dot"
 							:style="{ backgroundColor: dot }"
 						></text>
-					</view>
+					</view> -->
 				</view>
 			</view>
 		</view>
@@ -145,22 +146,22 @@
 					</view>
 					<view class="schedule-right">
 						<view class="schedule-status" :class="item.statusClass">{{ item.statusText }}</view>
-						<u-icon name="arrow-right" color="#c4ccd9" size="17"></u-icon>
+						<!-- <u-icon name="arrow-right" color="#c4ccd9" size="17"></u-icon> -->
 					</view>
 				</view>
 			</view>
 		</view>
 
-		<custom-tabbar :current="0"></custom-tabbar>
+		<myTabbar :current="0"></myTabbar>
 	</view>
 </template>
 
 <script>
-	import customTabbar from "@/components/custom-tabbar/custom-tabbar.vue";
+	import myTabbar from "@/components/myTabbar.vue";
 	import { getEscortSchedulesApi, getEscortOrdersApi } from '@/api/frontApikit.js'
 	export default {
 		components: {
-			customTabbar
+			myTabbar
 		},
 		data() {
 			const today = new Date()
@@ -852,7 +853,7 @@
 	}
 
 	.page-title {
-		font-size: 44rpx;
+		font-size: 34rpx;
 		line-height: 58rpx;
 		font-weight: 700;
 		color: #111827;
@@ -861,7 +862,7 @@
 	.page-subtitle {
 		margin-top: 6rpx;
 		font-size: 24rpx;
-		color: #98a2b3;
+		color: #909399;
 	}
 
 	.header-tools {
@@ -872,7 +873,7 @@
 	.month-picker {
 		height: 60rpx;
 		padding: 0 18rpx;
-		border-radius: 30rpx;
+		border-radius: 10rpx;
 		background: #ffffff;
 		display: flex;
 		align-items: center;
@@ -885,7 +886,7 @@
 		width: 60rpx;
 		height: 60rpx;
 		margin-left: 14rpx;
-		border-radius: 50%;
+		border-radius: 10rpx;
 		background: #ffffff;
 		display: flex;
 		align-items: center;
@@ -924,18 +925,21 @@
 	}
 
 	.stat-label {
-		font-size: 21rpx;
+		font-size: 19rpx;
 		line-height: 28rpx;
-		color: #667085;
+		color: #909399;
 		white-space: nowrap;
+		text-align: center;
 	}
 
 	.stat-value {
-		margin: 4rpx 0;
+		margin: 10rpx 0;
 		font-size: 36rpx;
 		line-height: 44rpx;
 		font-weight: 700;
 		color: #101828;
+		text-align: center;
+
 	}
 
 	.stat-trend {
@@ -943,7 +947,7 @@
 		align-items: center;
 		font-size: 18rpx;
 		line-height: 24rpx;
-		color: #98a2b3;
+		transform: scale(0.8);
 		white-space: nowrap;
 	}
 
@@ -977,7 +981,7 @@
 		width: 58rpx;
 		height: 58rpx;
 		border-radius: 50%;
-		background: #f5f7fb;
+		/* background: #f5f7fb; */
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -1007,7 +1011,7 @@
 
 	.day-cell {
 		width: 14.2857%;
-		min-height: 112rpx;
+		min-height: 100rpx;
 		padding: 8rpx 3rpx 7rpx;
 		box-sizing: border-box;
 		display: flex;
@@ -1047,7 +1051,7 @@
 	.day-tag {
 		width: 100%;
 		margin-top: 5rpx;
-		padding: 2rpx 5rpx;
+		padding: 10rpx 5rpx;
 		border-radius: 8rpx;
 		font-size: 18rpx;
 		line-height: 24rpx;
@@ -1056,6 +1060,8 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		box-sizing: border-box;
+		transform: scale(0.8);
+		min-width: 130rpx;
 	}
 
 	.day-cell.selected .day-tag {
@@ -1133,6 +1139,8 @@
 	.day-panel-header {
 		padding-bottom: 18rpx;
 		border-bottom: 1rpx solid #eef1f6;
+	display: flex;
+    justify-content: space-between;
 	}
 
 	.day-panel-title-row {
@@ -1148,14 +1156,14 @@
 
 	.day-panel-date {
 		margin-left: 14rpx;
-		font-size: 23rpx;
-		color: #98a2b3;
+		font-size: 22rpx;
+		color: #909399;
 	}
 
 	.day-panel-count {
 		margin-top: 8rpx;
 		font-size: 22rpx;
-		color: #667085;
+		color: #909399;
 	}
 
 	.schedule-item {
@@ -1177,16 +1185,19 @@
 	}
 
 	.schedule-start {
-		font-size: 24rpx;
+		font-size: 30rpx;
 		line-height: 32rpx;
 		font-weight: 600;
-		color: #2563ff;
+		/* text-align: center; */
+		/* color: #2563ff; */
 	}
 
 	.schedule-end {
 		margin-top: 4rpx;
-		font-size: 21rpx;
+		font-size: 20rpx;
 		color: #98a2b3;
+		/* text-align: center; */
+
 	}
 
 	.schedule-content {

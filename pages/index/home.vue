@@ -629,7 +629,9 @@
 				</view>
 			</view>
 		</view>
-		<main-tabbar :current="0"></main-tabbar>
+		<myTabbar :current="0"></myTabbar>
+
+		
 	</view>
 
 </template>
@@ -645,7 +647,9 @@ getMeMedicalRecordApi,
 		postMeInformedConsentByIdConfirmApi,
 		
 	} from '@/api/frontApikit.js'
-	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
+
+	import myTabbar from '@/components/myTabbar.vue'
+
 
 
 	export default {
@@ -653,7 +657,7 @@ getMeMedicalRecordApi,
 			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
 		},
 		components: {
-			mainTabbar
+			myTabbar
 		},
 		data() {
 				const userInfo = JSON.parse(uni.getStorageSync('userInfo')) || {}

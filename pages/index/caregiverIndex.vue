@@ -82,13 +82,18 @@
 					class="user-card"
 					@click="openChat(user)"
 				>
-					<view v-if="user.unreadCount > 0" class="unread-badge">
-						{{ user.unreadCount > 99 ? '99+' : user.unreadCount }}
-					</view>
-					<view class="user-avatar">
+				<view class="user-avatar-wrapper">
+<view class="user-avatar">
 						<image v-if="user.avatar" class="avatar-img" :src="user.avatar" mode="aspectFill"></image>
 						<u-icon v-else name="account-fill" color="#2563ff" size="35"></u-icon>
+						
 					</view>
+					<view v-if="user.unreadCount > 0" class="unread-badge">
+						{{ user.unreadCount > 99 ? '99+' : user.unreadCount }}
+						</view>
+				</view>
+				
+					
 					<view class="user-main">
 						<view class="user-title-row">
 							<text class="user-name">{{ user.name }}</text>
@@ -147,14 +152,10 @@
 									<text>{{ order.serviceTime }}</text>
 								</view>
 							</view>
-							<u-button
-								type="primary"
-								size="mini"
-								plain
-								shape="circle"
-								text="查看详情"
-								@click="openOrderDetail(order)"
-							></u-button>
+							<view @click="openOrderDetail(order)" class="font-info font-s">
+								查看详情
+							</view>
+						
 						</view>
 
 						<view class="order-info-row">
@@ -228,11 +229,12 @@
 		</template>
 
 		<!-- 改动位置：用户列表点击后的全屏健康管理群聊天弹窗 -->
-		<u-popup
+		<caregiver-popup
 			:show="chatPopupVisible"
 			mode="bottom"
 			:round="0"
-			:zIndex="10060"
+			:zIndex="10080"
+			:safeAreaInsetBottom="false"
 			:closeOnClickOverlay="false"
 			@close="closeChatPopup"
 		>
@@ -283,24 +285,31 @@
 						class="full-msg-row"
 						:class="msg.type"
 					>
-						<view v-if="msg.type === 'other'" class="full-msg-avatar">
+						<view v-if="msg.type === 'other'" class="full-msg-avatar other">
 							<image v-if="msg.avatar" :src="msg.avatar" mode="aspectFill" class="full-avatar-img"></image>
 							<u-icon v-else name="account-fill" color="#2563ff" size="24"></u-icon>
 						</view>
 						<view class="full-msg-content">
-							<view v-if="msg.type === 'other'" class="full-sender-row">
+							<view class="full-sender-row" :class="msg.type">
 								<text class="full-sender-name">{{ msg.name }}</text>
 								<text v-if="msg.roleText" class="full-sender-role">{{ msg.roleText }}</text>
 								<text class="full-sender-time">{{ msg.time }}</text>
 							</view>
 							<view class="full-bubble" :class="{ fail: msg.failed }">
-								<text>{{ msg.content }}</text>
+								<text>{{ msg.content }}<text v-if="msg.isEdited" class="edited-mark">（已编辑）</text></text>
 							</view>
 							<view v-if="msg.type === 'mine'" class="full-mine-meta">
-								<text>{{ msg.time }}</text>
 								<text v-if="msg.sending">发送中</text>
 								<text v-else-if="msg.failed">发送失败</text>
+								<view v-if="canEditChatMessage(msg)" class="edit-message-btn" @click="openEditMessage(msg)">
+									<u-icon name="edit-pen" color="#2563ff" size="14"></u-icon>
+									<text>编辑</text>
+								</view>
 							</view>
+						</view>
+						<view v-if="msg.type === 'mine'" class="full-msg-avatar mine">
+							<image v-if="msg.avatar" :src="msg.avatar" mode="aspectFill" class="full-avatar-img"></image>
+							<u-icon v-else name="account-fill" color="#ffffff" size="26"></u-icon>
 						</view>
 					</view>
 				</scroll-view>
@@ -311,25 +320,65 @@
 						class="full-chat-input"
 						placeholder="在多学科群内沟通（客服、医助、客户全员可见）"
 						confirm-type="send"
+						cursor-spacing="18"
+						:adjust-position="true"
+						:hold-keyboard="true"
 						:disabled="chatSending || !currentConversation"
 						@confirm="sendChatMessage"
 					/>
+					<view class="send-btn"  :class="{ disabled: chatSending || !currentConversation || !chatInput.trim() }" @click="sendChatMessage">
+					<text class="custom-icon custom-icon-navigation " style="font-size:40rpx;color:#fff;"></text>
+				</view>
+					<!-- <view class="full-send-btn" :class="{ disabled: chatSending || !currentConversation || !chatInput.trim() }" @click="sendChatMessage">
+						<u-icon name="arrow-up" color="#ffffff" size="20"></u-icon>
+						<text>发送</text>
+					</view> -->
+				</view>
+			</view>
+		</caregiver-popup>
+
+		<!-- 改动位置：编辑群聊消息弹窗 -->
+		<caregiver-popup
+			:show="editMessagePopupVisible"
+			mode="center"
+			:round="24"
+			:zIndex="10120"
+			:closeOnClickOverlay="false"
+			@close="closeEditMessage"
+		>
+			<view class="edit-chat-popup">
+				<view class="edit-chat-title">编辑群聊消息</view>
+				<view class="edit-original-box">
+					<text class="edit-original-label">原消息内容</text>
+					<text class="edit-original-text">{{ editForm.originalText }}</text>
+				</view>
+				<textarea
+					v-model="editForm.newText"
+					class="edit-chat-textarea"
+					maxlength="2000"
+					auto-height
+					placeholder="请输入修改后的内容"
+					cursor-spacing="20"
+					:adjust-position="true"
+				/>
+				<view class="edit-tip">保存后将在群内标注“已编辑”，并记录修改人与时间留痕</view>
+				<view class="edit-actions">
+					<u-button class="edit-action-btn" plain shape="circle" text="取消" @click="closeEditMessage"></u-button>
 					<u-button
+						class="edit-action-btn"
 						type="primary"
 						shape="circle"
-						size="normal"
-						text="发送"
-						:loading="chatSending"
-						:disabled="!currentConversation"
-						@click="sendChatMessage"
+						text="保存修改"
+						:loading="editSaving"
+						@click="submitEditMessage"
 					></u-button>
 				</view>
 			</view>
-		</u-popup>
+		</caregiver-popup>
 
 		<!-- 原群聊弹窗保留：历史内联面板结构，当前由上方全屏弹窗承接交互 -->
 		<!-- 改动位置：用户列表群聊弹窗，包含消息区、群成员、患者档案 -->
-		<u-popup :show="false" mode="bottom" :round="24" :closeable="true" @close="closeChatPopup">
+		<caregiver-popup :show="false" mode="bottom" :round="24" :closeable="true" @close="closeChatPopup">
 			<view class="chat-popup">
 				<view class="chat-popup-header">
 					<view class="chat-popup-title-wrap">
@@ -472,14 +521,14 @@
 					</view>
 				</view>
 			</view>
-		</u-popup>
+		</caregiver-popup>
 
 		<!-- 改动位置：患者档案独立弹窗，数据来自 getEscortUsersApi -->
-		<u-popup
+		<caregiver-popup
 			:show="archivePopupVisible"
 			mode="bottom"
 			:round="0"
-			:zIndex="10080"
+			:zIndex="10100"
 			:closeOnClickOverlay="false"
 			@close="closeArchivePopup"
 		>
@@ -576,14 +625,14 @@
 					<u-button type="primary" shape="circle" text="返回健康管理群" @click="closeArchivePopup"></u-button>
 				</view>
 			</view>
-		</u-popup>
+		</caregiver-popup>
 
 		<!-- 改动位置：群成员独立弹窗，成员来自 getMeConversationsApi -->
-		<u-popup
+		<caregiver-popup
 			:show="memberPopupVisible"
 			mode="bottom"
 			:round="0"
-			:zIndex="10080"
+			:zIndex="10100"
 			:closeOnClickOverlay="false"
 			@close="closeMemberPopup"
 		>
@@ -627,10 +676,10 @@
 					</view>
 				</scroll-view>
 			</view>
-		</u-popup>
+		</caregiver-popup>
 
 		<!-- 改动位置：服务记录弹窗，提交 postEscortOrdersByIdServiceRecordApi -->
-		<u-popup :show="recordPopupVisible" mode="bottom" :round="24" :closeable="true" @close="closeRecordPopup">
+		<caregiver-popup :show="recordPopupVisible" mode="bottom" :round="24" :closeable="true" @close="closeRecordPopup">
 			<view class="record-popup">
 				<view class="popup-title">填写服务记录</view>
 				<view class="form-label">身体恢复情况</view>
@@ -683,9 +732,9 @@
 					></u-button>
 				</view>
 			</view>
-		</u-popup>
+		</caregiver-popup>
 
-		<custom-tabbar :current="0"></custom-tabbar>
+		<myTabbar :current="0"></myTabbar>
 	</view>
 </template>
 
@@ -703,13 +752,17 @@ import {
 	getEscortUsersApi,
 	getMeConversationsApi,
 	getConversationsByIdMessagesApi,
-	postConversationsByIdMessagesApi
+	postConversationsByIdMessagesApi,
+	putConversationsByIdMessagesByMessageIdApi,
+	
 } from '@/api/frontApikit.js'
-import customTabbar from '@/components/custom-tabbar/custom-tabbar.vue'
+import CaregiverPopup from '@/components/pop/caregiver-popup.vue'
+import myTabbar from '@/components/myTabbar.vue'
 
 export default {
 	components: {
-		customTabbar
+		CaregiverPopup,
+		myTabbar
 	},
 	data() {
 		return {
@@ -726,6 +779,7 @@ export default {
 			membersLoading: false,
 			profileLoading: false,
 			chatSending: false,
+			editSaving: false,
 			chatInput: '',
 			chatError: '',
 			chatPopupUser: null,
@@ -736,6 +790,13 @@ export default {
 			chatScrollIntoView: '',
 			chatMessagesSignature: '',
 			chatPollTimer: null,
+			currentUser: {},
+			editMessagePopupVisible: false,
+			editingMessage: null,
+			editForm: {
+				originalText: '',
+				newText: ''
+			},
 			currentTab: 0,
 			currentMonth: '',
 			noticeText: '欢迎使用陪诊工作台',
@@ -825,10 +886,13 @@ export default {
 		}
 	},
 	onLoad() {
+		this.currentUser = this.readCurrentUser()
 		this.currentMonth = this.formatMonth(new Date())
-		this.bootstrap()
+		this.bootstrap();
+		
 	},
 	onShow() {
+		this.currentUser = this.readCurrentUser()
 		if (this.currentMonth) this.loadStats()
 	},
 	onReachBottom() {
@@ -844,6 +908,17 @@ export default {
 		this.stopChatPolling()
 	},
 	methods: {
+		// 读取本地登录信息，兼容字符串和对象两种缓存格式
+		readCurrentUser() {
+			try {
+				const raw = uni.getStorageSync('userInfo')
+				if (!raw) return {}
+				return typeof raw === 'string' ? JSON.parse(raw) : raw
+			} catch (error) {
+				return {}
+			}
+		},
+
 		// 首次进入时并行加载工作台核心数据
 		async bootstrap() {
 			this.pageLoading = true
@@ -1196,7 +1271,7 @@ export default {
 				})
 				const list = this.extractList(result)
 				const nextMessages = list.map((item, index) => this.normalizeChatMessage(item, index))
-				const nextSignature = nextMessages.map(msg => [msg.id, msg.type, msg.name, msg.content, msg.time].join('~')).join('|')
+				const nextSignature = nextMessages.map(msg => [msg.id, msg.type, msg.name, msg.content, msg.isEdited ? 1 : 0, msg.time].join('~')).join('|')
 				if (!manualLoading && nextSignature === this.chatMessagesSignature) return
 				this.chatMessages = nextMessages
 				this.chatMessagesSignature = nextSignature
@@ -1242,11 +1317,18 @@ export default {
 				type: 'mine',
 				name: this.getCurrentUserName(),
 				roleText: '陪诊师',
+				avatar: this.getCurrentUserAvatar(),
+				senderType: this.getCurrentSenderType(),
+				senderId: this.getPrimarySenderId(),
+				messageId: '',
+				clientSeq,
+				msgType: 'text',
+				isEdited: false,
 				content: text,
 				time: this.formatDateTime(new Date()),
 				sending: true,
 				failed: false,
-				clientSeq
+				raw: {}
 			}
 			this.chatMessages.push(localMessage)
 			this.chatInput = ''
@@ -1257,10 +1339,11 @@ export default {
 					id: this.currentConversation.id,
 					type: 'TEXT',
 					content: text,
-					senderType: 'CAREGIVER',
+					senderType: this.getCurrentSenderType(),
 					clientSeq
 				})
 				await this.loadChatMessages(false)
+				this.refreshConversationPreview()
 			} catch (error) {
 				localMessage.sending = false
 				localMessage.failed = true
@@ -1270,6 +1353,86 @@ export default {
 				this.chatSending = false
 				this.scrollChatToBottom()
 			}
+		},
+		// 判断当前消息是否允许本人编辑
+		canEditChatMessage(msg) {
+			if (!msg || msg.type !== 'mine' || msg.msgType !== 'text' || msg.sending || msg.failed) return false
+			if (['AI', 'SYSTEM'].indexOf(String(msg.senderType || '').toUpperCase()) > -1) return false
+			if (!msg.messageId) return false
+			if (msg.senderId && this.getMySenderIds().length) {
+				return this.getMySenderIds().some(id => String(id) === String(msg.senderId))
+			}
+			return true
+		},
+		// 打开消息编辑弹窗
+		openEditMessage(msg) {
+			if (!this.canEditChatMessage(msg)) {
+				uni.showToast({ title: '仅可编辑本人发送的文本消息', icon: 'none' })
+				return
+			}
+			this.editingMessage = msg
+			this.editForm = {
+				originalText: msg.content || '',
+				newText: msg.content || ''
+			}
+			this.editMessagePopupVisible = true
+		},
+		// 关闭消息编辑弹窗
+		closeEditMessage() {
+			this.editMessagePopupVisible = false
+			this.editingMessage = null
+			this.editForm = {
+				originalText: '',
+				newText: ''
+			}
+		},
+		// 保存编辑后的群聊消息
+		async submitEditMessage() {
+			const newText = String(this.editForm.newText || '').trim()
+			if (!this.editingMessage || !this.currentConversation || !this.currentConversation.id) return
+			if (!newText) {
+				uni.showToast({ title: '消息内容不能为空', icon: 'none' })
+				return
+			}
+			if (newText === this.editingMessage.content) {
+				uni.showToast({ title: '消息内容未修改', icon: 'none' })
+				return
+			}
+			if (this.editSaving) return
+			this.editSaving = true
+			uni.showLoading({ title: '保存中...', mask: true })
+			try {
+				await putConversationsByIdMessagesByMessageIdApi({
+					id: this.currentConversation.id,
+					messageId: this.editingMessage.messageId,
+					content: newText,
+					newText
+				})
+				const target = this.editingMessage
+				uni.showToast({ title: '消息已更新', icon: 'success' })
+				this.closeEditMessage()
+				await this.loadChatMessages(false)
+				const targetId = target.messageId || target.id
+				const index = this.chatMessages.findIndex(item => String(item.messageId || item.id) === String(targetId))
+				if (index > -1) {
+					this.$set(this.chatMessages, index, Object.assign({}, this.chatMessages[index], {
+						messageId: this.chatMessages[index].messageId || targetId,
+						content: newText,
+						isEdited: true,
+						editedAt: this.formatDateTime(new Date())
+					}))
+				}
+				this.refreshConversationPreview()
+			} catch (error) {
+				this.handleError(error, '编辑消息失败')
+			} finally {
+				this.editSaving = false
+				uni.hideLoading()
+			}
+		},
+		// 编辑/发送后刷新会话列表最新预览
+		refreshConversationPreview() {
+			this.loadUsers()
 		},
 		// 开始弹窗消息轮询
 		startChatPolling() {
@@ -1483,49 +1646,123 @@ export default {
 		// 标准化弹窗消息字段并区分发送者
 		normalizeChatMessage(raw, index) {
 			const source = raw || {}
-			const senderType = String(source.senderType || source.senderRole || source.role || '').toUpperCase()
+			const rawSenderType = String(
+				source.senderType ||
+				source.senderRole ||
+				source.role ||
+				source.actor ||
+				''
+			)
+			const senderType = this.normalizeSenderRole(rawSenderType)
 			const wireType = String(source.type || source.msgType || source.messageType || 'TEXT').toUpperCase()
 			let content = source.content || source.text || source.message || source.body || ''
 			if ((wireType === 'IMAGE' || source.msgType === 'image') && !content) content = '[图片消息]'
 			if ((wireType === 'HEALTH_CARD' || source.msgType === 'health') && !content) content = '[健康卡片消息]'
 			const mine = this.isMyChatMessage(source, senderType)
+			let msgType = 'text'
+			if (wireType === 'IMAGE' || wireType === 'IMAGE_MESSAGE' || source.msgType === 'image') msgType = 'image'
+			if (wireType === 'HEALTH_CARD' || wireType === 'HEALTH' || source.msgType === 'health') msgType = 'health'
+			const messageId = source.messageId || source.id || source.message_id || ''
+			const senderId = source.senderId || source.sender_id || source.userId || source.staffId || ''
 			return {
-				id: source.id || source.messageId || source.clientSeq || `popup_msg_${index}`,
+				id: messageId || source.clientSeq || `popup_msg_${index}`,
+				messageId,
+				clientSeq: source.clientSeq || '',
+				senderType,
+				senderId,
 				type: mine ? 'mine' : 'other',
-				name: source.senderName || source.staffName || source.name || this.getRoleText(senderType) || '群成员',
-				avatar: source.avatar || source.senderAvatar || source.avatarUrl || '',
+				name: source.senderName || source.staffName || source.name ||
+					(mine ? this.getCurrentUserName() : (this.getRoleText(senderType) || '群成员')),
+				avatar: source.avatar || source.senderAvatar || source.avatarUrl || (mine ? this.getCurrentUserAvatar() : ''),
 				roleText: this.getRoleText(senderType),
+				msgType,
 				content,
 				time: this.formatDateTime(source.createTime || source.sendTime || source.time || source.updateTime),
+				isEdited: source.isEdited === true ||
+					Number(source.isEdited || source.edited || 0) === 1 ||
+					!!source.editedAt,
+				editedAt: source.editedAt || source.updateTime || '',
 				sending: source.sending === true,
-				failed: source.failed === true
+				failed: source.failed === true,
+				raw: source
 			}
 		},
 		// 判断消息是否由当前陪诊师发送
 		isMyChatMessage(source, senderType) {
+			if (['AI', 'SYSTEM'].indexOf(senderType) > -1) return false
 			if (source.mine === true || source.self === true || source.fromMe === true || source.direction === 'outbound') return true
-			const senderId = String(source.senderId || source.userId || source.staffId || '').trim()
+			const senderId = String(source.senderId || source.sender_id || source.userId || source.staffId || source.accountId || '').trim()
 			if (senderId && this.getMySenderIds().some(id => String(id) === senderId)) return true
-			if (!senderId && (senderType === 'CAREGIVER' || senderType === 'ESCORT')) return true
+			const currentRole = this.getCurrentSenderType()
+			if (senderType && this.normalizeSenderRole(senderType) === currentRole) return true
 			return false
 		},
 		// 获取当前登录用户可能使用的 ID
 		getMySenderIds() {
-			const user = uni.getStorageSync('userInfo') || {}
-			return [
+			const user = this.currentUser || {}
+			const role = this.getCurrentSenderType()
+			const ids = [
 				user.id,
 				user.userId,
 				user.staffId,
+				user.memberId,
 				user.caregiverId,
 				user.escortId,
-				this.currentConversation && this.currentConversation.caregiverId,
-				this.currentConversation && this.currentConversation.escortId
-			].filter(item => item !== undefined && item !== null && String(item).trim() !== '').map(String)
+				user.accountId,
+				user.uid
+			]
+			if (this.currentConversation) {
+				ids.push(
+					this.currentConversation.currentUserId,
+					this.currentConversation.selfUserId,
+					this.currentConversation.memberId
+				)
+				if (role === 'CAREGIVER') ids.push(this.currentConversation.caregiverId, this.currentConversation.escortId)
+				if (role === 'CS') ids.push(this.currentConversation.csId, this.currentConversation.agentId)
+				if (role === 'PATIENT') ids.push(this.currentConversation.patientId)
+			}
+			;(this.conversationMembers || []).forEach(member => {
+				if (member && this.normalizeSenderRole(member.role) === role &&
+					(member.current === true || member.isCurrent === true || member.self === true || member.mine === true)) {
+					ids.push(member.id)
+				}
+			})
+			return ids.filter(item => item !== undefined && item !== null && String(item).trim() !== '').map(String)
+		},
+		// 获取当前登录用户的消息发送角色
+		getCurrentSenderType() {
+			const user = this.currentUser || {}
+			const rawRole = Array.isArray(user.roles)
+				? (user.roles[0] || user.role || '')
+				: (user.role || user.roles || user.userType || user.identity || '')
+			return this.normalizeSenderRole(rawRole) || 'CAREGIVER'
+		},
+		// 统一后端角色枚举
+		normalizeSenderRole(role) {
+			const text = String(role || '').toUpperCase()
+			if (!text) return ''
+			if (text.indexOf('CUSTOMER_SERVICE') > -1 || text === 'CS') return 'CS'
+			if (text.indexOf('PATIENT') > -1 || text === 'CUSTOMER' || text.indexOf('CLIENT') > -1) return 'PATIENT'
+			if (text.indexOf('CARE') > -1 || text.indexOf('ESCORT') > -1 || text.indexOf('STATION') > -1) return 'CAREGIVER'
+			if (text.indexOf('ASSISTANT') > -1) return 'DOCTOR_ASSISTANT'
+			if (text.indexOf('SYSTEM') > -1) return 'SYSTEM'
+			if (text.indexOf('AI') > -1 || text.indexOf('ROBOT') > -1) return 'AI'
+			return text
 		},
 		// 获取当前登录用户姓名
 		getCurrentUserName() {
-			const user = uni.getStorageSync('userInfo') || {}
-			return user.name || user.nickname || user.realName || '陪诊师'
+			const user = this.currentUser || {}
+			return user.name || user.nickname || user.realName || user.userName || user.username || this.getRoleText(this.getCurrentSenderType()) || '陪诊师'
+		},
+		// 获取当前登录用户头像
+		getCurrentUserAvatar() {
+			const user = this.currentUser || {}
+			return user.avatar || user.avatarUrl || user.headImg || user.headImage || ''
+		},
+		// 获取当前登录用户主 ID
+		getPrimarySenderId() {
+			const ids = this.getMySenderIds()
+			return ids.length ? ids[0] : ''
 		},
 		// 会话角色枚举转中文
 		getRoleText(role) {
@@ -2037,12 +2274,15 @@ export default {
 	box-shadow: 0 8rpx 24rpx rgba(28, 45, 85, 0.04);
 	box-sizing: border-box;
 }
-
+.user-avatar-wrapper{
+	position: relative;
+	margin-right: 20rpx;
+}
 .unread-badge {
 	position: absolute;
-	top: 18rpx;
-	right: 20rpx;
-	min-width: 34rpx;
+	top: -10rpx;
+	right: 0;
+	min-width: 40rpx;
 	height: 34rpx;
 	padding: 0 8rpx;
 	display: flex;
@@ -2051,9 +2291,10 @@ export default {
 	border-radius: 999rpx;
 	background: #ff3b30;
 	color: #ffffff;
-	font-size: 20rpx;
+	font-size: 18rpx;
 	box-sizing: border-box;
 	z-index: 1;
+	transform: scale(0.8);
 }
 
 .user-card {
@@ -2222,7 +2463,7 @@ export default {
 	gap: 12rpx;
 	margin-top: 22rpx;
 	padding-top: 20rpx;
-	border-top: 1rpx solid #f0f2f7;
+	/* border-top: 1rpx solid #f0f2f7; */
 }
 
 .chat-popup {
@@ -2764,6 +3005,12 @@ export default {
 	border-radius: 22rpx;
 }
 
+.full-msg-avatar.mine {
+	margin-right: 0;
+	margin-left: 14rpx;
+	background: #2f73ff;
+}
+
 .full-avatar-img {
 	width: 100%;
 	height: 100%;
@@ -2785,6 +3032,10 @@ export default {
 	align-items: center;
 	flex-wrap: wrap;
 	margin-bottom: 8rpx;
+}
+
+.full-sender-row.mine {
+	justify-content: flex-end;
 }
 
 .full-sender-name {
@@ -2830,6 +3081,16 @@ export default {
 	color: #ffffff;
 }
 
+.edited-mark {
+	margin-left: 6rpx;
+	font-size: 21rpx;
+	color: #8a94a8;
+}
+
+.full-msg-row.mine .edited-mark {
+	color: rgba(255, 255, 255, 0.82);
+}
+
 .full-bubble.fail {
 	background: #fff1f0;
 	color: #cf1322;
@@ -2837,6 +3098,8 @@ export default {
 
 .full-mine-meta {
 	display: flex;
+	align-items: center;
+	justify-content: flex-end;
 	margin-top: 8rpx;
 }
 
@@ -2844,30 +3107,136 @@ export default {
 	margin-left: 10rpx;
 }
 
+.edit-message-btn {
+	display: flex;
+	align-items: center;
+	margin-left: 14rpx;
+	font-size: 21rpx;
+	color: #2563ff;
+}
+
+.edit-message-btn text {
+	margin-left: 3rpx;
+}
+
 .full-chat-footer {
 	flex-shrink: 0;
 	display: flex;
 	align-items: center;
+	position: relative;
+	z-index: 2;
+	min-height: 104rpx;
 	padding: 16rpx 20rpx calc(18rpx + env(safe-area-inset-bottom));
 	background: #ffffff;
 	border-top: 1rpx solid #edf1f7;
+	box-sizing: border-box;
 }
 
 .full-chat-input {
 	flex: 1;
 	height: 72rpx;
+	line-height: 72rpx;
 	padding: 0 24rpx;
-	margin-right: 16rpx;
+	margin-right: 12rpx;
 	background: #f3f6fb;
+	border: 1rpx solid #e4e9f2;
 	border-radius: 999rpx;
 	font-size: 25rpx;
 	color: #263247;
 	box-sizing: border-box;
 }
 
-.full-chat-footer ::v-deep .u-button {
-	flex-shrink: 0;
-	margin: 0;
+
+.send-btn {
+		width: 72rpx;
+		height: 72rpx;
+		border-radius: 20rpx;
+		background: #2563eb;
+		color: #fff;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 32rpx;
+	}
+.full-send-btn text {
+	margin-left: 4rpx;
+	font-size: 25rpx;
+	color: #ffffff;
+	font-weight: 600;
+}
+
+.full-send-btn.disabled {
+	background: #b8d3ff;
+	box-shadow: none;
+}
+	
+
+/* 新增：编辑群聊消息弹窗 */
+.edit-chat-popup {
+	width: 640rpx;
+	padding: 34rpx 30rpx 30rpx;
+	background: #ffffff;
+	border-radius: 24rpx;
+	box-sizing: border-box;
+}
+
+.edit-chat-title {
+	font-size: 32rpx;
+	font-weight: 700;
+	color: #172033;
+	text-align: center;
+}
+
+.edit-original-box {
+	margin-top: 28rpx;
+	padding: 20rpx;
+	background: #f5f7fb;
+	border-radius: 16rpx;
+}
+
+.edit-original-label {
+	display: block;
+	margin-bottom: 10rpx;
+	font-size: 22rpx;
+	color: #8a94a8;
+}
+
+.edit-original-text {
+	font-size: 26rpx;
+	line-height: 1.5;
+	color: #344054;
+	word-break: break-word;
+}
+
+.edit-chat-textarea {
+	width: 100%;
+	height: 180rpx;
+	margin-top: 22rpx;
+	padding: 20rpx;
+	background: #ffffff;
+	border: 1rpx solid #dce3f0;
+	border-radius: 16rpx;
+	font-size: 26rpx;
+	line-height: 1.5;
+	color: #263247;
+	box-sizing: border-box;
+}
+
+.edit-tip {
+	margin-top: 16rpx;
+	font-size: 21rpx;
+	line-height: 1.5;
+	color: #96a0b5;
+}
+
+.edit-actions {
+	display: flex;
+	margin-top: 28rpx;
+}
+
+.edit-action-btn {
+	flex: 1;
+	margin: 0 8rpx;
 }
 
 /* 新增：患者档案与群成员独立弹窗 */
@@ -3024,6 +3393,7 @@ export default {
 	line-height: 1.45;
 	color: #344054;
 	word-break: break-all;
+	margin-left: 12rpx;
 }
 
 .archive-value.strong {
@@ -3108,5 +3478,8 @@ export default {
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
+}
+.user-avatar{
+	position: relative
 }
 </style>

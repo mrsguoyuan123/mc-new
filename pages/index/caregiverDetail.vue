@@ -60,17 +60,17 @@
 			</button>
 			<view class="bottom-desc">支付成功后即可预约首日上门时间</view>
 		</view>
-		<main-tabbar :current="0"></main-tabbar>
+		<myTabbar :current="0"></myTabbar>
 
 	</view>
 </template>
 
 <script>
-	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
+	import myTabbar from '@/components/myTabbar.vue'
 
 	export default {
 		components: {
-			mainTabbar
+			myTabbar
 		},
 		data() {
 			return {

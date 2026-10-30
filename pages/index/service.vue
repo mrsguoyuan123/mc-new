@@ -1,7 +1,36 @@
 <template>
 	<view class="page-content">
+		<!-- 改动位置：新增页面加载态 -->
+		<view v-if="pageLoading" class="state-box">
+			<u-loading-icon mode="circle" color="#2563ff" size="48rpx"></u-loading-icon>
+			<text class="state-text">正在加载陪诊任务...</text>
+		</view>
+
+		<!-- 改动位置：新增空状态/异常状态 -->
+		<view v-else-if="!hasOrder" class="state-box">
+			<u-icon name="order" color="#c0c4cc" size="72rpx"></u-icon>
+			<text class="state-title">{{ pageError || '暂无可执行的陪诊服务' }}</text>
+			<text class="state-desc">请在陪诊首页确认订单状态后重试</text>
+			<button class="state-btn" @click="retryLoad">刷新重试</button>
+		</view>
+
+		<template v-else>
+		<!-- 改动位置：待开始订单增加开始服务入口 -->
+		<view v-if="orderStatus === 'CONFIRMED'" class="start-banner">
+			<view class="start-info">
+				<text class="start-title">患者已确认，等待开始服务</text>
+				<text class="start-desc">开始后可进行到院签到和服务记录</text>
+			</view>
+			<button class="start-btn" :disabled="actionLoading" @click="startService">开始服务</button>
+		</view>
+
+		<view v-if="orderStatus === 'WAIT_ACCEPT' || orderStatus === 'CANCELLED'" class="state-box inline-state">
+			<text class="state-title">{{ orderStatus === 'CANCELLED' ? '该服务已取消' : '该订单尚未接单' }}</text>
+			<text class="state-desc">请返回陪诊首页处理订单</text>
+		</view>
+
 		<!--患者信息卡片-->
-		<view class="patient-card card-border-gray">
+		<view v-if="canService" class="patient-card card-border-gray">
 			<view class="card-header">
 				<view class="avatar">
 					<u-icon name="account" color="#9c27b0" size="60rpx"></u-icon>
@@ -9,7 +38,7 @@
 				<view class="header-info">
 					<view class="row-name">
 						<text class="name">{{user.name}}</text>
-						<text class="age">{{user.age}}岁</text>
+						<text class="age">{{user.age === '--' ? '年龄未填' : user.age + '岁'}}</text>
 					</view>
 					<view class="row-status">
 						<text class="status-text">{{user.status}}</text>
@@ -17,8 +46,12 @@
 				</view>
 			</view>
 			<view class="info-item">
-				<u-icon name="phone" color="#9333ea" size="32rpx"></u-icon>
+				<u-icon name="phone" color="#2563ff" size="32rpx"></u-icon>
 				<text class="info-val">{{user.phone}}</text>
+			</view>
+			<view class="info-item" v-if="user.serviceTime">
+				<u-icon name="clock" color="#2563ff" size="32rpx"></u-icon>
+				<text class="info-val">{{user.serviceTime}}</text>
 			</view>
 			<view class="info-item addr-row">
 				<view class="addr-left">
@@ -27,14 +60,14 @@
 				</view>
 				<view class="nav-btn" @click="goNav">
 					<text class="custom-icon custom-icon-navigation icon-bold mr-10"
-						style="font-size:28rpx;color:#9333ea;"></text>
+						style="font-size:28rpx;color:#2563ff;"></text>
 					<text>导航</text>
 				</view>
 			</view>
 		</view>
 
 		<!--陪诊任务卡片-->
-		<view class="task-card card-border-gray">
+		<view v-if="canService" class="task-card card-border-gray">
 			<view class="card-title">陪诊任务</view>
 			<view class="timeline">
 				<!--任务1：到院签到-->
@@ -46,7 +79,7 @@
 							<u-icon name="checkmark-circle" color="#27ae60" size="34rpx"></u-icon>
 							<text class="done-text">已完成</text>
 						</view>
-						<view class="btn-group" v-if="currentTask === 1&& !task1Done">
+						<view class="btn-group" v-if="currentTask === 1 && !task1Done && orderStatus === 'IN_SERVICE'">
 							<view class="margin-bottom-1">
 								<view v-if="locDone"
 									class="done-row border-green bg-green radius-15 padding-1 border-2">
@@ -66,11 +99,17 @@
 								</view>
 								<button v-else class="purple-btn  radius-15" @click="photoCheck">
 									<u-icon name="camera" size="36rpx" color="#fff"></u-icon>
-									<text>拍照打卡</text>
+									<text>{{checkinData.photos.length ? '继续拍照' : '拍照打卡'}}</text>
 								</button>
 							</view>
+							<scroll-view v-if="checkinData.photos.length" scroll-x class="photo-scroll">
+								<view class="photo-list">
+									<image v-for="(photo, index) in checkinData.photos" :key="index" class="photo-thumb"
+										:src="photo" mode="aspectFill"></image>
+								</view>
+							</scroll-view>
 
-							<button v-if="task1AllDone" class=" purple-btn  radius-15 margin-top-10" @click="goTask2">下一步</button>
+							<button v-if="task1AllDone" class=" purple-btn  radius-15 margin-top-10" :disabled="actionLoading" @click="goTask2">提交到院签到</button>
 						</view>
 
 					</view>
@@ -85,7 +124,7 @@
 							<u-icon name="checkmark-circle" color="#27ae60" size="34rpx"></u-icon>
 							<text class="done-text">已完成</text>
 						</view>
-						<view v-if="currentTask===2 && !task2Done" class="task-form">
+						<view v-if="currentTask===2 && !task2Done && orderStatus === 'IN_SERVICE'" class="task-form">
 							<view class="form-label">当前进展描述</view>
 							<textarea class="textarea" v-model="submitForm.progressDesc" placeholder=""></textarea>
 							<view class="form-label">异常反馈</view>
@@ -95,7 +134,7 @@
 								<view class="picker-box">{{abnormalList[submitForm.abnormalIdx]}}</view>
 							</picker>
 							<button :disabled="!btnDisabled1" class="purple-btn  radius-15 margin-top-10"
-								@click="submitTask2">下一步</button>
+								:loading="actionLoading" @click="submitTask2">下一步</button>
 						</view>
 					</view>
 				</view>
@@ -109,7 +148,7 @@
 							<u-icon name="checkmark-circle" color="#27ae60" size="34rpx"></u-icon>
 							<text class="done-text">已完成</text>
 						</view>
-						<view v-if="currentTask===3 && !task3Done" class="task-form">
+						<view v-if="currentTask===3 && !task3Done && orderStatus === 'IN_SERVICE'" class="task-form">
 							<view class="form-label">陪诊总结</view>
 							<textarea class="textarea" v-model="submitForm.summaryText"
 								placeholder="请对本次陪诊服务进行总结..."></textarea>
@@ -123,36 +162,65 @@
 									未达成</view>
 							</view>
 							<button :disabled="!btnDisabled2" class="submit-btn  radius-15 margin-top-10"
-								@click="submitAllRecord">提交陪诊记录</button>
+								:loading="actionLoading" @click="submitAllRecord">提交陪诊记录</button>
 						</view>
 					</view>
 				</view>
 			</view>
 		</view>
+		</template>
 
-		<custom-tabbar :current="1"></custom-tabbar>
+		<myTabbar :current="1"></myTabbar>
 		<u-toast ref="uToast"></u-toast>
 	</view>
 </template>
 
 <script>
-	import customTabbar from "@/components/custom-tabbar/custom-tabbar.vue";
+	import myTabbar from "@/components/myTabbar.vue";
+	import {
+		getEscortOrdersApi,
+		getEscortOrdersByIdApi,
+		putEscortOrdersByIdStartApi,
+		postEscortOrdersByIdCheckinApi,
+		postEscortOrdersByIdServiceRecordApi,
+		postFilesUploadApi
+	} from "@/api/frontApikit.js";
 	// import { AMapWX } from "@/static/amap‑wx.130.js"
 
 	export default {
 		components: {
-			customTabbar
+			myTabbar
 		},
 
 		data() {
 			return {
+				pageLoading: false, // 页面加载状态
+				pageError: '', // 页面空状态文案
+				actionLoading: false, // 按钮提交状态
+				currentOrderId: '', // 当前订单ID
+				orderStatus: '', // 当前订单状态
+				orderDetail: null, // 订单详情原始数据
+				checkinData: {
+					latitude: null,
+					longitude: null,
+					address: '',
+					photos: []
+				}, // 到院签到数据
+				hasCheckin: false, // 是否已到院签到
+				hasServiceRecord: false, // 是否已提交服务记录
+				abnormalOptions: [
+					{ label: '空巢老人', value: 'EMPTY_NESTER' },
+					{ label: '行动不便', value: 'MOBILITY_IMPAIRED' },
+					{ label: '其他异常', value: 'OTHER' }
+				], // 异常反馈选项
 
 				user: {
 					name: "孙患者",
 					age: 45,
 					status: "陪诊进行中",
 					phone: "138****5678",
-					hospital: "杭州市第一人民医院"
+					hospital: "杭州市第一人民医院",
+					serviceTime: ""
 				},
 				address: "杭州市西湖区西湖景区",
 				destLat: "", //目的地纬度 latitude
@@ -170,12 +238,15 @@
 				},
 				pollTimer: null,
 
-				abnormalList: ["突发状况", "排队过久", "其他"],
+				abnormalList: ["空巢老人", "行动不便", "其他异常"],
 				task3Done: false,
 
 				task1Finished: false,
 
 			}
+		},
+		onLoad(options) {
+			this.initServicePage(options || {});
 		},
 		onUnload() {
 			if (this.pollTimer) {
@@ -184,38 +255,244 @@
 			}
 		},
 		computed: {
+			// 是否存在当前订单
+			hasOrder() {
+				return !!this.currentOrderId;
+			},
+			// 可执行服务流程的订单状态
+			canService() {
+				return this.orderStatus === 'CONFIRMED' ||
+					this.orderStatus === 'IN_SERVICE' ||
+					this.orderStatus === 'COMPLETED';
+			},
 			task1AllDone() {
-				return this.locDone && this.photoDone
+				return this.hasCheckin || (this.locDone && this.photoDone && this.checkinData.latitude !== null)
 			},
 			btnDisabled1() {
 				// console.log(this.submitForm.progressDesc!= '',this.submitForm.abnormalIdx!== '')
-				return this.submitForm.progressDesc !== '' && this.submitForm.abnormalIdx !== ''
+				return this.submitForm.progressDesc.trim() !== '' && this.submitForm.abnormalIdx !== ''
 			},
 			btnDisabled2() {
-				return this.submitForm.summaryText !== '' && this.submitForm.serviceResult !== ''
+				return this.submitForm.summaryText.trim() !== '' && this.submitForm.serviceResult !== ''
 			},
 		},
 		methods: {
-			// 导航
-			goNav() {
-
-				uni.openLocation({
-					latitude: 30.2741,
-					longitude: 120.1550,
-					name: "杭州市第一人民医院",
-					address: "杭州市第一人民医院",
-					fail: () => {
-						uni.showToast({
-							title: "打开地图失败",
-							icon: "none"
-						})
+			// 初始化服务页，优先读取路由订单
+			async initServicePage(options) {
+				const id = options.id || options.orderId || '';
+				const status = options.orderStatus || options.status || '';
+				this.pageLoading = true;
+				this.pageError = '';
+				try {
+					if (id) {
+						await this.loadOrderDetail(id, status);
+					} else {
+						await this.loadCurrentServiceOrder();
 					}
-				})
+				} catch (error) {
+					this.handleError(error, '陪诊任务加载失败');
+					this.pageError = '陪诊任务加载失败';
+				} finally {
+					this.pageLoading = false;
+				}
+			},
+			// 未带订单ID时自动寻找当前服务/待开始订单
+			async loadCurrentServiceOrder() {
+				const statuses = ['IN_SERVICE', 'CONFIRMED'];
+				for (let i = 0; i < statuses.length; i += 1) {
+					const result = await getEscortOrdersApi({
+						status: statuses[i],
+						page: 1,
+						pageSize: 1
+					});
+					const list = this.extractList(result);
+					if (list.length) {
+						const order = list[0] || {};
+						await this.loadOrderDetail(order.id, order.status || statuses[i]);
+						return;
+					}
+				}
+				this.resetOrderState('暂无可执行的陪诊服务');
+			},
+			// 获取订单详情并归一化页面字段
+			async loadOrderDetail(id, status) {
+				if (!id) {
+					this.resetOrderState('缺少订单ID');
+					return;
+				}
+				const data = await getEscortOrdersByIdApi({ id }) || {};
+				this.orderDetail = data;
+				this.normalizeOrderDetail(data, id, status);
+			},
+			// 重置无订单状态
+			resetOrderState(message) {
+				this.currentOrderId = '';
+				this.orderStatus = '';
+				this.orderDetail = null;
+				this.pageError = message || '';
+			},
+			// 解析订单详情并填充患者卡片和任务进度
+			normalizeOrderDetail(data, fallbackId, fallbackStatus) {
+				const booking = data.booking || {};
+				const patient = data.patient || {};
+				const serviceRecord = data.serviceRecord || {};
+				const checkins = Array.isArray(data.checkins) ? data.checkins : [];
+				const arriveCheckin = this.findArriveCheckin(checkins);
+				const merged = Object.assign({}, booking, patient, data.patientInfo || {}, data);
+				const address = this.buildServiceAddress(booking, patient, merged);
+				const rawPhone = merged.phone || merged.mobile || merged.contactPhone || patient.phone || '';
+				const photos = arriveCheckin ? this.normalizePhotos(arriveCheckin.photos) : [];
+
+				this.currentOrderId = booking.id || data.id || merged.orderId || fallbackId;
+				this.orderStatus = booking.status || data.status || merged.status || fallbackStatus || '';
+				this.address = address;
+				this.destLat = this.toFiniteNumber(merged.latitude || patient.latitude || booking.latitude);
+				this.destLng = this.toFiniteNumber(merged.longitude || patient.longitude || booking.longitude);
+				this.hasCheckin = !!arriveCheckin;
+				this.hasServiceRecord = !!(serviceRecord && Object.keys(serviceRecord).length);
+				this.checkinData = {
+					latitude: arriveCheckin ? this.toFiniteNumber(arriveCheckin.latitude) : null,
+					longitude: arriveCheckin ? this.toFiniteNumber(arriveCheckin.longitude) : null,
+					address: arriveCheckin ? (arriveCheckin.address || address) : '',
+					photos
+				};
+				this.user = {
+					name: patient.name || merged.patientName || merged.name || '未命名患者',
+					age: this.toNumber(merged.age) ? merged.age : '--',
+					status: this.getStatusText(this.orderStatus),
+					phone: this.maskPhone(rawPhone),
+					hospital: address,
+					serviceTime: this.formatServiceTime(merged.serviceDate || booking.serviceDate, merged.period || booking.timeSlot)
+				};
+				this.fillServiceForm(serviceRecord);
+				this.syncTaskState(serviceRecord, arriveCheckin);
+			},
+			// 根据签到和服务记录恢复任务进度
+			syncTaskState(serviceRecord, arriveCheckin) {
+				this.locDone = !!arriveCheckin;
+				this.photoDone = !!(arriveCheckin && this.checkinData.photos.length);
+				this.task1Done = !!arriveCheckin;
+				if (this.hasServiceRecord) {
+					this.task1Done = true;
+					this.task2Done = true;
+					this.task3Done = true;
+					this.currentTask = 3;
+					return;
+				}
+				this.task2Done = false;
+				this.task3Done = false;
+				this.currentTask = arriveCheckin ? 2 : 1;
+			},
+			// 回填历史服务记录
+			fillServiceForm(serviceRecord) {
+				const abnormalValue = serviceRecord.otherSituation || '';
+				const abnormalIdx = this.abnormalOptions.findIndex(item => item.value === abnormalValue);
+				this.submitForm = {
+					progressDesc: serviceRecord.recoveryDescription || '',
+					abnormalIdx: abnormalIdx > -1 ? abnormalIdx : '',
+					summaryText: serviceRecord.specialFeedback || '',
+					serviceResult: serviceRecord.taskCompleted === 'INCOMPLETE' ? 0 : (serviceRecord.taskCompleted ? 1 : '')
+				};
+			},
+			// 查找到院签到记录
+			findArriveCheckin(checkins) {
+				for (let i = 0; i < checkins.length; i += 1) {
+					const type = String(checkins[i].type || '').toUpperCase();
+					if (type === 'ARRIVE' || type === 'CHECK_IN' || type === 'ARRIVAL') return checkins[i];
+				}
+				return null;
+			},
+			// 拼接服务地址
+			buildServiceAddress(booking, patient, merged) {
+				if (merged.address || patient.address) return merged.address || patient.address;
+				const hospitalPart = [booking.hospital, booking.department].filter(Boolean).join(' ');
+				return hospitalPart || booking.address || merged.hospitalName || '暂无服务地址';
+			},
+			// 状态码转中文
+			getStatusText(status) {
+				const map = {
+					WAIT_ACCEPT: '待接单',
+					CONFIRMED: '待开始服务',
+					IN_SERVICE: '陪诊进行中',
+					COMPLETED: '服务已完成',
+					CANCELLED: '服务已取消'
+				};
+				return map[status] || '陪诊服务';
+			},
+			// 开始服务
+			async startService() {
+				if (this.actionLoading || !this.currentOrderId) return;
+				const confirmed = await this.confirmAction('确认现在开始本次陪诊服务吗？');
+				if (!confirmed) return;
+				this.actionLoading = true;
+				try {
+					await putEscortOrdersByIdStartApi({ id: this.currentOrderId });
+					uni.showToast({ title: '服务已开始', icon: 'success' });
+					await this.loadOrderDetail(this.currentOrderId, 'IN_SERVICE');
+				} catch (error) {
+					this.handleError(error, '开始服务失败');
+				} finally {
+					this.actionLoading = false;
+				}
+			},
+			// 手动刷新页面
+			retryLoad() {
+				this.initServicePage({
+					id: this.currentOrderId,
+					orderStatus: this.orderStatus
+				});
+			},
+			// 导航
+			// 原有高德App导航备用方法（保留旧逻辑，页面导航统一使用上方 goNav）
+			async legacyGoNav() {
+				if (this.destLat !== '' && this.destLng !== '') {
+					uni.openLocation({
+						latitude: Number(this.destLat),
+						longitude: Number(this.destLng),
+						name: this.user.name,
+						address: this.address,
+						fail: () => uni.showToast({ title: '打开地图失败', icon: 'none' })
+					});
+					return;
+				}
+				try {
+					uni.showLoading({ title: '解析地址中...' });
+					const geo = await this.getGeoByAddress(this.address);
+					this.destLat = geo.latitude;
+					this.destLng = geo.longitude;
+					uni.openLocation({
+						latitude: geo.latitude,
+						longitude: geo.longitude,
+						name: this.user.name,
+						address: geo.formattedAddress || this.address,
+						fail: () => uni.showToast({ title: '打开地图失败', icon: 'none' })
+					});
+				} catch (error) {
+					uni.setClipboardData({
+						data: this.address,
+						success: () => uni.showToast({ title: '地址已复制', icon: 'none' })
+					});
+				} finally {
+					uni.hideLoading();
+				}
 			},
 			// 定位打卡
-			locationCheck() {
-				this.task1Finished = true;
-				this.locDone = true;
+			async locationCheck() {
+				if (this.actionLoading || this.hasCheckin) return;
+				this.actionLoading = true;
+				try {
+					const location = await this.getCurrentLocation();
+					this.checkinData.latitude = Number(location.latitude);
+					this.checkinData.longitude = Number(location.longitude);
+					this.checkinData.address = location.address || this.address;
+					this.task1Finished = true;
+					this.locDone = true;
+					uni.showToast({ title: '定位成功', icon: 'success' });
+				} catch (error) {
+					this.handleLocationError(error);
+				} finally {
+					this.actionLoading = false;
+				}
 				// 		uni.chooseLocation({
 				// 			success: (res) => {
 				// 				console.log('选点结果', res)
@@ -231,7 +508,7 @@
 				// 			},
 				// 			fail: (err) => {
 				// 				console.error(err)
-				// 				if (err?.errMsg.includes("auth")) {
+				// 				if (err.errMsg && err.errMsg.includes("auth")) {
 				// 					uni.showModal({
 				// 						title: "需要位置权限",
 				// 						content: "请开启位置权限才能定位打卡",
@@ -240,7 +517,7 @@
 				// 							if (res.confirm) uni.openSetting()
 				// 						}
 				// 					})
-				// 				} else if (err?.errMsg.includes('cancel')) {
+				// 				} else if (err.errMsg && err.errMsg.includes('cancel')) {
 				// 					uni.showToast({
 				// 						title: "已取消定位打卡",
 				// 						icon: "none"
@@ -258,8 +535,20 @@
 			},
 			// 拍照打卡
 			photoCheck() {
-				this.task1Finished = true;
-				this.photoDone = true
+				if (this.actionLoading || this.hasCheckin) return;
+				uni.chooseImage({
+					count: Math.max(1, 9 - this.checkinData.photos.length),
+					sizeType: ['compressed'],
+					sourceType: ['camera', 'album'],
+					success: res => {
+						const files = res.tempFilePaths || [];
+						if (files.length) this.uploadCheckinPhotos(files);
+					},
+					fail: error => {
+						if (error && /cancel/i.test(String(error.errMsg || ''))) return;
+						uni.showToast({ title: '选择照片失败，请检查权限', icon: 'none' });
+					}
+				});
 				// uni.chooseMedia({
 				// 	count: 1,
 				// 	mediaType: ['image'],
@@ -281,6 +570,205 @@
 				// 	}
 				// })
 			},
+			// 上传签到照片
+			async uploadCheckinPhotos(files) {
+				this.actionLoading = true;
+				uni.showLoading({ title: '照片上传中...', mask: true });
+				try {
+					for (let i = 0; i < files.length; i += 1) {
+						const result = await postFilesUploadApi({
+							filePath: files[i],
+							name: 'file',
+							dir: 'checkin'
+						});
+						const url = this.extractUploadedFileUrl(result);
+						if (url) this.checkinData.photos.push(url);
+					}
+					this.task1Finished = true;
+					this.photoDone = this.checkinData.photos.length > 0;
+					uni.showToast({ title: '照片上传成功', icon: 'success' });
+				} catch (error) {
+					this.handleError(error, '照片上传失败');
+				} finally {
+					this.actionLoading = false;
+					uni.hideLoading();
+				}
+			},
+			// 获取设备当前定位
+			getCurrentLocation() {
+				return new Promise((resolve, reject) => {
+					uni.getLocation({
+						type: 'gcj02',
+						geocode: true,
+						success: res => {
+							let address = '';
+							if (res.address) {
+								address = [res.address.province, res.address.city, res.address.district, res.address.street, res.address.streetNum]
+									.filter(Boolean)
+									.join('');
+							}
+							resolve({
+								latitude: res.latitude,
+								longitude: res.longitude,
+								address
+							});
+						},
+						fail: reject
+					});
+				});
+			},
+			// 处理定位权限/取消等异常
+			handleLocationError(error) {
+				const message = String((error && error.errMsg) || (error && error.message) || '');
+				if (/cancel/i.test(message)) return;
+				if (/auth|deny|permission/i.test(message)) {
+					uni.showModal({
+						title: '需要位置权限',
+						content: '请开启位置权限后再进行到院签到',
+						confirmText: '去设置',
+						success: res => {
+							if (res.confirm && uni.openSetting) uni.openSetting();
+						}
+					});
+					return;
+				}
+				uni.showToast({ title: '未获取到签到位置', icon: 'none' });
+			},
+			// 确认操作弹窗
+			confirmAction(content) {
+				return new Promise(resolve => {
+					uni.showModal({
+						title: '操作确认',
+						content,
+						confirmText: '确认',
+						cancelText: '取消',
+						success: res => resolve(!!res.confirm),
+						fail: () => resolve(false)
+					});
+				});
+			},
+			// 统一异常提示，接口封装已提示的错误不重复打断流程
+			handleError(error, fallback) {
+				const message = (error && (error.message || error.errMsg)) || fallback || '请求失败';
+				console.warn('[service]', fallback || message, error);
+				if (!error || !error.isApiError) {
+					uni.showToast({ title: fallback || message, icon: 'none', duration: 2200 });
+				}
+			},
+			// 兼容数组、分页对象和业务包裹对象
+			extractList(data) {
+				if (Array.isArray(data)) return data;
+				if (!data) return [];
+				if (Array.isArray(data.list)) return data.list;
+				if (Array.isArray(data.records)) return data.records;
+				if (Array.isArray(data.rows)) return data.rows;
+				if (Array.isArray(data.items)) return data.items;
+				if (Array.isArray(data.data)) return data.data;
+				return [];
+			},
+			// 转有限数字，失败返回null
+			toFiniteNumber(value) {
+				const num = Number(value);
+				return Number.isFinite(num) ? num : '';
+			},
+			// 判断数字字段是否有效
+			toNumber(value) {
+				const num = Number(value);
+				return Number.isFinite(num) && num > 0 ? num : 0;
+			},
+			// 手机号脱敏
+			maskPhone(phone) {
+				const value = String(phone || '').trim();
+				if (!value) return '暂无联系电话';
+				if (value.indexOf('*') > -1) return value;
+				if (/^1\d{10}$/.test(value)) return value.slice(0, 3) + '****' + value.slice(7);
+				if (value.length >= 7) return value.slice(0, 3) + '****' + value.slice(-4);
+				return value;
+			},
+			// 格式化服务日期和时段
+			formatServiceTime(date, period) {
+				if (!date) return period || '';
+				let dateText = String(date);
+				const time = new Date(dateText.replace(/-/g, '/'));
+				if (!Number.isNaN(time.getTime())) {
+					const month = String(time.getMonth() + 1).padStart(2, '0');
+					const day = String(time.getDate()).padStart(2, '0');
+					dateText = `${time.getFullYear()}-${month}-${day}`;
+				}
+				const periodMap = {
+					MORNING: '上午',
+					AFTERNOON: '下午',
+					FULLDAY: '全天'
+				};
+				const periodText = periodMap[String(period || '').toUpperCase()] || period || '';
+				return periodText ? `${dateText} ${periodText}` : dateText;
+			},
+			// 兼容字符串、JSON字符串、对象数组等照片结构
+			normalizePhotos(photos) {
+				let list = [];
+				if (!photos) return list;
+				if (typeof photos === 'string') {
+					const text = photos.trim();
+					if (text.indexOf('[') === 0) {
+						try {
+							list = JSON.parse(text);
+						} catch (error) {
+							list = text.split(',');
+						}
+					} else {
+						list = text.split(',');
+					}
+				} else if (Array.isArray(photos)) {
+					list = photos;
+				}
+				return list.map(item => {
+					if (typeof item === 'string') return this.normalizeFileUrl(item);
+					return this.extractUploadedFileUrl(item || {});
+				}).filter(Boolean);
+			},
+			// 拼接文件访问地址
+			normalizeFileUrl(url) {
+				if (url === null || url === undefined) return '';
+				let value = String(url).trim();
+				if (!value || value.indexOf('{') === 0 || value.indexOf('[') === 0) return '';
+				if (/^(https?:|wxfile:|blob:|data:|\.\/|file:|cloud:|static\/|@\/)/i.test(value)) return value;
+				if (/^[a-zA-Z]:[\\/]/.test(value)) return value;
+				if (value.indexOf('/files/') === 0) return 'http://followup.ijunyuan.cn/api/v1' + value;
+				if (value.indexOf('/') === 0) return 'http://followup.ijunyuan.cn/api/v1' + value;
+				return 'http://followup.ijunyuan.cn/api/v1/files/' + value.replace(/^\/+/, '');
+			},
+			// 从上传响应中提取图片地址
+			extractUploadedFileUrl(result) {
+				if (!result) return '';
+				if (typeof result === 'string') return this.normalizeFileUrl(result.trim());
+				if (Array.isArray(result)) {
+					for (let i = 0; i < result.length; i += 1) {
+						const url = this.extractUploadedFileUrl(result[i]);
+						if (url) return url;
+					}
+					return '';
+				}
+				const keys = ['url', 'fileUrl', 'imageUrl', 'accessUrl', 'downloadUrl', 'previewUrl',
+					'fullUrl', 'filePath', 'path', 'src', 'fileId', 'id', 'fileName', 'filename',
+					'urlPath', 'remoteUrl', 'fullPath'];
+				for (let i = 0; i < keys.length; i += 1) {
+					if (result[keys[i]] !== undefined && result[keys[i]] !== null) {
+						const url = this.normalizeFileUrl(result[keys[i]]);
+						if (url) return url;
+					}
+				}
+				if (result.dir && result.filename) {
+					return this.normalizeFileUrl(String(result.dir).replace(/\/$/, '') + '/' + result.filename);
+				}
+				const nestedKeys = ['data', 'file', 'image', 'attachment', 'result', 'record'];
+				for (let j = 0; j < nestedKeys.length; j += 1) {
+					if (result[nestedKeys[j]] && typeof result[nestedKeys[j]] === 'object') {
+						const url = this.extractUploadedFileUrl(result[nestedKeys[j]]);
+						if (url) return url;
+					}
+				}
+				return '';
+			},
 
 
 
@@ -300,15 +788,57 @@
 				if (this.currentTask > taskNo) return "text-gray";
 				return "";
 			},
-			// 进入第二步
-			goTask2() {
-				this.currentTask = 2;
-				this.task1Done = true
+			// 校验服务是否已开始
+			ensureServiceStarted() {
+				if (this.orderStatus !== 'IN_SERVICE') {
+					uni.showToast({ title: '请先点击开始服务', icon: 'none' });
+					return false;
+				}
+				return true;
 			},
+			// 提交定位和照片，完成到院签到
+			async goTask2() {
+				if (!this.ensureServiceStarted() || this.actionLoading || this.hasCheckin) return;
+				if (this.checkinData.latitude === null || this.checkinData.longitude === null) {
+					uni.showToast({ title: '请先完成定位打卡', icon: 'none' });
+					return;
+				}
+				if (!this.checkinData.photos.length) {
+					uni.showToast({ title: '请先上传签到照片', icon: 'none' });
+					return;
+				}
+				this.actionLoading = true;
+				uni.showLoading({ title: '签到提交中...', mask: true });
+				try {
+					await postEscortOrdersByIdCheckinApi({
+						id: this.currentOrderId,
+						data: {
+							latitude: Number(this.checkinData.latitude),
+							longitude: Number(this.checkinData.longitude),
+							address: this.checkinData.address || this.address,
+							photos: this.checkinData.photos
+						}
+					});
+					this.hasCheckin = true;
+					this.task1Done = true;
+					this.locDone = true;
+					this.photoDone = true;
+					this.currentTask = 2;
+					uni.showToast({ title: '到院签到成功', icon: 'success' });
+				} catch (error) {
+					this.handleError(error, '到院签到失败');
+				} finally {
+					this.actionLoading = false;
+					uni.hideLoading();
+				}
+			},
+			// 选择异常反馈类型
 			onAbnormalChange(e) {
 				this.submitForm.abnormalIdx = Number(e.detail.value)
 			},
+			// 校验第二步并进入最终反馈
 			submitTask2() {
+				if (!this.ensureServiceStarted() || this.hasServiceRecord) return;
 				if (!this.submitForm.progressDesc.trim()) {
 					uni.showToast({
 						title: "请填写就诊进展",
@@ -319,7 +849,9 @@
 				this.task2Done = true
 				this.currentTask = 3
 			},
-			submitAllRecord() {
+			// 提交最终陪诊服务记录
+			async submitAllRecord() {
+				if (!this.ensureServiceStarted() || this.actionLoading || this.hasServiceRecord) return;
 				if (!this.submitForm.summaryText.trim()) {
 					uni.showToast({
 						title: "请填写陪诊总结",
@@ -327,18 +859,31 @@
 					})
 					return
 				}
-				this.task3Done = true
-				// this.showSubmitTip = true;
-				console.log(this.submitForm)
-
-				this.$refs.uToast.show({
-					message: "陪诊记录已提交",
-					type: "success",
-					duration: 1500,
-					// complete: () => {
-					// 	this.$safeJump(routeUrl)
-					// }
-				})
+				const option = this.abnormalOptions[this.submitForm.abnormalIdx] || {};
+				this.actionLoading = true;
+				uni.showLoading({ title: '提交中...', mask: true });
+				try {
+					await postEscortOrdersByIdServiceRecordApi({
+						id: this.currentOrderId,
+						data: {
+							recoveryDescription: this.submitForm.progressDesc.trim(),
+							otherSituation: option.value || 'OTHER',
+							specialFeedback: this.submitForm.summaryText.trim(),
+							taskCompleted: this.submitForm.serviceResult === 0 ? 'INCOMPLETE' : 'COMPLETED'
+						}
+					});
+					this.hasServiceRecord = true;
+					this.task2Done = true;
+					this.task3Done = true;
+					this.currentTask = 3;
+					uni.showToast({ title: '陪诊记录已提交', icon: 'success' });
+					await this.loadOrderDetail(this.currentOrderId, 'COMPLETED');
+				} catch (error) {
+					this.handleError(error, '陪诊记录提交失败');
+				} finally {
+					this.actionLoading = false;
+					uni.hideLoading();
+				}
 			},
 			/**
 			 * 1、地址转经纬度 高德http地理编码
@@ -432,6 +977,112 @@
 	} */
 	.page-content {
 		position: relative;
+		padding: 24rpx 24rpx 140rpx;
+		box-sizing: border-box;
+		min-height: 100vh;
+	}
+
+	.state-box {
+		min-height: 480rpx;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 60rpx 40rpx;
+		box-sizing: border-box;
+		text-align: center;
+	}
+
+	.inline-state {
+		min-height: 260rpx;
+		background: #fff;
+		border-radius: 24rpx;
+		margin-bottom: 30rpx;
+	}
+
+	.state-text,
+	.state-title,
+	.state-desc {
+		margin-top: 20rpx;
+	}
+
+	.state-text,
+	.state-title {
+		font-size: 30rpx;
+		color: #333;
+		font-weight: 600;
+	}
+
+	.state-desc {
+		font-size: 26rpx;
+		color: #909399;
+	}
+
+	.state-btn,
+	.start-btn {
+		background: #2563ff;
+		color: #fff;
+		border-radius: 42rpx;
+		font-size: 28rpx;
+		padding: 0 48rpx;
+		margin-top: 30rpx;
+		border: none;
+	}
+
+	.start-banner {
+		background: #f3e8fc;
+		border: 1rpx solid #d8b4fe;
+		border-radius: 20rpx;
+		padding: 28rpx;
+		margin-bottom: 30rpx;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.start-info {
+		flex: 1;
+		padding-right: 20rpx;
+	}
+
+	.start-title {
+		display: block;
+		font-size: 30rpx;
+		font-weight: bold;
+		color: #581c87;
+	}
+
+	.start-desc {
+		display: block;
+		font-size: 24rpx;
+		color: #7e3af2;
+		margin-top: 8rpx;
+	}
+
+	.start-btn {
+		width: 180rpx;
+		height: 72rpx;
+		line-height: 72rpx;
+		padding: 0;
+		margin: 0;
+	}
+
+	.photo-scroll {
+		width: 100%;
+		margin-top: 20rpx;
+		white-space: nowrap;
+	}
+
+	.photo-list {
+		display: flex;
+	}
+
+	.photo-thumb {
+		width: 120rpx;
+		height: 120rpx;
+		border-radius: 12rpx;
+		margin-right: 14rpx;
+		background: #f2f3f5;
 	}
 
 	.tip-box {
@@ -532,7 +1183,7 @@
 	.nav-btn {
 		display: flex;
 		align-items: center;
-		color: #9333ea;
+		color: #2563ff;
 		font-size: 30rpx;
 	}
 
@@ -570,7 +1221,7 @@
 	}
 
 	.dot-active {
-		background: #9333ea;
+		background: #2563ff;
 	}
 
 	.dot-wait {
@@ -612,7 +1263,7 @@
 	
 
 	.action-btn {
-		background: #9333ea;
+		background: #2563ff;
 		color: #fff;
 		border-radius: 16rpx;
 		padding: 16rpx 32rpx;
@@ -684,7 +1335,7 @@
 	}
 
 	.purple-btn {
-		background: #9333ea;
+		background: #2563ff;
 		color: #fff;
 		width: 100%;
 		display: flex;
@@ -695,7 +1346,7 @@
 		font-weight: bold;
 		height: 80rpx;
 		line-height: 80rpx;
-		/* border: 2px solid #9333ea; */
+		/* border: 2px solid #2563ff; */
 	}
 
 	.done-row {
@@ -743,7 +1394,7 @@
 	}
 
 	.tab-active {
-		color: #9333ea;
+		color: #2563ff;
 	}
 
 

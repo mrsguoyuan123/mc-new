@@ -400,7 +400,7 @@
 				<text class="sub-text">ENCRYPTED LINE CONNECTING</text>
 			</view>
 		</view>
-		<my-tabbar :current="0"></my-tabbar>
+		<myTabbar :current="0"></myTabbar>
 		<u-toast ref="uToast"></u-toast>
 	</view>
 </template>
@@ -409,7 +409,7 @@
 		getConversationsStatsApi,
 		getCsPatientsApi
 	} from '@/api/frontApikit.js'
-	import myTabbar from '@/components/my‑tabbar/my‑tabbar.vue'
+	import myTabbar from '@/components/myTabbar.vue'
 	export default {
 		options: {
 			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效

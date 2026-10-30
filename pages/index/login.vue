@@ -279,10 +279,11 @@ export default {
             const roleUrlMap = {
                 PATIENT: '/pages/index/home',
                 CS: '/pages/index/workBench',
-                CAREGIVER: '/pages/index/caregiverIndex'
+                CAREGIVER: '/pages/index/caregiverIndex',
+                DOCTOR: '/pages/index/doctorIndex', 
             }
             const url = roleUrlMap[role];
-            console.log(roleUrlMap)
+            console.log(url)
             if (!url) {
                 this.showTip('当前角色暂未配置入口')
                 return

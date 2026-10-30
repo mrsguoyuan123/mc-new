@@ -65,20 +65,19 @@
 				:badge="item.badge" @click="routeTo(item.route)"></u-tabbar-item>
 
 		</u-tabbar>
-		<!-- <main-tabbar :current="0"></main-tabbar> -->
+		
 		<u-toast ref="uToast"></u-toast>
 	</view>
 </template>
 
 <script>
-	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
 
 	export default {
 		options: {
 			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
 		},
 		components: {
-			mainTabbar
+		
 		},
 		data() {
 			return {

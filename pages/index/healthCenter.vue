@@ -410,7 +410,8 @@
 			<text class="custom-icon custom-icon-navigation icon-bold" style="color:#155DFC;margin-right: 5px;"></text>
 			同步到我的私人医生团队
 		</view>
-		<main-tabbar :current="1"></main-tabbar>
+		<myTabbar :current="1"></myTabbar>
+	
 		<u-toast ref="uToast"></u-toast>
 		<view class="mask" v-if="showModal">
 			<view class="dialog">
@@ -461,14 +462,14 @@
 	import mealDetail from './mealDetail.vue'
 
 
-	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
+	import myTabbar from '@/components/myTabbar.vue'
 
 	export default {
 		options: {
 			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
 		},
 		components: {
-			mainTabbar,weightControl,sleepManagement,rehabSport,mealDetail
+			myTabbar,weightControl,sleepManagement,rehabSport,mealDetail
 		},
 		computed: {
     isAllTaken() {

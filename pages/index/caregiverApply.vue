@@ -53,16 +53,17 @@
 			</scroll-view>
 
 		</view>
-		<main-tabbar :current="0"></main-tabbar>
+				<myTabbar :current="0"></myTabbar>
+
 	</view>
 </template>
 
 <script>
-	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
+	import myTabbar from '@/components/myTabbar.vue'
 
 	export default {
 		components: {
-			mainTabbar
+			myTabbar
 		},
 
 		data() {

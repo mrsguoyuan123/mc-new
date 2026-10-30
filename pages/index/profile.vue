@@ -121,7 +121,7 @@
 
 			<u-button class="width-100 margin-top-8" shape="circle" :hairline="false" @click="logOut()" type="error"
 				text="退出当前账号"></u-button>
-			<main-tabbar :current="3"></main-tabbar>
+			<myTabbar :current="3"></myTabbar>
 		</view>
 	</view>
 </template>
@@ -132,7 +132,7 @@
 		getDictOptionsApi,
 		postAuthLogoutApi
 	} from '@/api/frontApikit.js'
-	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
+	import myTabbar from '@/components/myTabbar.vue'
 	import {
 		mapState
 	} from 'vuex'
@@ -183,7 +183,7 @@
 			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
 		},
 		components: {
-			mainTabbar
+			myTabbar
 		},
 		computed: {
 			...mapState([

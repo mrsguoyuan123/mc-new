@@ -77,18 +77,18 @@
 			
 		</view>
 		
-		<main-tabbar :current="2" :totalUnread="totalUnread"></main-tabbar>
+		<myTabbar :current="2"></myTabbar>
 	</view>
 </template>
 <script>
 import {
 		getMeConversationsApi as fetchConversationsApi,
 	} from '@/api/frontApikit.js'
-	import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
+	import myTabbar from '@/components/myTabbar.vue'
 	// import { toRaw } from 'vue'
 	export default {
 		components: {
-			mainTabbar
+			myTabbar
 		},
 		data() {
 			const userInfo = JSON.parse(uni.getStorageSync('userInfo')) || {}

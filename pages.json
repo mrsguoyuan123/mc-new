@@ -180,6 +180,19 @@
 			"style": {
 				"navigationStyle": "custom"
 			}
+		},
+		{
+			"path": "pages/index/doctorIndex",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		
+		{
+			"path": "pages/index/doctorMine",
+			"style": {
+				"navigationBarTitleText": ""
+			}
 		}
 		
 

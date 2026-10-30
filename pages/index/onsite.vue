@@ -144,7 +144,7 @@
 
 			</view>
 		</view>
-		<custom-tabbar :current="0"></custom-tabbar>
+		<myTabbar :current="0"></myTabbar>
 	</view>
 </template>
 
@@ -156,10 +156,10 @@
 		getCsPatientsApi
 	} from '@/api/frontApikit.js'
 
-	import customTabbar from "@/components/custom-tabbar/custom-tabbar.vue";
+	import myTabbar from "@/components/myTabbar.vue";
 	export default {
 		components: {
-			customTabbar
+			myTabbar
 		},
 		data() {
 			return {

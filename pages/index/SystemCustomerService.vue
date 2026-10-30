@@ -130,13 +130,13 @@
 			</view>
 		</view>
 		<!-- 自定义底部tabbar -->
-		<my-tabbar :current="1"></my-tabbar>
+		<myTabbar :current="1"></myTabbar>
 	</view>
 </template>
 <script>
 	import { putAuthPasswordApi,getMeSettingsApi,putMeSettingsApi,putAccountsSecurityApi,postAuthLogoutApi,getNotificationsApi,putNotificationsReadApi } from '@/api/frontApikit.js'
 
-	import myTabbar from '@/components/my‑tabbar/my‑tabbar.vue'
+	import myTabbar from '@/components/myTabbar.vue'
 	import {
 		mapState
 	} from 'vuex'

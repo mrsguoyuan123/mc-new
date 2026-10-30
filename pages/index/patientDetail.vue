@@ -271,7 +271,7 @@ export default {
 			}
 			const careNotice = data.careNotice || patient.careNotice || booking.careNotice
 			if (careNotice) list.push({ title: '照护提醒', content: careNotice })
-			if (booking.remark) list.push({ title: '订单备注', content: booking.remark })
+			// if (booking.remark) list.push({ title: '订单备注', content: booking.remark })
 			return list
 		},
 		// 构建已完成订单的服务历史列表
@@ -669,13 +669,17 @@ export default {
 	display: flex;
 	padding: 22rpx;
 	border-radius: 20rpx;
-	background: #f7f9fc;
-	border-left: 6rpx solid #2563ff;
+	background: rgba(234, 250, 240, 0.4);
+	/* border-left: 6rpx solid #2563ff; */
 	box-sizing: border-box;
+	
+	color: #009689;
 }
 
 .notice-item.danger {
 	background: #fff5f5;
+	background: rgba(234, 250, 240, 0.4);
+
 	/* border-left-color: #ef4444; */
 }
 

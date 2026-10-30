@@ -208,8 +208,9 @@
 				</u-button>
 			</view>
 		</u-popup>
+<myTabbar :current="2"></myTabbar>
 
-		<main-tabbar :current="2"></main-tabbar>
+		
 	</view>
 </template>
 <script>
@@ -222,7 +223,7 @@
         postFilesUploadApi,
         getReplyTemplatesApi
     } from '@/api/frontApikit.js'
-    import mainTabbar from '@/components/main-tabbar/main-tabbar.vue'
+    import myTabbar from '@/components/myTabbar.vue'
     import {
         mapState
     } from 'vuex'
@@ -231,7 +232,7 @@
             styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
         },
         components: {
-            mainTabbar
+            myTabbar
         },
         computed: {
             ...mapState([
