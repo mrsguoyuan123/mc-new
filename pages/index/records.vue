@@ -143,7 +143,7 @@
 	
 	export default {
 		data() {
-			const userInfo = JSON.parse(uni.getStorageSync('userInfo')) || {}
+			const userInfo =readCurrentUser()
 			return {
 				id: userInfo.userId,
 				record: {
@@ -172,7 +172,15 @@
 			
 		},
 		methods: {
-			
+						readCurrentUser() {
+			try {
+				const raw = uni.getStorageSync('userInfo')
+				if (!raw) return {}
+				return typeof raw === 'string' ? JSON.parse(raw) : raw
+			} catch (error) {
+				return {}
+			}
+		},
 			sexSelect(e) {
 				this.model1.userInfo.sex = e.name
 				this.$refs.uForm.validateField('userInfo.sex')

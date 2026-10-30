@@ -195,7 +195,7 @@
 			};
 		},
 		async onLoad(options) {
-			const userInfo = JSON.parse(uni.getStorageSync('userInfo')) || {}
+			const userInfo =readCurrentUser()
 			this.patientId = userInfo.userId;
 			
 			
@@ -203,6 +203,15 @@
 
 		},
 		methods: {
+				readCurrentUser() {
+			try {
+				const raw = uni.getStorageSync('userInfo')
+				if (!raw) return {}
+				return typeof raw === 'string' ? JSON.parse(raw) : raw
+			} catch (error) {
+				return {}
+			}
+		},
 			resetRegisterForm() {
 				const userInfo = this.model1.userInfo
 				userInfo.name = ''

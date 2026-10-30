@@ -5,7 +5,7 @@
       :placeholder="false"
       :fixed="true"
       activeColor="rgb(21, 93, 252)"
-      inactiveColor="#d2d6dd"
+      inactiveColor="#72758b"
     >
       <u-tabbar-item
         v-for="item in tabList"
@@ -55,15 +55,18 @@ export default {
     },
     totalUnread: {
       handler(val) {
-        console.log('【watch totalUnread】新值=', val)
+   //     console.log('【watch totalUnread】新值=', val)
         this.buildTabList()
       },
       immediate: true
     }
   },
   created() {
-    console.log('【created】开始请求消息')
+  //  console.log('【created】开始请求消息')
+    if(this.role == 'PATIENT'){
     this.loadConversations()
+
+    }
   },
   methods: {
     async loadConversations() {
@@ -78,11 +81,11 @@ export default {
         allMessageList.forEach(item => {
           total += Number(item.unreadCount || 0)
         })
-        console.log('【接口返回计算 total】', total)
+     //   console.log('【接口返回计算 total】', total)
         this.totalUnread = total
 
       } catch (e) {
-        console.error('拉取消息失败', e)
+     //   console.error('拉取消息失败', e)
       } finally {
         uni.hideLoading()
       }
@@ -105,7 +108,7 @@ export default {
       })
     },
     buildTabList() {
-      console.log('【buildTabList执行】 totalUnread=', this.totalUnread)
+      //console.log('【buildTabList执行】 totalUnread=', this.totalUnread)
       let list = []
       if (this.role === 'DOCTOR') {
         list = [
@@ -134,10 +137,10 @@ export default {
       const msgItem = list.find(i => i.pagePath === '/pages/index/messages')
       if (msgItem) {
         msgItem.badge = this.totalUnread > 0 ? String(this.totalUnread) : ''
-        console.log('【消息tab badge赋值】', msgItem.badge)
+      //  console.log('【消息tab badge赋值】', msgItem.badge)
       }
-      this.tabList = JSON.parse(JSON.stringify(list)) // ✅ 深度克隆，彻底切断引用，Vue2最稳方案
-      console.log('【最终tabList】', this.tabList)
+      this.tabList = JSON.parse(JSON.stringify(list)) //  深度克隆，彻底切断引用，Vue2最稳方案
+     // console.log('【最终tabList】', this.tabList)
     },
     readCurrentUser() {
       try {

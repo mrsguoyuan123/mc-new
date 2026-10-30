@@ -193,6 +193,18 @@
 			"style": {
 				"navigationBarTitleText": ""
 			}
+		},
+		{
+			"path": "pages/index/myHealthRecord",
+			"style": {
+				"navigationBarTitleText": ""
+			}
+		},
+		{
+			"path": "pages/1",
+			"style": {
+				"navigationBarTitleText": ""
+			}
 		}
 		
 
@@ -200,8 +212,8 @@
 	],
 	"tabBar": {
 		"custom": true,
-		"color": "#c0c4cc",
-		"selectedColor": "#9c27b0",
+		"color": "#72758b",
+		"selectedColor": "rgb(21, 93, 252)",
 		"backgroundColor": "#ffffff",
 		"list": [{
 				"pagePath": "pages/index/caregiverIndex",

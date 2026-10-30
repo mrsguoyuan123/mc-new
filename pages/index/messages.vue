@@ -91,10 +91,10 @@ import {
 			myTabbar
 		},
 		data() {
-			const userInfo = JSON.parse(uni.getStorageSync('userInfo')) || {}
+			
 			return {
 				totalUnread: 0,
-				id: userInfo.userId || '',
+				id: '',
 				current: 0,
 				tabList: [{
 					id: 1,
@@ -146,6 +146,8 @@ import {
 			};
 		},
 		onLoad() {
+			 const userInfo = this.readCurrentUser()
+   			 this.id = userInfo.userId
 			this.loadConversations()
 		},
 		mounted() {
@@ -154,6 +156,16 @@ import {
 			})
 		},
 		methods: {
+					       readCurrentUser() {
+      try {
+        const raw = uni.getStorageSync('userInfo')
+        if (!raw) return {}
+        return typeof raw === 'string' ? JSON.parse(raw) : raw
+      } catch (error) {
+        console.error('读取userInfo失败', error)
+        return {}
+      }
+    },
 			// 新增：计算全部未读总和，赋值给消息tab badge
 			calcTotalUnread() {
 		let total = 0

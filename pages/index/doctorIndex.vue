@@ -1,411 +1,279 @@
 <template>
-  <view class="doctor-index-page">
-    <!-- 搜索框 -->
-    <view class="search-wrap">
-      <u-search
-        v-model="searchKey"
-        placeholder="搜索患者姓名、手机号、手术名称..."
-        :show-action="false"
-        bg-color="#f5f7fa"
-        height="72"
-        @input="handleSearch"
-      ></u-search>
-    </view>
-
-    <!-- 排序 & 科室筛选 -->
-    <view class="filter-top">
-      <u-dropdown
-        ref="sortDropdown"
-        v-model="sortValue"
-        :options="sortOptions"
-        title="时间倒序 (默认最近)"
-        @change="handleSortChange"
-      ></u-dropdown>
-      <u-dropdown
-        ref="deptDropdown"
-        v-model="deptValue"
-        :options="deptOptions"
-        title="科室"
-        @change="handleDeptChange"
-      ></u-dropdown>
-    </view>
-
-    <!-- 时间快捷标签 -->
-    <view class="time-tabs">
-      <view
-        v-for="item in timeTabList"
-        :key="item.type"
-        class="time-tab-item"
-        :class="{ active: activeTimeTab === item.type }"
-        @click="handleTimeTabClick(item)"
-      >
-        {{ item.label }}
+  <view class="page-doctor-index">
+    <!-- 头部 -->
+    <view class="header">
+      <view class="title-wrap">
+        <view class="icon-doc"></view>
+        <view class="title">医生</view>
       </view>
+      <view class="sub-title">术后患者全流程管理</view>
     </view>
-
+    <!-- 搜索 -->
+    <view class="search-wrap">
+      <input class="search-input" placeholder="搜索患者姓名、手机号、手术名称..." v-model="keyword" @input="onSearch" />
+    </view>
+    <!-- 筛选行 -->
+    <view class="filter-row">
+      <picker mode="selector" :range="sortOptions" :value="sortIndex" @change="onSortChange">
+        <view class="filter-item">
+          <text>时间倒序 (默认最近)</text>
+        </view>
+      </picker>
+      <picker mode="selector" :range="deptOptions" :value="deptIndex" @change="onDeptChange">
+        <view class="filter-item">
+          <text>科室</text>
+        </view>
+      </picker>
+    </view>
+    <!-- 时间标签 -->
+    <view class="time-tab">
+      <view class="time-tab-item" :class="{active:timeType==='all'}" @click="timeType='all'">全部</view>
+      <view class="time-tab-item" :class="{active:timeType==='7d'}" @click="timeType='7d'">近7天</view>
+      <view class="time-tab-item" :class="{active:timeType==='30d'}" @click="timeType='30d'">近30天</view>
+      <view class="time-tab-item" :class="{active:timeType==='custom'}" @click="openCustomDate">自定义</view>
+    </view>
     <!-- 列表统计 -->
     <view class="list-tip">
-      共 {{ total }} 位患者记录
-      <text class="tip-right">点击进入详情</text>
+      <text>共 {{total}} 位患者记录</text>
+      <text class="right">点击进入详情</text>
     </view>
-
     <!-- 患者列表 -->
     <view class="patient-list">
-      <view class="patient-item" v-for="item in patientList" :key="item.id" @click="goDetail(item)">
-        <view class="item-left">
-          <view class="avatar">{{ item.name.slice(0,1) }}</view>
+      <view class="patient-item" v-for="item in patientList" :key="item.id">
+        <view class="left-avatar">
+          <view class="avatar-circle">{{item.name.charAt(0)}}</view>
         </view>
-        <view class="item-center">
+        <view class="content">
           <view class="name-row">
-            <text class="name">{{ item.name }}</text>
-            <text class="gender">{{ item.gender }}</text>
+            <text class="name">{{item.name}}</text>
+            <text class="gender">{{item.gender}}</text>
+            <button class="btn-chat" >查看沟通记录</button>
           </view>
-          <view class="operation-name">{{ item.operationName }}</view>
+          <view class="surgery-name">{{item.surgeryType}}</view>
           <view class="time-row">
-            <u-icon name="clock" size="14" color="#999"></u-icon>
-            <text class="time-text">手术时间: {{ item.operationTime }}</text>
+            <text>手术时间：{{item.surgeryDate}}</text>
+            <text class="btn-archive" @click="routeTo(item.id)">查看详情报告</text>
           </view>
-        </view>
-        <view class="item-right">
-          <view class="btn-msg" @click.stop="openChat(item)">查看沟通记录</view>
-          <view class="btn-report" @click.stop="openReport(item)">查看详情报告</view>
         </view>
       </view>
     </view>
 
-    <!-- 空状态 -->
-    <u-empty v-if="patientList.length === 0 && !loading" text="暂无患者数据"></u-empty>
-
-    <!-- 加载 -->
-    <u-loading v-if="loading"></u-loading>
-
-    <!-- 自定义时间弹窗 -->
-    <u-popup v-model="showDatePopup" mode="center" border-radius="16" width="85%">
-      <view class="date-popup">
-        <view class="popup-title">自定义手术时间范围</view>
-        <view class="date-row">
-          <view class="date-label">起始日期</view>
-          <u-date-picker
-            v-model="startDate"
-            mode="date"
-            @confirm="onStartDateConfirm"
-          >
-            <view class="date-input">{{ startDate || '请选择' }}</view>
-          </u-date-picker>
-        </view>
-        <view class="date-row">
-          <view class="date-label">截止日期</view>
-          <u-date-picker
-            v-model="endDate"
-            mode="date"
-            @confirm="onEndDateConfirm"
-          >
-            <view class="date-input">{{ endDate || '请选择' }}</view>
-          </u-date-picker>
-        </view>
-        <view class="popup-btn-row">
-          <view class="btn-cancel" @click="showDatePopup = false">取消</view>
-          <view class="btn-confirm" @click="confirmDateFilter">确认筛选</view>
-        </view>
-      </view>
-    </u-popup>
-
-    <!-- 底部tab -->
-    <u-tabbar
-      v-model="tabActive"
-      :list="tabList"
-      @change="tabChange"
-    ></u-tabbar>
+    <myTabbar :current="1"></myTabbar>
   </view>
 </template>
 
 <script>
+import myTabbar from "@/components/myTabbar";
+import { getDoctorPatientsApi,getDoctorPatientsByIdConversationApi,postDoctorPatientsByIdAttachmentsApi,deleteDoctorPatientsByIdAttachmentsByAttIdApi } from '@/api/frontApikit.js'
 export default {
-  name: 'DoctorIndex',
+  components: {
+    myTabbar
+  },
   data() {
     return {
-      searchKey: '',
-      sortValue: 'desc',
-      sortOptions: [
-        { label: '时间倒序 (默认最近)', value: 'desc' },
-        { label: '时间正序', value: 'asc' }
-      ],
-      deptValue: '',
-      deptOptions: [],
-      activeTimeTab: 'all',
-      timeTabList: [
-        { label: '全部', type: 'all' },
-        { label: '近7天', type: '7' },
-        { label: '近30天', type: '30' },
-        { label: '自定义', type: 'custom' }
-      ],
-      patientList: [],
-      total: 0,
-      loading: false,
-      showDatePopup: false,
-      startDate: '',
-      endDate: '',
-      tabActive: 0,
-      tabList: [
-        { iconPath: '/static/tab/home.png', selectedIconPath: '/static/tab/home-active.png', text: '首页' },
-        { iconPath: '/static/tab/my.png', selectedIconPath: '/static/tab/my-active.png', text: '我的' }
-      ],
-      page: 1,
-      pageSize: 10
+      userInfo: {},
+      keyword:'',
+      departmentId:'',
+      from:'',
+      to:'',
+      sort:'desc',
+      page:1,
+      pageSize:20,
+      patientList:[],
+      total:0,
+      timeType:'all',
+      sortOptions:['时间倒序','时间正序'],
+      sortIndex:0,
+      deptOptions:['全部科室'],
+      deptIndex:0
     }
   },
   onLoad() {
-    this.getDeptList()
-    this.fetchPatientList()
-  },
-  onReachBottom() {
-    this.page++
-    this.fetchPatientList(true)
+    const userInfo = this.readCurrentUser()
+    this.userInfo = userInfo
+    this.loadData();
   },
   methods: {
-    async getDeptList() {
-      // const res = await this.$api.getDeptOptions()
-      // this.deptOptions = res.data
-    },
-    async fetchPatientList(isLoadMore = false) {
-      if (isLoadMore) {
-        this.loading = true
-      } else {
-        this.page = 1
-        this.patientList = []
-      }
+       readCurrentUser() {
       try {
-        const params = {
-          page: this.page,
-          pageSize: this.pageSize,
-          keyword: this.searchKey,
-          sort: this.sortValue,
-          deptId: this.deptValue,
-          timeType: this.activeTimeTab,
-          startDate: this.activeTimeTab === 'custom' ? this.startDate : '',
-          endDate: this.activeTimeTab === 'custom' ? this.endDate : ''
-        }
-        const res = await this.$api.doctorPatientList(params)
-        if (res.code === 200) {
-          const list = res.data.records || []
-          this.total = res.data.total
-          if (isLoadMore) {
-            this.patientList.push(...list)
-          } else {
-            this.patientList = list
-          }
-        }
-      } catch (err) {
-        console.error('列表请求失败', err)
-      } finally {
-        this.loading = false
+        const raw = uni.getStorageSync('userInfo')
+        if (!raw) return {}
+        return typeof raw === 'string' ? JSON.parse(raw) : raw
+      } catch (error) {
+        console.error('读取userInfo失败', error)
+        return {}
       }
     },
-    handleSearch() {
-      this.fetchPatientList()
+    // 获取患者列表
+    async loadData() {
+     
+      const res = await getDoctorPatientsApi({
+        keyword:this.keyword,
+        departmentId:this.departmentId,
+        from:this.from,
+        to:this.to,
+        sort:this.sort,
+        page:this.page,
+        pageSize:this.pageSize
+      })
+      console.log('患者列表',res)
+        this.patientList = res.list
+        this.total = res.total
+
+     
     },
-    handleSortChange() {
-      this.fetchPatientList()
+    onSearch(){
+      this.page = 1
+      this.loadData()
     },
-    handleDeptChange() {
-      this.fetchPatientList()
+    onSortChange(e){
+      this.sort = e.detail.value === 0 ? 'desc' : 'asc'
+      this.loadData()
     },
-    handleTimeTabClick(item) {
-      this.activeTimeTab = item.type
-      if (item.type === 'custom') {
-        this.showDatePopup = true
-        return
-      }
-      this.fetchPatientList()
+    onDeptChange(e){
+      // 这里后续对接科室ID
+      this.loadData()
     },
-    onStartDateConfirm(e) {
-      this.startDate = e.value
+    openCustomDate(){
+      uni.showToast({title:'自定义时间',icon:'none'})
     },
-    onEndDateConfirm(e) {
-      this.endDate = e.value
-    },
-    confirmDateFilter() {
-      if (!this.startDate || !this.endDate) {
-        uni.showToast({ title: '请选择起止日期', icon: 'none' })
-        return
-      }
-      this.showDatePopup = false
-      this.fetchPatientList()
-    },
-    goDetail(row) {
-      uni.navigateTo({ url: `/pages/doctor/patientDetail?id=${row.id}` })
-    },
-    openChat(row) {
-      uni.navigateTo({ url: `/pages/doctor/chat?id=${row.id}` })
-    },
-    openReport(row) {
-      uni.navigateTo({ url: `/pages/doctor/report?id=${row.id}` })
-    },
-    tabChange(index) {
-      if (index === 1) {
-        uni.switchTab({ url: '/pages/doctor/my' })
-      }
+   
+   
+    // 跳转患者档案（详情报告）
+    routeTo(patientId){
+      
+      uni.navigateTo({
+        url:`/pages/index/myHealthRecord?id=${patientId}`
+      })
     }
   }
 }
 </script>
 
-<style scoped lang="scss">
-.doctor-index-page {
-  background-color: #f5f7fa;
-  min-height: 100vh;
-  padding-bottom: 120rpx;
+<style scoped>
+.page-doctor-index{
+  padding:24rpx;
+  background-color:#f7f8fa;
+  min-height:100vh;
+  padding-bottom:140rpx;
 }
-.search-wrap {
-  padding: 20rpx 24rpx;
-  background-color: #fff;
+.header{
+  margin-bottom:20rpx;
 }
-.filter-top {
-  display: flex;
-  padding: 0 24rpx;
-  background: #fff;
-  gap: 20rpx;
-  padding-bottom: 16rpx;
+.title-wrap{
+  display:flex;
+  align-items:center;
+  gap:16rpx;
 }
-.time-tabs {
-  display: flex;
-  background: #fff;
-  padding: 16rpx 24rpx;
-  gap: 16rpx;
+.title{
+  font-size:36rpx;
+  font-weight:bold;
 }
-.time-tab-item {
-  padding: 8rpx 20rpx;
-  border-radius: 20rpx;
-  font-size: 28rpx;
-  color: #666;
-  background: #f5f7fa;
+.sub-title{
+  font-size:26rpx;
+  color:#666;
+  margin-top:4rpx;
 }
-.time-tab-item.active {
-  background: #007aff;
-  color: #fff;
+.search-wrap{
+  background:#fff;
+  border-radius:16rpx;
+  padding:20rpx;
+  margin-bottom:20rpx;
 }
-.list-tip {
-  padding: 20rpx 24rpx;
-  font-size: 28rpx;
-  color: #666;
-  display: flex;
-  justify-content: space-between;
+.search-input{
+  height:60rpx;
+  font-size:28rpx;
 }
-.tip-right {
-  color: #999;
+.filter-row{
+  display:flex;
+  gap:20rpx;
+  margin-bottom:20rpx;
 }
-.patient-list {
-  padding: 0 24rpx;
+.filter-item{
+  background:#fff;
+  padding:16rpx 24rpx;
+  border-radius:12rpx;
+  font-size:26rpx;
+  color:#333;
 }
-.patient-item {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 20rpx;
-  display: flex;
-  border-left: 8rpx solid #007aff;
-  align-items: flex-start;
+.time-tab{
+  display:flex;
+  gap:16rpx;
+  margin-bottom:24rpx;
 }
-.avatar {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 50%;
-  background: #e8f0fe;
-  color: #007aff;
-  text-align: center;
-  line-height: 80rpx;
-  font-size: 32rpx;
-  font-weight: bold;
+.time-tab-item{
+  padding:12rpx 24rpx;
+  background:#fff;
+  border-radius:12rpx;
+  font-size:26rpx;
 }
-.item-center {
-  flex: 1;
-  margin-left: 20rpx;
+.time-tab-item.active{
+  background:#0066ff;
+  color:#fff;
 }
-.name-row {
-  display: flex;
-  align-items: center;
+.list-tip{
+  display:flex;
+  justify-content:space-between;
+  font-size:26rpx;
+  color:#666;
+  margin-bottom:20rpx;
 }
-.name {
-  font-size: 34rpx;
-  font-weight: 500;
+.patient-item{
+  background:#fff;
+  border-radius:16rpx;
+  padding:24rpx;
+  display:flex;
+  gap:20rpx;
+  margin-bottom:20rpx;
+  border-left:8rpx solid #4080ff;
 }
-.gender {
-  margin-left: 12rpx;
-  color: #999;
-  font-size: 26rpx;
+.avatar-circle{
+  width:80rpx;
+  height:80rpx;
+  border-radius:50%;
+  background:#e8f0fe;
+  color:#4080ff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:32rpx;
 }
-.operation-name {
-  font-size: 28rpx;
-  color: #555;
-  margin: 8rpx 0;
+.content{
+  flex:1;
 }
-.time-row {
-  display: flex;
-  align-items: center;
-  color: #999;
-  font-size: 26rpx;
+.name-row{
+  display:flex;
+  align-items:center;
+  gap:12rpx;
 }
-.item-right {
-  display: flex;
-  flex-direction: column;
-  gap: 12rpx;
+.name{
+  font-size:32rpx;
+  font-weight:500;
 }
-.btn-msg {
-  border: 1rpx solid #007aff;
-  color: #007aff;
-  padding: 6rpx 16rpx;
-  border-radius: 8rpx;
-  font-size: 26rpx;
-  text-align: center;
+.gender{
+  color:#666;
+  font-size:26rpx;
 }
-.btn-report {
-  color: #007aff;
-  font-size: 26rpx;
-  text-align: right;
+.btn-chat{
+  margin-left:auto;
+  font-size:24rpx;
+  color:#4080ff;
+  border:1rpx solid #4080ff;
+  padding:8rpx 16rpx;
+  border-radius:8rpx;
 }
-.date-popup {
-  padding: 32rpx;
+.surgery-name{
+  font-size:28rpx;
+  color:#444;
+  margin:8rpx 0;
 }
-.popup-title {
-  font-size: 34rpx;
-  font-weight: 500;
-  margin-bottom: 32rpx;
+.time-row{
+  display:flex;
+  justify-content:space-between;
+  font-size:26rpx;
+  color:#666;
 }
-.date-row {
-  margin-bottom: 24rpx;
-}
-.date-label {
-  font-size: 28rpx;
-  color: #666;
-  margin-bottom: 12rpx;
-}
-.date-input {
-  width: 100%;
-  border: 1rpx solid #ddd;
-  border-radius: 12rpx;
-  padding: 20rpx;
-  font-size: 28rpx;
-}
-.popup-btn-row {
-  display: flex;
-  margin-top: 40rpx;
-  gap: 20rpx;
-}
-.btn-cancel {
-  flex: 1;
-  text-align: center;
-  padding: 20rpx;
-  border-radius: 12rpx;
-  background: #f5f7fa;
-  font-size: 30rpx;
-}
-.btn-confirm {
-  flex: 1;
-  text-align: center;
-  padding: 20rpx;
-  border-radius: 12rpx;
-  background: #007aff;
-  color: #fff;
-  font-size: 30rpx;
+.btn-archive{
+  color:#4080ff;
 }
 </style>

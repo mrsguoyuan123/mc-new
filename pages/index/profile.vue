@@ -196,32 +196,7 @@
 		data() {
 			return {
 
-				tabList: [{
-					id: 1,
-					name: "首页",
-					icon: "home",
-					badge: "",
-					route: "home"
-				}, {
-					id: 2,
-					name: "健康",
-					icon: "heart",
-					badge: "",
-					route: "healthCenter"
-				}, {
-					id: 3,
-					name: "消息",
-					icon: "chat",
-					badge: "3",
-					route: "messages"
-				}, {
-					id: 4,
-					name: "我的",
-					icon: "account",
-					badge: "",
-					route: "profile"
-				}],
-				activeTab: 3,
+				
 				isShow: true,
 				showSex: false,
 				saving: false,

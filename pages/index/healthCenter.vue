@@ -13,14 +13,14 @@
 				<view class="scroll-inner">
 					<!-- 子项，横向排开 -->
 					<view class="u-flex space-between align-center tab-wrapper">
-						<view @click="clickTab(item)" :class="activeTab2 == item.id?'activeTab':''"
+						<view @click="clickTab(item)" :class="activeTab2 == item.id ? 'activeTab' : ''"
 							v-for="item in tabList2" :key="item.id"
 							class="tab-icons radius-1 card-border-gray u-flex space-between align-center u-flex-column margin-right-10">
 
-							<text :color="activeTab2 == item.id?'white':'#a1a5af'" :class="'custom-icon-' + item.icon"
+							<text :color="activeTab2 == item.id ? 'white' : '#a1a5af'" :class="'custom-icon-' + item.icon"
 								class="custom-icon  icon-bold margin-bottom-5" style="font-size:40rpx;"></text>
 							<view class="font-info font-s font-bold tab-font ">
-								{{item.name}}
+								{{ item.name }}
 							</view>
 						</view>
 					</view>
@@ -29,12 +29,12 @@
 		</view>
 		<!-- 饮食分析 -->
 		<view v-if="activeTab2 == 1">
-<mealDetail></mealDetail>
-			
+			<mealDetail></mealDetail>
+
 		</view>
 		<!-- 运动处方 -->
 		<view v-else-if="activeTab2 == 2">
-<rehabSport></rehabSport>
+			<rehabSport></rehabSport>
 			<!-- <view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between u-flex-column ">
 				<view class="header-text">
 					<view class="header-icon ">
@@ -102,7 +102,7 @@
 		</view>
 		<!-- 体重动态 -->
 		<view v-else-if="activeTab2 == 3">
-			
+
 			<weightControl />
 			<!-- <view class="radius-15 card-top bg-white card-border card-border-gray  u-flex space-between u-flex-column ">
 				<view class="header-text">
@@ -279,13 +279,13 @@
 								<view class="required-txt">必填</view>
 							</view>
 							<view class="radio-group">
-								<view class="radio-item" :class="{active: form.timesPerDay === 1}"
+								<view class="radio-item" :class="{ active: form.timesPerDay === 1 }"
 									@click="form.timesPerDay = 1">1次
 								</view>
-								<view class="radio-item" :class="{active: form.timesPerDay === 2}"
+								<view class="radio-item" :class="{ active: form.timesPerDay === 2 }"
 									@click="form.timesPerDay = 2">2次
 								</view>
-								<view class="radio-item" :class="{active: form.timesPerDay === 3}"
+								<view class="radio-item" :class="{ active: form.timesPerDay === 3 }"
 									@click="form.timesPerDay = 3">3次
 								</view>
 							</view>
@@ -309,79 +309,72 @@
 				</view>
 			</view>
 			<view class="radius-15 card-top bg-white card-border card-border-gray u-flex space-between u-flex-column ">
-    <view class="header-text">
-      <view class="">
-        <view class="font-m font-bold font-m">今日用药</view>
-        <view class="font-info font-s">服药后请点击确认</view>
-      </view>
-      <view class="font-info font-s" v-if="medicationList.length">共{{ medicationList.length }}项</view>
-    </view>
+				<view class="header-text">
+					<view class="">
+						<view class="font-m font-bold font-m">今日用药</view>
+						<view class="font-info font-s">服药后请点击确认</view>
+					</view>
+					<view class="font-info font-s" v-if="medicationList.length">共{{ medicationList.length }}项</view>
+				</view>
 
-    <!-- 全部确认成功提示块 -->
-    <view v-if="medicationList.length && isAllTaken" class="all-done-tip">
-      <u-icon name="checkmark-circle-fill" color="#06b370" size="44rpx"></u-icon>
-      <view class="tip-text-wrap">
-        <view class="tip-title">今日用药已全部确认</view>
-        <view class="tip-desc">遵医嘱规律服药有助术后平稳康复，请保持良好作息</view>
-      </view>
-    </view>
+				<!-- 全部确认成功提示块 -->
+				<view v-if="medicationList.length && isAllTaken" class="all-done-tip">
+					<u-icon name="checkmark-circle-fill" color="#06b370" size="44rpx"></u-icon>
+					<view class="tip-text-wrap">
+						<view class="tip-title">今日用药已全部确认</view>
+						<view class="tip-desc">遵医嘱规律服药有助术后平稳康复，请保持良好作息</view>
+					</view>
+				</view>
 
-    <!-- 空状态 -->
-    <view v-if="!medicationList.length" class="empty-wrap">
-      <view class="empty-icon">
-<text class="custom-icon custom-icon-PillOutline icon-bold"
-						style="font-size:40rpx;color:#155DFC;"></text>
-	  </view>
-	 
-      <view class="empty-title">还没有添加用药提醒</view>
-      <view class="empty-desc">添加药物后，可以在这里确认服用情况。</view>
-    </view>
+				<!-- 空状态 -->
+				<view v-if="!medicationList.length" class="empty-wrap">
+					<view class="empty-icon">
+						<text class="custom-icon custom-icon-PillOutline icon-bold"
+							style="font-size:40rpx;color:#155DFC;"></text>
+					</view>
 
-    <!-- 用药列表 -->
-    <view
-      class="card-list u-flex space-between radius-1 medication-wrapper margin-bottom-1 no-shadow"
-      :class="item.taken ? 'medicationTake' : ''"
-      v-for="item in medicationList"
-      :key="item.id"
-    >
-      <view class="massage-list u-flex align-center flex-center">
-        <view class="massage-icon-left view-icon"  :class="item.status === 'TAKEN' ? 'message-checked' : ''">
-          <u-icon v-if="item.status === 'TAKEN'" name="checkmark-circle-fill" color="#06b370" size="44rpx"></u-icon>
-          <text v-else class="custom-icon custom-icon-PillOutline icon-bold" style="font-size:40rpx;color:#999;"></text>
-        </view>
-        <view class="massage-content">
-          <view class="view-text">
-            <u--text size="28rpx" :bold="true" class="font-m font-black font-bold" lines="1" :text="item.name"></u--text>
-            <view class="badge-wrapper margin-top-1">
-              <view class="font-info font-s">每日{{item.timesPerDay}}次</view>
-              <view
-                class="font-info font-s"
-                :class="{'color-green': item.status === 'TAKEN', 'color-gray': item.status === 'PENDING'}"
-              >
-                {{ item.status === 'PENDING' ? '待服用' : item.status === 'TAKEN' ? '已服用' : item.status }}
-              </view>
-            </view>
-          </view>
-        </view>
-        <view class="massage-icon-right">
-          <view
-            @click="openModal(item)"
-            v-show="item.status == 'PENDING'"
-            class="font-blue font-bold font-s btn-confirm-txt"
-          >
-            确认已服用
-          </view>
-          <view
-            v-show="item.status == 'TAKEN'"
-            class="font-info font-s color-gray btn-confirmed-txt"
-          >
-            已确认
-          </view>
-          <view @click="openModal2(item)" class="font-blue font-bold font-s">删除</view>
-        </view>
-      </view>
-    </view>
-  </view>
+					<view class="empty-title">还没有添加用药提醒</view>
+					<view class="empty-desc">添加药物后，可以在这里确认服用情况。</view>
+				</view>
+
+				<!-- 用药列表 -->
+				<view class="card-list u-flex space-between radius-1 medication-wrapper margin-bottom-1 no-shadow"
+					:class="item.taken ? 'medicationTake' : ''" v-for="item in medicationList" :key="item.id">
+					<view class="massage-list u-flex align-center flex-center">
+						<view class="massage-icon-left view-icon"
+							:class="item.status === 'TAKEN' ? 'message-checked' : ''">
+							<u-icon v-if="item.status === 'TAKEN'" name="checkmark-circle-fill" color="#06b370"
+								size="44rpx"></u-icon>
+							<text v-else class="custom-icon custom-icon-PillOutline icon-bold"
+								style="font-size:40rpx;color:#999;"></text>
+						</view>
+						<view class="massage-content">
+							<view class="view-text">
+								<u--text size="28rpx" :bold="true" class="font-m font-black font-bold" lines="1"
+									:text="item.name"></u--text>
+								<view class="badge-wrapper margin-top-1">
+									<view class="font-info font-s">每日{{ item.timesPerDay }}次</view>
+									<view class="font-info font-s"
+										:class="{ 'color-green': item.status === 'TAKEN', 'color-gray': item.status === 'PENDING' }">
+										{{ item.status === 'PENDING' ? '待服用' : item.status === 'TAKEN' ? '已服用' :
+											item.status }}
+									</view>
+								</view>
+							</view>
+						</view>
+						<view class="massage-icon-right">
+							<view @click="openModal(item)" v-show="item.status == 'PENDING'"
+								class="font-blue font-bold font-s btn-confirm-txt">
+								确认已服用
+							</view>
+							<view v-show="item.status == 'TAKEN'" class="font-info font-s color-gray btn-confirmed-txt">
+								已确认
+							</view>
+							<view @click="openModal2(item)" class="font-blue font-bold font-s">删除</view>
+						</view>
+					</view>
+				</view>
+			</view>
 			<!-- <view class="radius-1 bg-white margin-top-1 padding-1 border-pink bg-linear-pink">
 				<view class="u-flex space-start">
 					<text class="custom-icon custom-icon-PillOutline icon-bold"
@@ -402,16 +395,16 @@
 
 
 		<view v-else-if="activeTab2 == 6" class="">
-			
+
 			<sleepManagement />
-		
+
 		</view>
 		<view v-if="activeTab2 != 5" class="button-wrapper u-flex flex-center font-s" @click="showToast()" ref="uToast">
 			<text class="custom-icon custom-icon-navigation icon-bold" style="color:#155DFC;margin-right: 5px;"></text>
 			同步到我的私人医生团队
 		</view>
 		<myTabbar :current="1"></myTabbar>
-	
+
 		<u-toast ref="uToast"></u-toast>
 		<view class="mask" v-if="showModal">
 			<view class="dialog">
@@ -441,658 +434,671 @@
 				</view>
 			</view>
 		</view>
-	
-	
+
+
 	</view>
 </template>
 <script>
-	import {
-		
-		getMeExercisePlanApi,
-		getMeMedicationTodayApi,
-		postMeMedicationApi,
-		postMeMedicationByIdTakeApi,
-		deleteMeMedicationByIdApi,
-		getHospitalPatientsByIdHealthDetailApi
+import {
 
-	} from '@/api/frontApikit.js'
-	import weightControl from './weightControl.vue'
-	import sleepManagement from './sleepManagement.vue'
-	import rehabSport from './rehabSport.vue'
-	import mealDetail from './mealDetail.vue'
+	getMeExercisePlanApi,
+	getMeMedicationTodayApi,
+	postMeMedicationApi,
+	postMeMedicationByIdTakeApi,
+	deleteMeMedicationByIdApi,
+	getHospitalPatientsByIdHealthDetailApi
+
+} from '@/api/frontApikit.js'
+import weightControl from './weightControl.vue'
+import sleepManagement from './sleepManagement.vue'
+import rehabSport from './rehabSport.vue'
+import mealDetail from './mealDetail.vue'
 
 
-	import myTabbar from '@/components/myTabbar.vue'
+import myTabbar from '@/components/myTabbar.vue'
 
-	export default {
-		options: {
-			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
-		},
-		components: {
-			myTabbar,weightControl,sleepManagement,rehabSport,mealDetail
-		},
-		computed: {
-    isAllTaken() {
-      if (!this.medicationList.length) return false
-      return this.medicationList.every(item => item.status === 'TAKEN')
-    }
-  },
+export default {
+	options: {
+		styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
+	},
+	components: {
+		myTabbar, weightControl, sleepManagement, rehabSport, mealDetail
+	},
+	computed: {
+		isAllTaken() {
+			if (!this.medicationList.length) return false
+			return this.medicationList.every(item => item.status === 'TAKEN')
+		}
+	},
 
-		data() {
-				const userInfo = JSON.parse(uni.getStorageSync('userInfo')) || {}
+	data() {
 
-			return {
-				id: userInfo.userId || '',
-				showModal: false,
-				showModal2: false,
-				drugName: '',
-				drugId: "",
-				form: {
-					name: '',
-					timesPerDay: 1
-				},
-				chartData: {
-					categories: ['', '', '', '', '', '', '', '', '', '', ''],
-					series: [{
-						name: '心率',
-						data: [42, 65, 48, 80, 52, 68, 95, 64, 45, 76, 83]
-					}]
-				},
-				chartOpts: {
-					color: ['#dbeafe'], //柱子浅蓝色
-					dataLabel: false,
-					extra: {
-						column: {
-							barWidth: 20, //柱子宽度
-							categoryGap: 2,
-							barBorderRadius: [6, 6, 0, 0] //顶部圆角，底部直角
-						},
-						tooltip: {
-							show: false
-						} //关闭悬浮提示
+
+		return {
+			id: '',
+			showModal: false,
+			showModal2: false,
+			drugName: '',
+			drugId: "",
+			form: {
+				name: '',
+				timesPerDay: 1
+			},
+			chartData: {
+				categories: ['', '', '', '', '', '', '', '', '', '', ''],
+				series: [{
+					name: '心率',
+					data: [42, 65, 48, 80, 52, 68, 95, 64, 45, 76, 83]
+				}]
+			},
+			chartOpts: {
+				color: ['#dbeafe'], //柱子浅蓝色
+				dataLabel: false,
+				extra: {
+					column: {
+						barWidth: 20, //柱子宽度
+						categoryGap: 2,
+						barBorderRadius: [6, 6, 0, 0] //顶部圆角，底部直角
 					},
-					xAxis: {
-						disableGrid: true,
-						axisLine: false,
-						label: {
-							show: false
-						} //隐藏x轴文字
-					},
-					yAxis: {
-						disabled: true,
-						disableGrid: true,
-						axisLine: false,
-						label: {
-							show: false
-						}
-					},
-					legend: {
+					tooltip: {
 						show: false
-					}, //隐藏图例
-					padding: [0, 0, 0, 0],
-					label: {
-						show: false,
-					}
-
+					} //关闭悬浮提示
 				},
-				show: false,
-				fontSize1: "30rpx",
-				fontSize2: "40rpx",
-				activeTab: 1,
-				activeTab2: 2,
-				medicationList: [],
-
-				tabList2: [{
-					id: 1,
-					name: "饮食分析",
-					icon: "camera",
-				}, {
-					id: 2,
-					name: "运动处方",
-					icon: "sport-shoe",
-					badge: "",
-					route: "healthCenter"
-				}, {
-					id: 3,
-					name: "体重动态",
-					icon: "scale",
-					badge: "3",
-					route: "messages"
-				}, {
-					id: 4,
-					name: "血压血糖",
-					icon: "activity",
-					badge: "",
-					route: "profile"
-				}, {
-					id: 5,
-					name: "用药提醒",
-					icon: "PillOutline",
-
-				}, {
-					id: 6,
-					name: "睡眠管理",
-					icon: "moon",
-
-				}],
-
-
-			};
-		},
-		onLoad(options) {
-			this.getMeMedicationTodayApi()
-			// this.getHospitalPatientsByIdHealthDetail()
-		
-		},
-		methods: {
-			openModal(item) {
-				console.log(item)
-				this.drugName = item.name
-				this.drugId = item.id
-				this.showModal = true
-			},
-			openModal2(item) {
-				
-				this.drugName = item.name
-				this.drugId = item.id
-				this.showModal2 = true
-			},
-			closeModal() {
-				this.showModal = false
-			},
-			closeModal2() {
-				this.showModal2 = false
-			},
-			confirmTake() {
-				console.log('确认服用', this.drugName)
-				this.closeModal()
-			},
-			//  患者健康详情（饮食/运动/体重/血糖血压7天；检查指标30天；其他附件）
-			async getHospitalPatientsByIdHealthDetail() {
-				try {
-					console.log(this.id)
-
-					const mealDetail = await getHospitalPatientsByIdHealthDetailApi({
-						id:this.id
-					})
-
-			
-					console.log(mealDetail)
-
-				} catch (e) {
-					console.log('报错：', e)
-				}
-			},
-			//  今日用药列表（status 由当日打卡推导）
-			async getMeMedicationTodayApi() {
-				try {
-
-					const getMeMedicationToday = await getMeMedicationTodayApi({
-
-
-					})
-
-					this.medicationList = getMeMedicationToday
-					console.log('用药', getMeMedicationToday)
-
-				} catch (e) {
-					console.log('报错：', e)
-				}
-			},
-			// 添加用药（药名+每日次数 1-3；v3 不再设置提醒时间）
-			async postMeMedicationApi() {
-				try {
-					console.log(this.form)
-
-					const postMeMedication = await postMeMedicationApi(
-
-						this.form
-					)
-					uni.showToast({
-						title: "用药提醒已添加",
-						icon: "success"
-					})
-					this.getMeMedicationTodayApi()
-					// console.log('用药', postMeMedication)
-
-				} catch (e) {
-					console.log('报错：', e)
-				}
-			},
-			//用药打卡（当日幂等）
-			async postMeMedicationByIdTakeApi(drugId) {
-
-				try {
-
-					const postMeMedicationByIdTake = await postMeMedicationByIdTakeApi({
-						id: drugId
-					})
-
-					uni.showToast({
-						title: "已标记服用",
-						icon: "success"
-					})
-					this.closeModal()
-					this.getMeMedicationTodayApi()
-
-				} catch (e) {
-					console.log('报错：', e)
-				}
-			},
-			// 删除本人用药提醒
-
-			async deleteMeMedicationByIdApi(drugId) {
-				
-				try {
-
-					const deleteMeMedicationById = await deleteMeMedicationByIdApi({
-						id: drugId
-
-					})
-					uni.showToast({
-						title: "用药提醒已删除",
-						icon: "success"
-					})
-
-					this.closeModal2()
-					this.getMeMedicationTodayApi()
-
-				} catch (e) {
-					console.log('报错：', e)
-				}
-			},
-			// 我的运动康复方案（动作+本周统计；每日重置昨日完成项）
-			async getMeExercisePlan() {
-				try {
-
-					const MeExercisePlan = await getMeExercisePlanApi({
-						id: this.id
-					})
-					console.log('MeExercisePlan：', MeExercisePlan)
-					this.list = listData.list
-				} catch (e) {
-					console.log('报错：', e)
-				}
-			},
-
-
-			toggleTask(id) {
-				console.log(id)
-				const newState = this.useState.map((item, index) => {
-					// 处理逻辑
-					if (item.id == id) {
-						item.completed = !item.completed
+				xAxis: {
+					disableGrid: true,
+					axisLine: false,
+					label: {
+						show: false
+					} //隐藏x轴文字
+				},
+				yAxis: {
+					disabled: true,
+					disableGrid: true,
+					axisLine: false,
+					label: {
+						show: false
 					}
-
-					return item;
-				});
-				console.log(newState)
-				// this.useState.map(t => t.id === id ? { ...t, completed: !t.completed } : t))
-
-			},
-			clickTab(item) {
-				this.activeTab2 = item.id;
-				console.log(this.activeTab2)
-			},
-			showToast(params) {
-
-				const name = this.tabList2[this.activeTab2 - 1].name;
-				const data = {
-					value1: '1',
-					value2: '2',
-					healthType: name
-
+				},
+				legend: {
+					show: false
+				}, //隐藏图例
+				padding: [0, 0, 0, 0],
+				label: {
+					show: false,
 				}
-				let routeUrl = "/pages/index/consultation" + `?data=` + encodeURIComponent(JSON.stringify(data))
-				const that = this;
-				this.$refs.uToast.show({
-					title: '',
-					position: 'top',
-					message: `${name}数据已加密发送至我的私人医生团队,已生成健康卡片同步至聊天窗口`,
-					// 如果不传此type参数，默认为default，也可以手动写上 type: 'default'
-					type: 'success',
-					// 如果不需要图标，请设置为false
-					icon: 'checkmark-circle',
-					complete() {
-						this.$safeJump(routeUrl)
-					},
-				})
 
 			},
-			routeTo(res) {
+			show: false,
+			fontSize1: "30rpx",
+			fontSize2: "40rpx",
+			activeTab: 1,
+			activeTab2: 2,
+			medicationList: [],
 
-				let data = {
-					title: 'hello',
-					id: 1
-				}
-				let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(data))
-				this.$safeJump(routeUrl)
+			tabList2: [{
+				id: 1,
+				name: "饮食分析",
+				icon: "camera",
+			}, {
+				id: 2,
+				name: "运动处方",
+				icon: "sport-shoe",
+				badge: "",
+				route: "healthCenter"
+			}, {
+				id: 3,
+				name: "体重动态",
+				icon: "scale",
+				badge: "3",
+				route: "messages"
+			}, {
+				id: 4,
+				name: "血压血糖",
+				icon: "activity",
+				badge: "",
+				route: "profile"
+			}, {
+				id: 5,
+				name: "用药提醒",
+				icon: "PillOutline",
 
+			}, {
+				id: 6,
+				name: "睡眠管理",
+				icon: "moon",
+
+			}],
+
+
+		};
+	},
+	onLoad() {
+		const userInfo = this.readCurrentUser()
+		this.id = userInfo.userId
+		this.getMeMedicationTodayApi()
+
+	},
+	methods: {
+		readCurrentUser() {
+			try {
+				const raw = uni.getStorageSync('userInfo')
+				if (!raw) return {}
+				return typeof raw === 'string' ? JSON.parse(raw) : raw
+			} catch (error) {
+				console.error('读取userInfo失败', error)
+				return {}
 			}
 		},
-		onReady() {
-			//如果需要兼容微信小程序，并且校验规则中含有方法等，只能通过setRules方法设置规则。
+		openModal(item) {
+			console.log(item)
+			this.drugName = item.name
+			this.drugId = item.id
+			this.showModal = true
+		},
+		openModal2(item) {
+
+			this.drugName = item.name
+			this.drugId = item.id
+			this.showModal2 = true
+		},
+		closeModal() {
+			this.showModal = false
+		},
+		closeModal2() {
+			this.showModal2 = false
+		},
+		confirmTake() {
+			console.log('确认服用', this.drugName)
+			this.closeModal()
+		},
+		//  患者健康详情（饮食/运动/体重/血糖血压7天；检查指标30天；其他附件）
+		async getHospitalPatientsByIdHealthDetail() {
+			try {
+				console.log(this.id)
+
+				const mealDetail = await getHospitalPatientsByIdHealthDetailApi({
+					id: this.id
+				})
+
+
+				console.log(mealDetail)
+
+			} catch (e) {
+				console.log('报错：', e)
+			}
+		},
+		//  今日用药列表（status 由当日打卡推导）
+		async getMeMedicationTodayApi() {
+			try {
+
+				const getMeMedicationToday = await getMeMedicationTodayApi({
+
+
+				})
+
+				this.medicationList = getMeMedicationToday
+				console.log('用药', getMeMedicationToday)
+
+			} catch (e) {
+				console.log('报错：', e)
+			}
+		},
+		// 添加用药（药名+每日次数 1-3；v3 不再设置提醒时间）
+		async postMeMedicationApi() {
+			try {
+				console.log(this.form)
+
+				const postMeMedication = await postMeMedicationApi(
+
+					this.form
+				)
+				uni.showToast({
+					title: "用药提醒已添加",
+					icon: "success"
+				})
+				this.getMeMedicationTodayApi()
+				// console.log('用药', postMeMedication)
+
+			} catch (e) {
+				console.log('报错：', e)
+			}
+		},
+		//用药打卡（当日幂等）
+		async postMeMedicationByIdTakeApi(drugId) {
+
+			try {
+
+				const postMeMedicationByIdTake = await postMeMedicationByIdTakeApi({
+					id: drugId
+				})
+
+				uni.showToast({
+					title: "已标记服用",
+					icon: "success"
+				})
+				this.closeModal()
+				this.getMeMedicationTodayApi()
+
+			} catch (e) {
+				console.log('报错：', e)
+			}
+		},
+		// 删除本人用药提醒
+
+		async deleteMeMedicationByIdApi(drugId) {
+
+			try {
+
+				const deleteMeMedicationById = await deleteMeMedicationByIdApi({
+					id: drugId
+
+				})
+				uni.showToast({
+					title: "用药提醒已删除",
+					icon: "success"
+				})
+
+				this.closeModal2()
+				this.getMeMedicationTodayApi()
+
+			} catch (e) {
+				console.log('报错：', e)
+			}
+		},
+		// 我的运动康复方案（动作+本周统计；每日重置昨日完成项）
+		async getMeExercisePlan() {
+			try {
+
+				const MeExercisePlan = await getMeExercisePlanApi({
+					id: this.id
+				})
+				console.log('MeExercisePlan：', MeExercisePlan)
+				this.list = listData.list
+			} catch (e) {
+				console.log('报错：', e)
+			}
+		},
+
+
+		toggleTask(id) {
+			console.log(id)
+			const newState = this.useState.map((item, index) => {
+				// 处理逻辑
+				if (item.id == id) {
+					item.completed = !item.completed
+				}
+
+				return item;
+			});
+			console.log(newState)
+			// this.useState.map(t => t.id === id ? { ...t, completed: !t.completed } : t))
 
 		},
-	};
+		clickTab(item) {
+			this.activeTab2 = item.id;
+			console.log(this.activeTab2)
+		},
+		showToast(params) {
+
+			const name = this.tabList2[this.activeTab2 - 1].name;
+			const data = {
+				value1: '1',
+				value2: '2',
+				healthType: name
+
+			}
+			let routeUrl = "/pages/index/consultation" + `?data=` + encodeURIComponent(JSON.stringify(data))
+			const that = this;
+			this.$refs.uToast.show({
+				title: '',
+				position: 'top',
+				message: `${name}数据已加密发送至我的私人医生团队,已生成健康卡片同步至聊天窗口`,
+				// 如果不传此type参数，默认为default，也可以手动写上 type: 'default'
+				type: 'success',
+				// 如果不需要图标，请设置为false
+				icon: 'checkmark-circle',
+				complete() {
+					this.$safeJump(routeUrl)
+				},
+			})
+
+		},
+		routeTo(res) {
+
+			let data = {
+				title: 'hello',
+				id: 1
+			}
+			let routeUrl = "/pages/index/" + res + `?data=` + encodeURIComponent(JSON.stringify(data))
+			this.$safeJump(routeUrl)
+
+		}
+	},
+	onReady() {
+		//如果需要兼容微信小程序，并且校验规则中含有方法等，只能通过setRules方法设置规则。
+
+	},
+};
 </script>
 
 
 <style scoped>
-	.header {
-		display: flex;
-		align-items: center;
-		gap: 24rpx;
-		margin-bottom: 48rpx;
-	}
+.header {
+	display: flex;
+	align-items: center;
+	gap: 24rpx;
+	margin-bottom: 48rpx;
+}
 
-	.icon-box {
-		width: 80rpx;
-		height: 80rpx;
-		border-radius: 50%;
-		background-color: #e8f3ff;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 36rpx;
-		color: #0066ee;
-	}
+.icon-box {
+	width: 80rpx;
+	height: 80rpx;
+	border-radius: 50%;
+	background-color: #e8f3ff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 36rpx;
+	color: #0066ee;
+}
 
-	.main-title {
-		font-size: 36rpx;
-		font-weight: 600;
-		color: #222;
-	}
+.main-title {
+	font-size: 36rpx;
+	font-weight: 600;
+	color: #222;
+}
 
-	.sub-title1 {
-		font-size: 26rpx;
-		color: #888;
-		margin-top: 8rpx;
-	}
+.sub-title1 {
+	font-size: 26rpx;
+	color: #888;
+	margin-top: 8rpx;
+}
 
-	.form-item {
-		margin-bottom: 40rpx;
-	}
+.form-item {
+	margin-bottom: 40rpx;
+}
 
-	.label-row {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 20rpx;
-	}
+.label-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 20rpx;
+}
 
-	.label {
-		font-size: 30rpx;
-		color: #222;
-	}
+.label {
+	font-size: 30rpx;
+	color: #222;
+}
 
-	.star {
-		color: #f56c6c;
-	}
+.star {
+	color: #f56c6c;
+}
 
-	.required-txt {
-		font-size: 26rpx;
-		color: #999;
-	}
+.required-txt {
+	font-size: 26rpx;
+	color: #999;
+}
 
-	.input-wrap {
-		display: flex;
-		align-items: center;
-		border: 2rpx solid #b4d3ff;
-		border-radius: 20rpx;
-		padding: 0 24rpx;
-		height: 88rpx;
-		background: #fff;
-	}
+.input-wrap {
+	display: flex;
+	align-items: center;
+	border: 2rpx solid #b4d3ff;
+	border-radius: 20rpx;
+	padding: 0 24rpx;
+	height: 88rpx;
+	background: #fff;
+}
 
-	.input {
-		flex: 1;
-		font-size: 28rpx;
-	}
+.input {
+	flex: 1;
+	font-size: 28rpx;
+}
 
-	.input-icon {
-		font-size: 28rpx;
-		color: #999;
-	}
+.input-icon {
+	font-size: 28rpx;
+	color: #999;
+}
 
-	.radio-group {
-		display: flex;
-		gap: 16rpx;
-	}
+.radio-group {
+	display: flex;
+	gap: 16rpx;
+}
 
-	.radio-item {
-		flex: 1;
-		height: 70rpx;
-		line-height: 70rpx;
-		text-align: center;
-		background-color: #f4f5f7;
-		border-radius: 20rpx;
-		color: #333;
-	}
+.radio-item {
+	flex: 1;
+	height: 70rpx;
+	line-height: 70rpx;
+	text-align: center;
+	background-color: #f4f5f7;
+	border-radius: 20rpx;
+	color: #333;
+}
 
-	.radio-item.active {
-		background-color: #0066ee;
-		color: #fff;
-	}
+.radio-item.active {
+	background-color: #0066ee;
+	color: #fff;
+}
 
-	.tip-small {
-		font-size: 24rpx;
-		color: #888;
-		margin-top: 16rpx;
-	}
+.tip-small {
+	font-size: 24rpx;
+	color: #888;
+	margin-top: 16rpx;
+}
 
-	.info-tip {
-		display: flex;
-		gap: 12rpx;
-		margin: 48rpx 0;
-		font-size: 24rpx;
-		color: #888;
-	}
+.info-tip {
+	display: flex;
+	gap: 12rpx;
+	margin: 48rpx 0;
+	font-size: 24rpx;
+	color: #888;
+}
 
-	.info-icon {
-		color: #888;
-	}
+.info-icon {
+	color: #888;
+}
 
-	.submit-btn {
-		width: 100%;
-		height: 96rpx;
-		line-height: 96rpx;
-		text-align: center;
-		border-radius: 48rpx;
-		font-size: 30rpx;
-		background-color: #0066ee;
-		color: #fff;
-	}
+.submit-btn {
+	width: 100%;
+	height: 96rpx;
+	line-height: 96rpx;
+	text-align: center;
+	border-radius: 48rpx;
+	font-size: 30rpx;
+	background-color: #0066ee;
+	color: #fff;
+}
 
-	.submit-btn.disabled {
-		background-color: #e7e8eb;
-		color: #b9bcc3;
-	}
+.submit-btn.disabled {
+	background-color: #e7e8eb;
+	color: #b9bcc3;
+}
 
-	/* .tab-wrapper {
+/* .tab-wrapper {
 		::v-deep .u-icon__label {
 			display: none !important;
 		}
 	} */
-	::v-deep .u-toast__content__text {
-		line-height: 1.4 !important;
-	}
+::v-deep .u-toast__content__text {
+	line-height: 1.4 !important;
+}
 
-	.chart-wrap {
-		height: 200rpx !important;
-		width: 100% !important;
-	}
+.chart-wrap {
+	height: 200rpx !important;
+	width: 100% !important;
+}
 
-	.heart-bottom {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-end;
-		/* margin-top:24rpx; */
-		width: 100%;
-	}
+.heart-bottom {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	/* margin-top:24rpx; */
+	width: 100%;
+}
 
-	.heart-desc {
-		font-size: 26rpx;
-		color: #666;
-	}
+.heart-desc {
+	font-size: 26rpx;
+	color: #666;
+}
 
-	.heart-val {
-		font-size: 48rpx;
-		color: #2563eb;
-		font-weight: bold;
-	}
+.heart-val {
+	font-size: 48rpx;
+	color: #2563eb;
+	font-weight: bold;
+}
 
-	.unit {
-		font-size: 28rpx;
-	}
+.unit {
+	font-size: 28rpx;
+}
 
-	.page-heathCenter .card-list {
-		padding: 30rpx
-	}
+.page-heathCenter .card-list {
+	padding: 30rpx
+}
 
-	.page-heathCenter .medication-wrapper.card-list {
-		border: 1px solid #dddd;
-	}
+.page-heathCenter .medication-wrapper.card-list {
+	border: 1px solid #dddd;
+}
 
-	.page-heathCenter .medicationTake {
-		border: 1px solid #dbfce7 !important;
-		background-color: #f0fdf4;
-	}
-
-
-	.page-heathCenter .card-list .badge-blue-bg {
-		background-color: #eff6ff;
-	}
-
-	.article-list {
-		flex: 1;
-		margin-left: 20rpx;
-	}
-
-	.tag-row {
-		align-items: center;
-	}
-
-	.heath-6 .massage-icon-left {
-		width: 40rpx;
-		height: 40rpx;
-	}
+.page-heathCenter .medicationTake {
+	border: 1px solid #dbfce7 !important;
+	background-color: #f0fdf4;
+}
 
 
+.page-heathCenter .card-list .badge-blue-bg {
+	background-color: #eff6ff;
+}
+
+.article-list {
+	flex: 1;
+	margin-left: 20rpx;
+}
+
+.tag-row {
+	align-items: center;
+}
+
+.heath-6 .massage-icon-left {
+	width: 40rpx;
+	height: 40rpx;
+}
 
 
-	/* 未标记药品 */
-	.page-heathCenter .card-list .massage-icon-left {
-		background-color: #eff6ff;
-		border-radius: 10px;
-	}
+
+
+/* 未标记药品 */
+.page-heathCenter .card-list .massage-icon-left {
+	background-color: #eff6ff;
+	border-radius: 10px;
+}
+
 .page-heathCenter .card-list .massage-icon-left.message-checked {
-		background-color: #e8fbf3;
-		
-	}
-	/* 右边文字 标记已服用*/
-	.page-heathCenter .massage-list .massage-icon-right {
-		width: 260rpx;
+	background-color: #e8fbf3;
 
-	}
+}
 
-	/* 中间内容 未标记 */
-	.page-heathCenter .massage-list {
-		position: relative;
+/* 右边文字 标记已服用*/
+.page-heathCenter .massage-list .massage-icon-right {
+	width: 260rpx;
 
-	}
+}
 
+/* 中间内容 未标记 */
+.page-heathCenter .massage-list {
+	position: relative;
 
-
-	.page-heathCenter .medicationTake .massage-icon-left {
-		background-color: #c8c9cc;
-		background-color: #00c950;
-	}
-
-	.page-heathCenter .card-list .badge-blue-bg {
-		background-color: #eff6ff;
-	}
-
-	.page-heathCenter .activeCheckbox {
-		border: 1px solid #dae9fd;
-		background-color: #eff6ff;
-	}
-
-	.page-heathCenter .activeCheckbox .font-bold {
-		color: #1c398e;
-	}
+}
 
 
-	.page-heathCenter .bg-gray {
-		/* width:100% */
-		width: calc(100% - 30rpx)
-	}
 
-	.page-heathCenter .heath-6 {
-		padding-right: 0;
-		width: 100%;
-	}
+.page-heathCenter .medicationTake .massage-icon-left {
+	background-color: #c8c9cc;
+	background-color: #00c950;
+}
 
-	.page-heathCenter .badge {
-		height: max-content;
-	}
+.page-heathCenter .card-list .badge-blue-bg {
+	background-color: #eff6ff;
+}
 
-	.healthCheckbox {
-		width: calc(100% - 60rpx);
-		border: 1px solid #f3f4f6;
-	}
+.page-heathCenter .activeCheckbox {
+	border: 1px solid #dae9fd;
+	background-color: #eff6ff;
+}
 
-	.page-heathCenter .button-wrapper {
-		border: 2px solid #155DFC;
-		color: #155DFC;
-		border-radius: 10px;
-		padding: 10px;
-		margin-top: 50rpx
-	}
-
-	.page-heathCenter .button-wrapper-fill {
-		background-color: #155DFC;
-		border-radius: 10px;
-		padding: 10px;
-		color: white;
-		width: calc(100% - 30rpx);
-		text-align: center;
-	}
-
-	.page-heathCenter .header-text {
-		width: 100%;
-		margin: 0 0 30rpx 0;
-	}
+.page-heathCenter .activeCheckbox .font-bold {
+	color: #1c398e;
+}
 
 
-	.page-heathCenter .float-wrapper .u-icon {
-		position: relative;
-		top: 6px;
+.page-heathCenter .bg-gray {
+	/* width:100% */
+	width: calc(100% - 30rpx)
+}
 
-	}
+.page-heathCenter .heath-6 {
+	padding-right: 0;
+	width: 100%;
+}
 
-	.weight-wrapper {
-		width: 100%;
-	}
+.page-heathCenter .badge {
+	height: max-content;
+}
 
-	.page-heathCenter .card-green {
-		width: calc(100% - 30rpx);
-	}
+.healthCheckbox {
+	width: calc(100% - 60rpx);
+	border: 1px solid #f3f4f6;
+}
 
-	.page-heathCenter .input-wrapper {
-		width: 100%;
-	}
+.page-heathCenter .button-wrapper {
+	border: 2px solid #155DFC;
+	color: #155DFC;
+	border-radius: 10px;
+	padding: 10px;
+	margin-top: 50rpx
+}
 
-	.page-heathCenter .card-spe {
-		width: 100%;
-	}
+.page-heathCenter .button-wrapper-fill {
+	background-color: #155DFC;
+	border-radius: 10px;
+	padding: 10px;
+	color: white;
+	width: calc(100% - 30rpx);
+	text-align: center;
+}
 
-	.page-heathCenter .card-spe>view {
-		color: black;
-		width: calc(50% - 15rpx);
-	}
+.page-heathCenter .header-text {
+	width: 100%;
+	margin: 0 0 30rpx 0;
+}
 
-	/* 	.page-heathCenter .massage-icon-left1 {
+
+.page-heathCenter .float-wrapper .u-icon {
+	position: relative;
+	top: 6px;
+
+}
+
+.weight-wrapper {
+	width: 100%;
+}
+
+.page-heathCenter .card-green {
+	width: calc(100% - 30rpx);
+}
+
+.page-heathCenter .input-wrapper {
+	width: 100%;
+}
+
+.page-heathCenter .card-spe {
+	width: 100%;
+}
+
+.page-heathCenter .card-spe>view {
+	color: black;
+	width: calc(50% - 15rpx);
+}
+
+/* 	.page-heathCenter .massage-icon-left1 {
 		background-color: #00c950;
 		border-radius: 100%;
 	}
@@ -1102,152 +1108,159 @@
 		border-radius: 100%;
 	} */
 
-	.page-heathCenter .card-list {
-		width: calc(100% - 60rpx);
-	}
-
-	.heath-5 .massage-content {
-		margin: 0 30rpx;
-
-	}
-
-	.u-badge>view {
-		width: calc(33% - 20px);
-	}
-
-	.my-card .view-icon {
-		padding: 30rpx;
-	}
-
-	.color-gray {
-		color: #999;
-	}
-
-	.color-green {
-		color: #00a64c;
-	}
-
-	.mask {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background-color: rgba(0, 0, 0, 0.45);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 999;
-	}
-
-	.dialog {
-		width: 620rpx;
-		background: #fff;
-		border-radius: 36rpx;
-		padding: 48rpx 36rpx;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-	}
-
-	.dialog-icon {
-		width: 120rpx;
-		height: 120rpx;
-		border-radius: 20px;
-		background: #e8f3ff;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 52rpx;
-		color: #0066ee;
-		margin-bottom: 32rpx;
-	}
-
-	.dialog-title {
-		font-size: 40rpx;
-		font-weight: 600;
-		color: #222;
-		margin-bottom: 20rpx;
-	}
-
-	.dialog-desc {
-		font-size: 28rpx;
-		color: #666;
-		margin-bottom: 48rpx;
-	}
-
-	.btn-row {
-		width: 100%;
-		display: flex;
-		gap: 24rpx;
-	}
-
-	.btn-cancel {
-		flex: 1;
-		height: 88rpx;
-		line-height: 88rpx;
-		text-align: center;
-		background: #f4f5f7;
-		border-radius: 44rpx;
-		font-size: 30rpx;
-		color: #333;
-	}
-
-	.btn-confirm {
-		flex: 1;
-		height: 88rpx;
-		line-height: 88rpx;
-		text-align: center;
-		background: #0066ee;
-		border-radius: 44rpx;
-		font-size: 30rpx;
-		color: #fff;
-	}
-	.empty-wrap {
-  padding:80rpx 20rpx;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+.page-heathCenter .card-list {
+	width: calc(100% - 60rpx);
 }
+
+.heath-5 .massage-content {
+	margin: 0 30rpx;
+
+}
+
+.u-badge>view {
+	width: calc(33% - 20px);
+}
+
+.my-card .view-icon {
+	padding: 30rpx;
+}
+
+.color-gray {
+	color: #999;
+}
+
+.color-green {
+	color: #00a64c;
+}
+
+.mask {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.45);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 999;
+}
+
+.dialog {
+	width: 620rpx;
+	background: #fff;
+	border-radius: 36rpx;
+	padding: 48rpx 36rpx;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.dialog-icon {
+	width: 120rpx;
+	height: 120rpx;
+	border-radius: 20px;
+	background: #e8f3ff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 52rpx;
+	color: #0066ee;
+	margin-bottom: 32rpx;
+}
+
+.dialog-title {
+	font-size: 40rpx;
+	font-weight: 600;
+	color: #222;
+	margin-bottom: 20rpx;
+}
+
+.dialog-desc {
+	font-size: 28rpx;
+	color: #666;
+	margin-bottom: 48rpx;
+}
+
+.btn-row {
+	width: 100%;
+	display: flex;
+	gap: 24rpx;
+}
+
+.btn-cancel {
+	flex: 1;
+	height: 88rpx;
+	line-height: 88rpx;
+	text-align: center;
+	background: #f4f5f7;
+	border-radius: 44rpx;
+	font-size: 30rpx;
+	color: #333;
+}
+
+.btn-confirm {
+	flex: 1;
+	height: 88rpx;
+	line-height: 88rpx;
+	text-align: center;
+	background: #0066ee;
+	border-radius: 44rpx;
+	font-size: 30rpx;
+	color: #fff;
+}
+
+.empty-wrap {
+	padding: 80rpx 20rpx;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
 .empty-icon {
-  width:120rpx;
-  height:120rpx;
-  background:#f7f8fa;
-  border-radius:24rpx;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:48rpx;
-  color:#ccc;
-  margin-bottom:32rpx;
+	width: 120rpx;
+	height: 120rpx;
+	background: #f7f8fa;
+	border-radius: 24rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 48rpx;
+	color: #ccc;
+	margin-bottom: 32rpx;
 }
+
 .empty-title {
-  font-size:32rpx;
-  font-weight:600;
-  color:#222;
-  margin-bottom:12rpx;
+	font-size: 32rpx;
+	font-weight: 600;
+	color: #222;
+	margin-bottom: 12rpx;
 }
+
 .empty-desc {
-  font-size:26rpx;
-  color:#888;
+	font-size: 26rpx;
+	color: #888;
 }
+
 .all-done-tip {
-  background: #e8fbf3;
-  border-radius: 20rpx;
-  padding:24rpx;
-  display:flex;
-  align-items:center;
-  gap:16rpx;
-  margin-bottom:24rpx;
+	background: #e8fbf3;
+	border-radius: 20rpx;
+	padding: 24rpx;
+	display: flex;
+	align-items: center;
+	gap: 16rpx;
+	margin-bottom: 24rpx;
 }
+
 .tip-title {
-  font-size:24rpx;
-  font-weight:600;
-  color:#00a64c;
+	font-size: 24rpx;
+	font-weight: 600;
+	color: #00a64c;
 }
+
 .tip-desc {
-  font-size:20rpx;
-  color:#06b370;
-  margin-top:4rpx;
+	font-size: 20rpx;
+	color: #06b370;
+	margin-top: 4rpx;
 }
 </style>
