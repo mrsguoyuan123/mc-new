@@ -16,7 +16,15 @@
 
 		<template v-else>
 			<!-- 改动位置：4个统计卡片，数字来自 getEscortStatsApi / getEscortProfileStatsApi -->
-			<view class="stats-grid">
+
+		<view class="stat-row">
+					<view class="stat-item" v-for="(stat, statIndex) in statCards">
+						<view class="num">{{ stat.value }}</view>
+						<view class="label">{{stat.label}}</view>
+					</view>
+
+				</view>
+			<!-- <view class="stats-grid">
 				<view
 					v-for="(item, statIndex) in statCards"
 					:key="item.key"
@@ -31,7 +39,7 @@
 						<view class="stat-label">{{ item.label }}</view>
 					</view>
 				</view>
-			</view>
+			</view> -->
 
 			<!-- 改动位置：蓝色陪诊服务日历入口，排班数据来自 getEscortSchedulesApi -->
 			<view class="calendar-card" @click="goCalendar">
@@ -62,7 +70,7 @@
 				</view>
 			</view>
 
-			<!-- 改动位置：用户列表，数据来自 getEscortUsersApi -->
+			<!-- 用户列表，数据来自 getMeConversationsApi -->
 			<view v-if="currentTab === 0" class="list-panel">
 				<view v-if="usersLoading" class="state-block compact">
 					<u-loading-icon mode="circle" color="#2563ff" size="26"></u-loading-icon>
@@ -86,14 +94,14 @@
 <view class="user-avatar">
 						<image v-if="user.avatar" class="avatar-img" :src="user.avatar" mode="aspectFill"></image>
 						<u-icon v-else name="account-fill" color="#2563ff" size="35"></u-icon>
-						
+
 					</view>
 					<view v-if="user.unreadCount > 0" class="unread-badge">
 						{{ user.unreadCount > 99 ? '99+' : user.unreadCount }}
 						</view>
 				</view>
-				
-					
+
+
 					<view class="user-main">
 						<view class="user-title-row">
 							<text class="user-name">{{ user.name }}</text>
@@ -155,7 +163,7 @@
 							<view @click="openOrderDetail(order)" class="font-info font-s">
 								查看详情
 							</view>
-						
+
 						</view>
 
 						<view class="order-info-row">
@@ -178,7 +186,7 @@
 								@click="acceptOrder(order)"
 							></u-button>
 							<u-button
-								v-if="order.status === 'CONFIRMED' || order.status === 'PENDING'"
+								v-if="order.status === 'CONFIRMED' || order.status === 'IN_SERVICE'"
 								type="primary"
 								size="mini"
 								shape="circle"
@@ -186,7 +194,7 @@
 								:loading="actionLoading"
 								@click="startOrder(order)"
 							></u-button>
-							<u-button
+							<!-- <u-button
 								v-if="order.status === 'IN_SERVICE'"
 								type="success"
 								size="mini"
@@ -194,8 +202,8 @@
 								text="到院签到"
 								:loading="actionLoading"
 								@click="checkinOrder(order)"
-							></u-button>
-							<u-button
+							></u-button> -->
+							<!-- <u-button
 								v-if="order.status === 'IN_SERVICE'"
 								type="primary"
 								size="mini"
@@ -204,7 +212,7 @@
 								text="填写服务记录"
 								:loading="actionLoading"
 								@click="openServiceRecord(order)"
-							></u-button>
+							></u-button> -->
 							<u-button
 								v-if="order.status === 'COMPLETED'"
 								type="info"
@@ -228,455 +236,15 @@
 			</view>
 		</template>
 
-		<!-- 改动位置：用户列表点击后的全屏健康管理群聊天弹窗 -->
-		<caregiver-popup
-			:show="chatPopupVisible"
-			mode="bottom"
-			:round="0"
-			:zIndex="10080"
-			:safeAreaInsetBottom="false"
-			:closeOnClickOverlay="false"
+		<message-pop
+			v-if="messagePopupVisible"
+			role="CAREGIVER"
+			:conversation-id="activeConversationId"
+			:current-user-id="currentUser.id || currentUser.userId"
+			:show-input="true"
 			@close="closeChatPopup"
-		>
-			<view class="full-chat-popup">
-				<view class="full-chat-header">
-					<view class="full-header-back" @click="closeChatPopup">
-						<u-icon name="arrow-left" color="#1f2937" size="22"></u-icon>
-					</view>
-					<view class="full-header-main">
-						<view class="full-title-row">
-							<text class="full-chat-title">{{ chatPopupUser ? chatPopupUser.name : '健康管理群' }} · 健康管理群</text>
-							<view class="full-group-chip">
-								<u-icon name="account-fill" color="#2563ff" size="13"></u-icon>
-								<text>多学科</text>
-							</view>
-						</view>
-						<view class="full-chat-subtitle">{{ chatPopupUser ? chatPopupUser.hospitalSurgery : '多学科随诊群沟通' }}</view>
-					</view>
-					<view class="full-header-actions">
-						<view class="full-archive-btn" @click="openArchivePopup">
-							<u-icon name="file-text" color="#2563ff" size="15"></u-icon>
-							<text>档案</text>
-						</view>
-						<view class="full-member-btn" @click="openMemberPopup">
-							<u-icon name="account-fill" color="#2563ff" size="22"></u-icon>
-						</view>
-					</view>
-				</view>
-
-				<scroll-view
-					scroll-y
-					class="full-message-scroll"
-					:scroll-into-view="chatScrollIntoView"
-					:scroll-with-animation="true"
-				>
-					<view v-if="chatMessagesLoading" class="full-chat-state">
-						<u-loading-icon mode="circle" color="#2563ff" size="26"></u-loading-icon>
-						<text class="full-state-text">历史消息加载中...</text>
-					</view>
-					<view v-else-if="!chatMessages.length" class="full-chat-state">
-						<u-icon name="chat" color="#b7c0d4" size="42"></u-icon>
-						<text class="full-state-text">{{ chatError || '暂无聊天消息，欢迎发起沟通' }}</text>
-					</view>
-					<view
-						v-for="(msg, index) in chatMessages"
-						:id="'chatMsg' + index"
-						:key="'full-msg-' + (msg.id || index)"
-						class="full-msg-row"
-						:class="msg.type"
-					>
-						<view v-if="msg.type === 'other'" class="full-msg-avatar other">
-							<image v-if="msg.avatar" :src="msg.avatar" mode="aspectFill" class="full-avatar-img"></image>
-							<u-icon v-else name="account-fill" color="#2563ff" size="24"></u-icon>
-						</view>
-						<view class="full-msg-content">
-							<view class="full-sender-row" :class="msg.type">
-								<text class="full-sender-name">{{ msg.name }}</text>
-								<text v-if="msg.roleText" class="full-sender-role">{{ msg.roleText }}</text>
-								<text class="full-sender-time">{{ msg.time }}</text>
-							</view>
-							<view class="full-bubble" :class="{ fail: msg.failed }">
-								<text>{{ msg.content }}<text v-if="msg.isEdited" class="edited-mark">（已编辑）</text></text>
-							</view>
-							<view v-if="msg.type === 'mine'" class="full-mine-meta">
-								<text v-if="msg.sending">发送中</text>
-								<text v-else-if="msg.failed">发送失败</text>
-								<view v-if="canEditChatMessage(msg)" class="edit-message-btn" @click="openEditMessage(msg)">
-									<u-icon name="edit-pen" color="#2563ff" size="14"></u-icon>
-									<text>编辑</text>
-								</view>
-							</view>
-						</view>
-						<view v-if="msg.type === 'mine'" class="full-msg-avatar mine">
-							<image v-if="msg.avatar" :src="msg.avatar" mode="aspectFill" class="full-avatar-img"></image>
-							<u-icon v-else name="account-fill" color="#ffffff" size="26"></u-icon>
-						</view>
-					</view>
-				</scroll-view>
-
-				<view class="full-chat-footer">
-					<input
-						v-model="chatInput"
-						class="full-chat-input"
-						placeholder="在多学科群内沟通（客服、医助、客户全员可见）"
-						confirm-type="send"
-						cursor-spacing="18"
-						:adjust-position="true"
-						:hold-keyboard="true"
-						:disabled="chatSending || !currentConversation"
-						@confirm="sendChatMessage"
-					/>
-					<view class="send-btn"  :class="{ disabled: chatSending || !currentConversation || !chatInput.trim() }" @click="sendChatMessage">
-					<text class="custom-icon custom-icon-navigation " style="font-size:40rpx;color:#fff;"></text>
-				</view>
-					<!-- <view class="full-send-btn" :class="{ disabled: chatSending || !currentConversation || !chatInput.trim() }" @click="sendChatMessage">
-						<u-icon name="arrow-up" color="#ffffff" size="20"></u-icon>
-						<text>发送</text>
-					</view> -->
-				</view>
-			</view>
-		</caregiver-popup>
-
-		<!-- 改动位置：编辑群聊消息弹窗 -->
-		<caregiver-popup
-			:show="editMessagePopupVisible"
-			mode="center"
-			:round="24"
-			:zIndex="10120"
-			:closeOnClickOverlay="false"
-			@close="closeEditMessage"
-		>
-			<view class="edit-chat-popup">
-				<view class="edit-chat-title">编辑群聊消息</view>
-				<view class="edit-original-box">
-					<text class="edit-original-label">原消息内容</text>
-					<text class="edit-original-text">{{ editForm.originalText }}</text>
-				</view>
-				<textarea
-					v-model="editForm.newText"
-					class="edit-chat-textarea"
-					maxlength="2000"
-					auto-height
-					placeholder="请输入修改后的内容"
-					cursor-spacing="20"
-					:adjust-position="true"
-				/>
-				<view class="edit-tip">保存后将在群内标注“已编辑”，并记录修改人与时间留痕</view>
-				<view class="edit-actions">
-					<u-button class="edit-action-btn" plain shape="circle" text="取消" @click="closeEditMessage"></u-button>
-					<u-button
-						class="edit-action-btn"
-						type="primary"
-						shape="circle"
-						text="保存修改"
-						:loading="editSaving"
-						@click="submitEditMessage"
-					></u-button>
-				</view>
-			</view>
-		</caregiver-popup>
-
-		<!-- 原群聊弹窗保留：历史内联面板结构，当前由上方全屏弹窗承接交互 -->
-		<!-- 改动位置：用户列表群聊弹窗，包含消息区、群成员、患者档案 -->
-		<caregiver-popup :show="false" mode="bottom" :round="24" :closeable="true" @close="closeChatPopup">
-			<view class="chat-popup">
-				<view class="chat-popup-header">
-					<view class="chat-popup-title-wrap">
-						<view class="chat-popup-title">{{ chatPopupUser ? chatPopupUser.name : '健康管理群' }}</view>
-						<view class="chat-popup-subtitle">多学科随诊群沟通</view>
-					</view>
-					<view class="chat-popup-close" @click="closeChatPopup">
-						<u-icon name="close" color="#667085" size="22"></u-icon>
-					</view>
-				</view>
-
-				<view class="chat-section-title">聊天消息区</view>
-				<scroll-view scroll-y class="chat-message-scroll" :scroll-into-view="chatScrollIntoView" :scroll-with-animation="true">
-					<view v-if="chatMessagesLoading" class="popup-state compact">
-						<u-loading-icon mode="circle" color="#2563ff" size="24"></u-loading-icon>
-						<text class="popup-state-text">消息加载中...</text>
-					</view>
-					<view v-else-if="!chatMessages.length" class="popup-state compact">
-						<u-icon name="chat" color="#b7c0d4" size="38"></u-icon>
-						<text class="popup-state-text">{{ chatError || '暂无聊天消息' }}</text>
-					</view>
-					<view
-						v-for="(msg, index) in chatMessages"
-						:id="'legacyChatMsg' + index"
-						:key="'legacy-msg-' + (msg.id || index)"
-						class="popup-msg-item"
-						:class="msg.type"
-					>
-						<view class="popup-msg-avatar">
-							<image v-if="msg.avatar" :src="msg.avatar" mode="aspectFill" class="popup-avatar-img"></image>
-							<u-icon v-else name="account-fill" :color="msg.type === 'mine' ? '#ffffff' : '#2563ff'" size="22"></u-icon>
-						</view>
-						<view class="popup-msg-body">
-							<view class="popup-sender">
-								<text>{{ msg.name }}</text>
-								<text v-if="msg.roleText" class="popup-role-tag">{{ msg.roleText }}</text>
-							</view>
-							<view class="popup-bubble" :class="{ fail: msg.failed }">
-								<text>{{ msg.content }}</text>
-							</view>
-							<view class="popup-msg-meta">
-								<text>{{ msg.time }}</text>
-								<text v-if="msg.sending">发送中</text>
-								<text v-else-if="msg.failed">发送失败</text>
-							</view>
-						</view>
-					</view>
-				</scroll-view>
-
-				<view class="chat-input-row">
-					<input
-						v-model="chatInput"
-						class="chat-popup-input"
-						placeholder="输入文字消息..."
-						confirm-type="send"
-						:disabled="chatSending || !currentConversation"
-						@confirm="sendChatMessage"
-					/>
-					<u-button
-						type="primary"
-						shape="circle"
-						size="mini"
-						text="发送"
-						:loading="chatSending"
-						@click="sendChatMessage"
-					></u-button>
-				</view>
-
-				<view class="collapse-panel">
-					<view class="collapse-header" @click="toggleMemberPanel">
-						<view class="collapse-left">
-							<u-icon name="account-fill" color="#2563ff" size="18"></u-icon>
-							<text class="collapse-title">群成员列表</text>
-							<text class="collapse-count">({{ conversationMembers.length }})</text>
-						</view>
-						<u-icon :name="memberPanelVisible ? 'arrow-up' : 'arrow-down'" color="#667085" size="16"></u-icon>
-					</view>
-					<view v-show="memberPanelVisible" class="collapse-content">
-						<view v-if="membersLoading" class="popup-state mini">
-							<u-loading-icon mode="circle" color="#2563ff" size="20"></u-loading-icon>
-							<text class="popup-state-text">群成员加载中...</text>
-						</view>
-						<view v-else-if="!conversationMembers.length" class="popup-empty-inline">暂无群成员信息</view>
-						<view v-for="(member, index) in conversationMembers" :key="'legacy-member-' + (member.id || index)" class="member-item">
-							<view class="member-avatar">
-								<image v-if="member.avatar" :src="member.avatar" mode="aspectFill" class="popup-avatar-img"></image>
-								<u-icon v-else name="account-fill" color="#2563ff" size="22"></u-icon>
-							</view>
-							<view class="member-info">
-								<view class="member-name-row">
-									<text class="member-name">{{ member.name }}</text>
-									<text v-if="member.roleText" class="member-role">{{ member.roleText }}</text>
-								</view>
-								<text class="member-remark">{{ member.remark || '暂无备注' }}</text>
-							</view>
-						</view>
-					</view>
-				</view>
-
-				<view class="collapse-panel">
-					<view class="collapse-header" @click="toggleProfilePanel">
-						<view class="collapse-left">
-							<u-icon name="file-text" color="#2563ff" size="18"></u-icon>
-							<text class="collapse-title">患者基本信息档案</text>
-						</view>
-						<u-icon :name="profilePanelVisible ? 'arrow-up' : 'arrow-down'" color="#667085" size="16"></u-icon>
-					</view>
-					<view v-show="profilePanelVisible" class="collapse-content">
-						<view v-if="profileLoading" class="popup-state mini">
-							<u-loading-icon mode="circle" color="#2563ff" size="20"></u-loading-icon>
-							<text class="popup-state-text">档案加载中...</text>
-						</view>
-						<view v-else-if="!patientProfile" class="popup-empty-inline">暂无患者档案</view>
-						<view v-else class="profile-grid">
-							<view class="profile-item">
-								<text class="profile-label">姓名</text>
-								<text class="profile-value">{{ patientProfile.name }}</text>
-							</view>
-							<view class="profile-item">
-								<text class="profile-label">年龄</text>
-								<text class="profile-value">{{ patientProfile.ageText }}</text>
-							</view>
-							<view class="profile-item">
-								<text class="profile-label">住院号</text>
-								<text class="profile-value strong">{{ patientProfile.inpatientNo }}</text>
-							</view>
-							<view class="profile-item">
-								<text class="profile-label">医院</text>
-								<text class="profile-value">{{ patientProfile.hospital }}</text>
-							</view>
-							<view class="profile-item wide">
-								<text class="profile-label">诊断信息</text>
-								<text class="profile-value">{{ patientProfile.diagnosis || '暂无诊断信息' }}</text>
-							</view>
-							<view class="profile-item wide">
-								<text class="profile-label">手术信息</text>
-								<text class="profile-value">{{ patientProfile.surgeryInfo || '暂无手术信息' }}</text>
-							</view>
-						</view>
-					</view>
-				</view>
-			</view>
-		</caregiver-popup>
-
-		<!-- 改动位置：患者档案独立弹窗，数据来自 getEscortUsersApi -->
-		<caregiver-popup
-			:show="archivePopupVisible"
-			mode="bottom"
-			:round="0"
-			:zIndex="10100"
-			:closeOnClickOverlay="false"
-			@close="closeArchivePopup"
-		>
-			<view class="archive-popup">
-				<view class="side-popup-header">
-					<view class="side-title-wrap">
-						<view class="side-title-icon blue">
-							<u-icon name="file-text" color="#2563ff" size="21"></u-icon>
-						</view>
-						<text class="side-popup-title">患者基本信息（临床权威一致）</text>
-					</view>
-					<view class="side-close" @click="closeArchivePopup">
-						<u-icon name="close" color="#667085" size="23"></u-icon>
-					</view>
-				</view>
-
-				<scroll-view scroll-y class="side-body-scroll">
-					<view v-if="profileLoading" class="full-chat-state">
-						<u-loading-icon mode="circle" color="#2563ff" size="26"></u-loading-icon>
-						<text class="full-state-text">患者档案加载中...</text>
-					</view>
-					<view v-else-if="!patientProfile" class="full-chat-state">
-						<u-icon name="file-text" color="#b7c0d4" size="42"></u-icon>
-						<text class="full-state-text">暂无患者档案</text>
-					</view>
-					<template v-else>
-						<view class="archive-hero-card">
-							<view class="archive-hero-avatar">
-								<image v-if="patientProfile.avatar" :src="patientProfile.avatar" mode="aspectFill" class="full-avatar-img"></image>
-								<u-icon v-else name="account-fill" color="#2563ff" size="38"></u-icon>
-							</view>
-							<view class="archive-hero-info">
-								<view class="archive-name-row">
-									<text class="archive-name">{{ patientProfile.name }}</text>
-									<text class="archive-gender-age">{{ patientProfile.genderAgeText }}</text>
-								</view>
-								<view class="archive-sub-row">
-									<text>住院号 {{ patientProfile.inpatientNo }}</text>
-									<u-tag text="数据源一致" type="success" size="mini" plain></u-tag>
-								</view>
-							</view>
-						</view>
-
-						<view class="archive-card">
-							<view class="archive-card-title">患者身份档案</view>
-							<view class="archive-grid">
-								<view class="archive-field">
-									<text class="archive-label">患者姓名</text>
-									<text class="archive-value">{{ patientProfile.name }}</text>
-								</view>
-								<view class="archive-field">
-									<text class="archive-label">性别</text>
-									<text class="archive-value">{{ patientProfile.genderText || '待补充' }}</text>
-								</view>
-								<view class="archive-field">
-									<text class="archive-label">年龄/出生日期</text>
-									<text class="archive-value">{{ patientProfile.ageBirthText }}</text>
-								</view>
-								<view class="archive-field">
-									<text class="archive-label">联系方式</text>
-									<text class="archive-value">{{ patientProfile.phone }}</text>
-								</view>
-								<view class="archive-field">
-									<text class="archive-label">住院号</text>
-									<text class="archive-value strong">{{ patientProfile.inpatientNo }}</text>
-								</view>
-								<view class="archive-field">
-									<text class="archive-label">就诊医院</text>
-									<text class="archive-value">{{ patientProfile.hospital }}</text>
-								</view>
-							</view>
-						</view>
-
-						<view class="archive-card">
-							<view class="archive-card-title">诊断与手术明细</view>
-							<view class="diagnosis-row">
-								<text class="archive-label">主要诊断</text>
-								<text class="archive-value">{{ patientProfile.diagnosis || '暂无诊断信息' }}</text>
-								<text v-if="patientProfile.diagnosisSource" class="source-text">{{ patientProfile.diagnosisSource }}</text>
-							</view>
-							<view class="diagnosis-row">
-								<text class="archive-label">手术方式</text>
-								<text class="archive-value">{{ patientProfile.surgeryType || '暂无手术信息' }}</text>
-							</view>
-							<view class="diagnosis-row">
-								<text class="archive-label">手术时间</text>
-								<text class="archive-value">{{ patientProfile.surgeryTime || '待补充' }}</text>
-							</view>
-						</view>
-					</template>
-				</scroll-view>
-
-				<view class="archive-footer">
-					<u-button type="primary" shape="circle" text="返回健康管理群" @click="closeArchivePopup"></u-button>
-				</view>
-			</view>
-		</caregiver-popup>
-
-		<!-- 改动位置：群成员独立弹窗，成员来自 getMeConversationsApi -->
-		<caregiver-popup
-			:show="memberPopupVisible"
-			mode="bottom"
-			:round="0"
-			:zIndex="10100"
-			:closeOnClickOverlay="false"
-			@close="closeMemberPopup"
-		>
-			<view class="member-popup">
-				<view class="side-popup-header">
-					<view class="side-title-wrap">
-						<view class="side-title-icon blue">
-							<u-icon name="account-fill" color="#2563ff" size="21"></u-icon>
-						</view>
-						<text class="side-popup-title">群成员列表 ({{ conversationMembers.length }}人)</text>
-					</view>
-					<view class="side-close" @click="closeMemberPopup">
-						<u-icon name="close" color="#667085" size="23"></u-icon>
-					</view>
-				</view>
-
-				<view class="member-desc">由客服、医生助理、客户、陪诊师与康复随访 AI 组成的多学科随诊群</view>
-				<scroll-view scroll-y class="side-body-scroll member-body">
-					<view v-if="membersLoading" class="full-chat-state">
-						<u-loading-icon mode="circle" color="#2563ff" size="26"></u-loading-icon>
-						<text class="full-state-text">群成员加载中...</text>
-					</view>
-					<view v-else-if="!conversationMembers.length" class="full-chat-state">
-						<u-icon name="account" color="#b7c0d4" size="42"></u-icon>
-						<text class="full-state-text">暂无群成员信息</text>
-					</view>
-					<view v-else>
-						<view v-for="(member, index) in conversationMembers" :key="'member-' + (member.id || index)" class="member-list-card">
-							<view class="member-list-avatar">
-								<image v-if="member.avatar" :src="member.avatar" mode="aspectFill" class="full-avatar-img"></image>
-								<u-icon v-else name="account-fill" color="#2563ff" size="28"></u-icon>
-							</view>
-							<view class="member-list-info">
-								<view class="member-list-title-row">
-									<text class="member-list-name">{{ member.name }}</text>
-									<text v-if="member.roleText" class="member-list-role">{{ member.roleText }}</text>
-								</view>
-								<text class="member-list-remark">{{ member.remark || '暂无角色备注' }}</text>
-							</view>
-						</view>
-					</view>
-				</scroll-view>
-			</view>
-		</caregiver-popup>
+			@refresh="loadUsers"
+		></message-pop>
 
 		<!-- 改动位置：服务记录弹窗，提交 postEscortOrdersByIdServiceRecordApi -->
 		<caregiver-popup :show="recordPopupVisible" mode="bottom" :round="24" :closeable="true" @close="closeRecordPopup">
@@ -749,19 +317,16 @@ import {
 	postEscortOrdersByIdServiceRecordApi,
 	getEscortSchedulesApi,
 	getEscortProfileStatsApi,
-	getEscortUsersApi,
 	getMeConversationsApi,
-	getConversationsByIdMessagesApi,
-	postConversationsByIdMessagesApi,
-	putConversationsByIdMessagesByMessageIdApi,
-	
 } from '@/api/frontApikit.js'
 import CaregiverPopup from '@/components/pop/caregiver-popup.vue'
+import MessagePop from '@/components/pop/messagePop.vue'
 import myTabbar from '@/components/myTabbar.vue'
 
 export default {
 	components: {
 		CaregiverPopup,
+		MessagePop,
 		myTabbar
 	},
 	data() {
@@ -770,33 +335,9 @@ export default {
 			usersLoading: false,
 			listLoading: false,
 			actionLoading: false,
-			chatPopupVisible: false,
-			archivePopupVisible: false,
-			memberPopupVisible: false,
-			memberPanelVisible: true,
-			profilePanelVisible: false,
-			chatMessagesLoading: false,
-			membersLoading: false,
-			profileLoading: false,
-			chatSending: false,
-			editSaving: false,
-			chatInput: '',
-			chatError: '',
-			chatPopupUser: null,
-			currentConversation: null,
-			conversationMembers: [],
-			patientProfile: null,
-			chatMessages: [],
-			chatScrollIntoView: '',
-			chatMessagesSignature: '',
-			chatPollTimer: null,
+			messagePopupVisible: false,
+			activeConversationId: '',
 			currentUser: {},
-			editMessagePopupVisible: false,
-			editingMessage: null,
-			editForm: {
-				originalText: '',
-				newText: ''
-			},
 			currentTab: 0,
 			currentMonth: '',
 			noticeText: '欢迎使用陪诊工作台',
@@ -842,7 +383,6 @@ export default {
 			statusTextMap: {
 				WAIT_ACCEPT: '待接单',
 				CONFIRMED: '待服务',
-				PENDING: '待服务',
 				IN_SERVICE: '服务中',
 				COMPLETED: '已服务',
 				CANCELLED: '已取消'
@@ -850,7 +390,6 @@ export default {
 			statusTypeMap: {
 				WAIT_ACCEPT: 'warning',
 				CONFIRMED: 'primary',
-				PENDING: 'primary',
 				IN_SERVICE: 'primary',
 				COMPLETED: 'success',
 				CANCELLED: 'info'
@@ -863,7 +402,7 @@ export default {
 			const pendingCount = Number(this.stats.pending || 0) + Number(this.stats.inService || 0)
 			return [
 				{ key: 'users', label: '用户列表', count: this.stats.users || 0, statuses: [], emptyText: '暂无可服务用户' },
-				{ key: 'pending', label: '待服务', count: pendingCount, statuses: ['CONFIRMED', 'PENDING', 'IN_SERVICE'], emptyText: '暂无待服务订单' },
+				{ key: 'pending', label: '待服务', count: pendingCount, statuses: ['CONFIRMED', 'IN_SERVICE'], emptyText: '暂无待服务订单' },
 				{ key: 'waitAccept', label: '待接单', count: this.stats.waitAccept || 0, statuses: ['WAIT_ACCEPT'], emptyText: '暂无待接单订单' },
 				{ key: 'completed', label: '已服务', count: this.stats.completed || 0, statuses: ['COMPLETED'], emptyText: '暂无已服务订单' }
 			]
@@ -889,7 +428,7 @@ export default {
 		this.currentUser = this.readCurrentUser()
 		this.currentMonth = this.formatMonth(new Date())
 		this.bootstrap();
-		
+
 	},
 	onShow() {
 		this.currentUser = this.readCurrentUser()
@@ -900,12 +439,6 @@ export default {
 	},
 	onPullDownRefresh() {
 		this.refreshAll()
-	},
-	onHide() {
-		this.stopChatPolling()
-	},
-	onUnload() {
-		this.stopChatPolling()
 	},
 	methods: {
 		// 读取本地登录信息，兼容字符串和对象两种缓存格式
@@ -1167,631 +700,15 @@ export default {
 		},
 		// 打开用户群聊弹窗
 		openChat(user) {
-			this.chatPopupUser = user
-			this.patientProfile = user
-			this.currentConversation = user.conversationRaw || this.normalizeConversation(user.conversationData || user)
-			this.conversationMembers = []
-			this.chatMessages = []
-			this.chatMessagesSignature = ''
-			this.chatInput = ''
-			this.chatError = ''
-			this.archivePopupVisible = false
-			this.memberPopupVisible = false
-			this.memberPanelVisible = true
-			this.profilePanelVisible = false
-			this.chatPopupVisible = true
-			this.loadChatMessages(true)
-			this.conversationMembers = this.currentConversation ? this.extractMembers(this.currentConversation, user) : []
-			this.startChatPolling()
+			this.activeConversationId = user.conversationId || user.id || ''
+			this.messagePopupVisible = true
 		},
-		// 关闭群聊弹窗并停止轮询
+		// 关闭消息弹窗
 		closeChatPopup() {
-			this.chatPopupVisible = false
-			this.archivePopupVisible = false
-			this.memberPopupVisible = false
-			this.stopChatPolling()
+			this.messagePopupVisible = false
+			this.activeConversationId = ''
 		},
-		// 打开患者档案弹窗
-		openArchivePopup() {
-			this.archivePopupVisible = true
-			this.loadPatientProfile(this.chatPopupUser)
-		},
-		// 仅关闭患者档案弹窗
-		closeArchivePopup() {
-			this.archivePopupVisible = false
-		},
-		// 打开群成员弹窗
-		openMemberPopup() {
-			this.memberPopupVisible = true
-			this.loadConversationMembers()
-		},
-		// 仅关闭群成员弹窗
-		closeMemberPopup() {
-			this.memberPopupVisible = false
-		},
-		// 展开或收起群成员面板
-		toggleMemberPanel() {
-			this.memberPanelVisible = !this.memberPanelVisible
-		},
-		// 展开或收起患者档案面板
-		toggleProfilePanel() {
-			this.profilePanelVisible = !this.profilePanelVisible
-		},
-		// 从我的会话中读取当前群成员
-		async loadConversationMembers() {
-			if (!this.chatPopupUser) return
-			this.membersLoading = true
-			try {
-				const result = await getMeConversationsApi()
-				const conversations = this.extractList(result).map(item => this.normalizeConversation(item))
-				const conversation = this.matchConversation(conversations, this.chatPopupUser) || this.currentConversation
-				this.currentConversation = conversation || this.currentConversation
-				this.conversationMembers = conversation
-					? this.extractMembers(conversation, this.chatPopupUser)
-					: (this.conversationMembers.length ? this.conversationMembers : [])
-				if (!conversation) uni.showToast({ title: '暂未找到群成员信息', icon: 'none' })
-			} catch (error) {
-				this.handleError(error, '群成员加载失败')
-			} finally {
-				this.membersLoading = false
-			}
-		},
-		// 加载用户对应的群会话、成员和消息
-		async loadConversationContext(user) {
-			this.membersLoading = true
-			this.chatMessagesLoading = true
-			try {
-				const result = await getMeConversationsApi()
-				const conversations = this.extractList(result).map(item => this.normalizeConversation(item))
-				const conversation = this.matchConversation(conversations, user)
-				this.currentConversation = conversation
-				this.conversationMembers = conversation ? this.extractMembers(conversation, user) : []
-				if (!conversation) {
-					this.chatError = '暂未找到该患者的群聊会话'
-					this.chatMessages = []
-					return
-				}
-				await this.loadChatMessages(true)
-			} catch (error) {
-				this.chatError = '群聊信息加载失败'
-				this.handleError(error, '群聊信息加载失败')
-			} finally {
-				this.membersLoading = false
-				this.chatMessagesLoading = false
-			}
-		},
-		// 拉取群聊历史消息
-		async loadChatMessages(manualLoading) {
-			if (!this.currentConversation || !this.currentConversation.id) return
-			if (manualLoading) this.chatMessagesLoading = true
-			try {
-				const result = await getConversationsByIdMessagesApi({
-					id: this.currentConversation.id,
-					size: 50
-				})
-				const list = this.extractList(result)
-				const nextMessages = list.map((item, index) => this.normalizeChatMessage(item, index))
-				const nextSignature = nextMessages.map(msg => [msg.id, msg.type, msg.name, msg.content, msg.isEdited ? 1 : 0, msg.time].join('~')).join('|')
-				if (!manualLoading && nextSignature === this.chatMessagesSignature) return
-				this.chatMessages = nextMessages
-				this.chatMessagesSignature = nextSignature
-				this.chatError = ''
-				this.scrollChatToBottom()
-			} catch (error) {
-				if (manualLoading) this.chatError = '消息加载失败，可稍后重试'
-				this.handleError(error, '消息加载失败')
-			} finally {
-				if (manualLoading) this.chatMessagesLoading = false
-			}
-		},
-		// 从患者用户接口刷新弹窗档案
-		async loadPatientProfile(user) {
-			this.profileLoading = true
-			try {
-				const result = await getEscortUsersApi()
-				const list = this.extractList(result)
-				const raw = list.find(item => this.samePatient(item, user)) || user
-				this.patientProfile = this.normalizePopupProfile(raw, user)
-			} catch (error) {
-				this.patientProfile = this.normalizePopupProfile(user || {})
-				this.handleError(error, '患者档案加载失败')
-			} finally {
-				this.profileLoading = false
-			}
-		},
-		// 发送文字消息并本地乐观渲染
-		async sendChatMessage() {
-			const text = String(this.chatInput || '').trim()
-			if (!text) {
-				uni.showToast({ title: '请输入消息内容', icon: 'none' })
-				return
-			}
-			if (!this.currentConversation || !this.currentConversation.id) {
-				uni.showToast({ title: '群聊会话尚未就绪', icon: 'none' })
-				return
-			}
-			if (this.chatSending) return
-			const clientSeq = 'caregiver_' + Date.now() + '_' + Math.random().toString(16).slice(2)
-			const localMessage = {
-				id: clientSeq,
-				type: 'mine',
-				name: this.getCurrentUserName(),
-				roleText: '陪诊师',
-				avatar: this.getCurrentUserAvatar(),
-				senderType: this.getCurrentSenderType(),
-				senderId: this.getPrimarySenderId(),
-				messageId: '',
-				clientSeq,
-				msgType: 'text',
-				isEdited: false,
-				content: text,
-				time: this.formatDateTime(new Date()),
-				sending: true,
-				failed: false,
-				raw: {}
-			}
-			this.chatMessages.push(localMessage)
-			this.chatInput = ''
-			this.chatSending = true
-			this.scrollChatToBottom()
-			try {
-				await postConversationsByIdMessagesApi({
-					id: this.currentConversation.id,
-					type: 'TEXT',
-					content: text,
-					senderType: this.getCurrentSenderType(),
-					clientSeq
-				})
-				await this.loadChatMessages(false)
-				this.refreshConversationPreview()
-			} catch (error) {
-				localMessage.sending = false
-				localMessage.failed = true
-				this.chatInput = text
-				this.handleError(error, '消息发送失败')
-			} finally {
-				this.chatSending = false
-				this.scrollChatToBottom()
-			}
-		},
-		// 判断当前消息是否允许本人编辑
-		canEditChatMessage(msg) {
-			if (!msg || msg.type !== 'mine' || msg.msgType !== 'text' || msg.sending || msg.failed) return false
-			if (['AI', 'SYSTEM'].indexOf(String(msg.senderType || '').toUpperCase()) > -1) return false
-			if (!msg.messageId) return false
-			if (msg.senderId && this.getMySenderIds().length) {
-				return this.getMySenderIds().some(id => String(id) === String(msg.senderId))
-			}
-			return true
-		},
-		// 打开消息编辑弹窗
-		openEditMessage(msg) {
-			if (!this.canEditChatMessage(msg)) {
-				uni.showToast({ title: '仅可编辑本人发送的文本消息', icon: 'none' })
-				return
-			}
-			this.editingMessage = msg
-			this.editForm = {
-				originalText: msg.content || '',
-				newText: msg.content || ''
-			}
-			this.editMessagePopupVisible = true
-		},
-		// 关闭消息编辑弹窗
-		closeEditMessage() {
-			this.editMessagePopupVisible = false
-			this.editingMessage = null
-			this.editForm = {
-				originalText: '',
-				newText: ''
-			}
-		},
-		// 保存编辑后的群聊消息
-		async submitEditMessage() {
-			const newText = String(this.editForm.newText || '').trim()
-			if (!this.editingMessage || !this.currentConversation || !this.currentConversation.id) return
-			if (!newText) {
-				uni.showToast({ title: '消息内容不能为空', icon: 'none' })
-				return
-			}
-			if (newText === this.editingMessage.content) {
-				uni.showToast({ title: '消息内容未修改', icon: 'none' })
-				return
-			}
-			if (this.editSaving) return
-			this.editSaving = true
-			uni.showLoading({ title: '保存中...', mask: true })
-			try {
-				await putConversationsByIdMessagesByMessageIdApi({
-					id: this.currentConversation.id,
-					messageId: this.editingMessage.messageId,
-					content: newText,
-					newText
-				})
-				const target = this.editingMessage
-				uni.showToast({ title: '消息已更新', icon: 'success' })
-				this.closeEditMessage()
-				await this.loadChatMessages(false)
-				const targetId = target.messageId || target.id
-				const index = this.chatMessages.findIndex(item => String(item.messageId || item.id) === String(targetId))
-				if (index > -1) {
-					this.$set(this.chatMessages, index, Object.assign({}, this.chatMessages[index], {
-						messageId: this.chatMessages[index].messageId || targetId,
-						content: newText,
-						isEdited: true,
-						editedAt: this.formatDateTime(new Date())
-					}))
-				}
-				this.refreshConversationPreview()
-			} catch (error) {
-				this.handleError(error, '编辑消息失败')
-			} finally {
-				this.editSaving = false
-				uni.hideLoading()
-			}
-		},
-		// 编辑/发送后刷新会话列表最新预览
-		refreshConversationPreview() {
-			this.loadUsers()
-		},
-		// 开始弹窗消息轮询
-		startChatPolling() {
-			this.stopChatPolling()
-			this.chatPollTimer = setInterval(() => {
-				if (this.chatPopupVisible && !this.chatSending) this.loadChatMessages(false)
-			}, 15000)
-		},
-		// 停止弹窗消息轮询
-		stopChatPolling() {
-			if (this.chatPollTimer) {
-				clearInterval(this.chatPollTimer)
-				this.chatPollTimer = null
-			}
-		},
-		// 滚动到最新一条消息
-		scrollChatToBottom() {
-			this.$nextTick(() => {
-				const index = this.chatMessages.length - 1
-				if (index < 0) return
-				setTimeout(() => {
-					this.chatScrollIntoView = 'chatMsg' + index
-				}, 60)
-			})
-		},
-		// 标准化会话字段并补齐患者 ID
-		normalizeConversation(item) {
-			const source = item || {}
-			const patient = source.patient || {}
-			return Object.assign({}, source, {
-				patientId: source.patientId || source.patient_id || source.patientID || patient.id || ''
-			})
-		},
-		// 根据患者 ID、会话 ID 或姓名匹配群聊
-		matchConversation(list, user) {
-			const targetId = String((user && (user.patientId || user.id)) || '')
-			const conversationId = String((user && (user.conversationId || user.chatId)) || '')
-			return list.find(item => {
-				if (conversationId && String(item.id) === conversationId) return true
-				return targetId && String(item.patientId) === targetId
-			}) || list.find(item => {
-				const title = item.name || item.title || item.patientName || ''
-				return user && user.name && title.indexOf(user.name) > -1
-			}) || null
-		},
-		// 从会话对象中提取群成员
-		extractMembers(conversation, user) {
-			const rawList = []
-			const membersSnapshot = this.parseMembersSnapshot(conversation)
-			membersSnapshot.forEach(item => rawList.push(item))
-			const containers = [
-				conversation.members,
-				conversation.participants,
-				conversation.users,
-				conversation.memberList,
-				conversation.membersJson
-			]
-			containers.forEach(list => {
-				if (Array.isArray(list)) list.forEach(item => rawList.push(item))
-			})
-			;[
-				{ data: conversation.patient, role: 'PATIENT' },
-				{ data: conversation.customer, role: 'PATIENT' },
-				{ data: conversation.cs, role: 'CS' },
-				{ data: conversation.customerService, role: 'CS' },
-				{ data: conversation.assistant, role: 'DOCTOR_ASSISTANT' },
-				{ data: conversation.doctorAssistant, role: 'DOCTOR_ASSISTANT' },
-				{ data: conversation.caregiver, role: 'CAREGIVER' },
-				{ data: conversation.escort, role: 'CAREGIVER' },
-				{ data: conversation.ai, role: 'AI' },
-				{ data: conversation.bot, role: 'AI' }
-			].forEach(item => {
-				if (item.data && typeof item.data === 'object') {
-					rawList.push(Object.assign({ role: item.data.role || item.role }, item.data))
-				}
-			})
-			if (!rawList.length && user) rawList.push(user)
-			const exists = {}
-			return rawList.map((item, index) => this.normalizeMember(item, index)).filter(item => {
-				if (!item.name) return false
-				const key = String(item.id || item.name)
-				if (exists[key]) return false
-				exists[key] = true
-				return true
-			})
-		},
-		// 解析 membersJson 中数组或按角色分组的成员快照
-		parseMembersSnapshot(conversation) {
-			if (!conversation) return []
-			let payload = conversation.membersJson !== undefined
-				? conversation.membersJson
-				: conversation.members_json
-			if (typeof payload === 'string') {
-				try {
-					payload = JSON.parse(payload)
-				} catch (error) {
-					return []
-				}
-			}
-			return this.normalizeMembersPayload(payload)
-		},
-		// 将不同接口形态的成员数据整理成统一数组
-		normalizeMembersPayload(payload) {
-			if (!payload) return []
-			if (Array.isArray(payload)) return payload.filter(item => item && typeof item === 'object')
-			if (typeof payload !== 'object') return []
-			const result = []
-			const roleMap = {
-				patient: 'PATIENT',
-				customer: 'PATIENT',
-				client: 'PATIENT',
-				cs: 'CS',
-				customerService: 'CS',
-				assistant: 'DOCTOR_ASSISTANT',
-				doctorAssistant: 'DOCTOR_ASSISTANT',
-				caregiver: 'CAREGIVER',
-				escort: 'CAREGIVER',
-				ai: 'AI',
-				bot: 'AI'
-			}
-			const listKeys = ['members', 'list', 'users', 'participants', 'memberList']
-			listKeys.forEach(key => {
-				if (Array.isArray(payload[key])) {
-					payload[key].forEach(item => {
-						if (item && typeof item === 'object') result.push(item)
-					})
-				}
-			})
-			Object.keys(roleMap).forEach(key => {
-				const value = payload[key]
-				if (Array.isArray(value)) {
-					value.forEach(item => {
-						if (item && typeof item === 'object') result.push(Object.assign({ role: item.role || roleMap[key] }, item))
-					})
-				} else if (value && typeof value === 'object') {
-					result.push(Object.assign({ role: value.role || roleMap[key] }, value))
-				}
-			})
-			return result
-		},
-		// 标准化群成员卡片字段
-		normalizeMember(raw, index) {
-			const source = raw || {}
-			const nested = source.user || source.profile || source.member || {}
-			const data = Object.assign({}, nested, source)
-			const role = String(data.role || data.senderType || data.userType || data.memberRole || '').toUpperCase()
-			const baseRemark = data.remark || data.description || data.title || data.department || data.hospitalName || ''
-			const genderText = data.gender === 'FEMALE' || data.gender === '女' ? '女' : data.gender === 'MALE' || data.gender === '男' ? '男' : ''
-			const ageText = this.toNumber(data.age) ? `${data.age}岁` : ''
-			const patientText = [genderText, ageText, data.inpatientNo ? `住院号 ${data.inpatientNo}` : ''].filter(Boolean).join('·')
-			const roleFallback = {
-				PATIENT: patientText || '健康管理群客户',
-				CUSTOMER: patientText || '健康管理群客户',
-				CLIENT: patientText || '健康管理群客户',
-				CS: '24小时专属就医客服管家',
-				CUSTOMER_SERVICE: '24小时专属就医客服管家',
-				DOCTOR_ASSISTANT: '临床助理，负责诊疗信息协同',
-				MEDICAL_ASSISTANT: '临床助理，负责诊疗信息协同',
-				CAREGIVER: '专属陪诊师，负责到院陪诊与随诊协同',
-				ESCORT: '专属陪诊师，负责到院陪诊与随诊协同',
-				AI: '智能用药打卡与体征异常预警机器人',
-				ROBOT: '智能用药打卡与体征异常预警机器人'
-			}
-			return {
-				id: data.id || data.userId || data.memberId || `member_${index}`,
-				name: data.name || data.nickname || data.staffName || data.patientName || '',
-				avatar: data.avatar || data.avatarUrl || data.headImg || '',
-				role,
-				roleText: this.getRoleText(role),
-				remark: baseRemark || roleFallback[role] || '群成员'
-			}
-		},
-		// 标准化弹窗中的患者档案
-		normalizePopupProfile(raw, fallbackUser) {
-			const source = raw || {}
-			const patient = source.patient || source.patientInfo || source.userInfo || {}
-			const data = Object.assign({}, patient, source, fallbackUser || {})
-			const diagnosis = data.diagnosis || data.diagnosisName || data.mainDiagnosis || data.disease || ''
-			const surgery = data.surgeryType || data.surgeryName || data.operationType || data.operationName || ''
-			const surgeryTime = data.surgeryTime || data.operationTime || data.surgeryDate || ''
-			const gender = data.gender || data.sex || data.genderText || ''
-			const genderText = gender === 'MALE' || gender === '男' || gender === 1
-				? '男'
-				: gender === 'FEMALE' || gender === '女' || gender === 2
-					? '女'
-					: gender
-			const age = this.toNumber(data.age)
-			const birthDate = data.birthDate || data.birthday || data.dateOfBirth || ''
-			const phone = this.maskPhone(data.phone || data.mobile || data.contactPhone || data.telephone || '')
-			return {
-				name: data.name || data.patientName || data.nickname || '未命名患者',
-				avatar: data.avatar || data.avatarUrl || data.headImg || '',
-				age,
-				ageText: age ? `${age}岁` : '年龄未填',
-				gender,
-				genderText,
-				birthDate,
-				genderAgeText: [genderText, age ? `${age}岁` : ''].filter(Boolean).join(' · ') || '性别年龄待补充',
-				ageBirthText: [age ? `${age}岁` : '', birthDate].filter(Boolean).join(' / ') || '待补充',
-				phone,
-				inpatientNo: data.inpatientNo || data.hospitalNo || data.admissionNo || data.patientNo || '待补充',
-				hospital: data.hospital || data.hospitalName || data.medicalInstitution || data.hospitalAddress || '暂无医院信息',
-				department: data.department || data.deptName || '',
-				diagnosis,
-				diagnosisSource: data.diagnosisSource || data.sourceText || '',
-				surgeryType: surgery,
-				surgeryTime,
-				surgeryInfo: surgery ? `${surgery}${surgeryTime ? `（${surgeryTime}）` : ''}` : ''
-			}
-		},
-		// 标准化弹窗消息字段并区分发送者
-		normalizeChatMessage(raw, index) {
-			const source = raw || {}
-			const rawSenderType = String(
-				source.senderType ||
-				source.senderRole ||
-				source.role ||
-				source.actor ||
-				''
-			)
-			const senderType = this.normalizeSenderRole(rawSenderType)
-			const wireType = String(source.type || source.msgType || source.messageType || 'TEXT').toUpperCase()
-			let content = source.content || source.text || source.message || source.body || ''
-			if ((wireType === 'IMAGE' || source.msgType === 'image') && !content) content = '[图片消息]'
-			if ((wireType === 'HEALTH_CARD' || source.msgType === 'health') && !content) content = '[健康卡片消息]'
-			const mine = this.isMyChatMessage(source, senderType)
-			let msgType = 'text'
-			if (wireType === 'IMAGE' || wireType === 'IMAGE_MESSAGE' || source.msgType === 'image') msgType = 'image'
-			if (wireType === 'HEALTH_CARD' || wireType === 'HEALTH' || source.msgType === 'health') msgType = 'health'
-			const messageId = source.messageId || source.id || source.message_id || ''
-			const senderId = source.senderId || source.sender_id || source.userId || source.staffId || ''
-			return {
-				id: messageId || source.clientSeq || `popup_msg_${index}`,
-				messageId,
-				clientSeq: source.clientSeq || '',
-				senderType,
-				senderId,
-				type: mine ? 'mine' : 'other',
-				name: source.senderName || source.staffName || source.name ||
-					(mine ? this.getCurrentUserName() : (this.getRoleText(senderType) || '群成员')),
-				avatar: source.avatar || source.senderAvatar || source.avatarUrl || (mine ? this.getCurrentUserAvatar() : ''),
-				roleText: this.getRoleText(senderType),
-				msgType,
-				content,
-				time: this.formatDateTime(source.createTime || source.sendTime || source.time || source.updateTime),
-				isEdited: source.isEdited === true ||
-					Number(source.isEdited || source.edited || 0) === 1 ||
-					!!source.editedAt,
-				editedAt: source.editedAt || source.updateTime || '',
-				sending: source.sending === true,
-				failed: source.failed === true,
-				raw: source
-			}
-		},
-		// 判断消息是否由当前陪诊师发送
-		isMyChatMessage(source, senderType) {
-			if (['AI', 'SYSTEM'].indexOf(senderType) > -1) return false
-			if (source.mine === true || source.self === true || source.fromMe === true || source.direction === 'outbound') return true
-			const senderId = String(source.senderId || source.sender_id || source.userId || source.staffId || source.accountId || '').trim()
-			if (senderId && this.getMySenderIds().some(id => String(id) === senderId)) return true
-			const currentRole = this.getCurrentSenderType()
-			if (senderType && this.normalizeSenderRole(senderType) === currentRole) return true
-			return false
-		},
-		// 获取当前登录用户可能使用的 ID
-		getMySenderIds() {
-			const user = this.currentUser || {}
-			const role = this.getCurrentSenderType()
-			const ids = [
-				user.id,
-				user.userId,
-				user.staffId,
-				user.memberId,
-				user.caregiverId,
-				user.escortId,
-				user.accountId,
-				user.uid
-			]
-			if (this.currentConversation) {
-				ids.push(
-					this.currentConversation.currentUserId,
-					this.currentConversation.selfUserId,
-					this.currentConversation.memberId
-				)
-				if (role === 'CAREGIVER') ids.push(this.currentConversation.caregiverId, this.currentConversation.escortId)
-				if (role === 'CS') ids.push(this.currentConversation.csId, this.currentConversation.agentId)
-				if (role === 'PATIENT') ids.push(this.currentConversation.patientId)
-			}
-			;(this.conversationMembers || []).forEach(member => {
-				if (member && this.normalizeSenderRole(member.role) === role &&
-					(member.current === true || member.isCurrent === true || member.self === true || member.mine === true)) {
-					ids.push(member.id)
-				}
-			})
-			return ids.filter(item => item !== undefined && item !== null && String(item).trim() !== '').map(String)
-		},
-		// 获取当前登录用户的消息发送角色
-		getCurrentSenderType() {
-			const user = this.currentUser || {}
-			const rawRole = Array.isArray(user.roles)
-				? (user.roles[0] || user.role || '')
-				: (user.role || user.roles || user.userType || user.identity || '')
-			return this.normalizeSenderRole(rawRole) || 'CAREGIVER'
-		},
-		// 统一后端角色枚举
-		normalizeSenderRole(role) {
-			const text = String(role || '').toUpperCase()
-			if (!text) return ''
-			if (text.indexOf('CUSTOMER_SERVICE') > -1 || text === 'CS') return 'CS'
-			if (text.indexOf('PATIENT') > -1 || text === 'CUSTOMER' || text.indexOf('CLIENT') > -1) return 'PATIENT'
-			if (text.indexOf('CARE') > -1 || text.indexOf('ESCORT') > -1 || text.indexOf('STATION') > -1) return 'CAREGIVER'
-			if (text.indexOf('ASSISTANT') > -1) return 'DOCTOR_ASSISTANT'
-			if (text.indexOf('SYSTEM') > -1) return 'SYSTEM'
-			if (text.indexOf('AI') > -1 || text.indexOf('ROBOT') > -1) return 'AI'
-			return text
-		},
-		// 获取当前登录用户姓名
-		getCurrentUserName() {
-			const user = this.currentUser || {}
-			return user.name || user.nickname || user.realName || user.userName || user.username || this.getRoleText(this.getCurrentSenderType()) || '陪诊师'
-		},
-		// 获取当前登录用户头像
-		getCurrentUserAvatar() {
-			const user = this.currentUser || {}
-			return user.avatar || user.avatarUrl || user.headImg || user.headImage || ''
-		},
-		// 获取当前登录用户主 ID
-		getPrimarySenderId() {
-			const ids = this.getMySenderIds()
-			return ids.length ? ids[0] : ''
-		},
-		// 会话角色枚举转中文
-		getRoleText(role) {
-			const map = {
-				PATIENT: '客户',
-				CUSTOMER: '客户',
-				CLIENT: '客户',
-				CS: '客服',
-				CUSTOMER_SERVICE: '客服',
-				CAREGIVER: '陪诊师',
-				ESCORT: '陪诊师',
-				DOCTOR_ASSISTANT: '医生助理',
-				MEDICAL_ASSISTANT: '医生助理',
-				AI: '机器人',
-				ROBOT: '机器人',
-				SYSTEM: '系统'
-			}
-			return map[role] || ''
-		},
-		// 判断两个用户对象是否属于同一患者
-		samePatient(raw, user) {
-			const source = raw || {}
-			const patient = source.patient || source.patientInfo || source.userInfo || {}
-			const data = Object.assign({}, patient, source)
-			const leftId = String(data.patientId || data.id || data.userId || '')
-			const rightId = String((user && (user.patientId || user.id)) || '')
-			if (leftId && rightId && leftId === rightId) return true
-			return !!(user && user.name && (data.name === user.name || data.patientName === user.name))
-		},
+
 		// 刷新排班并进入服务日历
 		async goCalendar() {
 			await this.loadSchedules()
@@ -2050,7 +967,7 @@ export default {
 <style scoped>
 .caregiver-page {
 	min-height: 100vh;
-	padding: 20rpx 24rpx 150rpx;
+	padding: 20rpx 30rpx 150rpx;
 	box-sizing: border-box;
 	background: #f5f7fb;
 }
@@ -2114,7 +1031,7 @@ export default {
 
 .empty-block {
 	min-height: 360rpx;
-	padding: 40rpx 0;
+	padding: 40rpx ;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -2181,7 +1098,7 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	border-radius: 24rpx;
+	border-radius: 20rpx;
 	background: linear-gradient(135deg, #2f73ff 0%, #1557e8 100%);
 	box-shadow: 0 12rpx 28rpx rgba(37, 99, 255, 0.22);
 	box-sizing: border-box;
@@ -2270,7 +1187,7 @@ export default {
 	margin-bottom: 18rpx;
 	padding: 26rpx;
 	background: #ffffff;
-	border-radius: 24rpx;
+	border-radius: 20rpx;
 	box-shadow: 0 8rpx 24rpx rgba(28, 45, 85, 0.04);
 	box-sizing: border-box;
 }
@@ -2466,320 +1383,6 @@ export default {
 	/* border-top: 1rpx solid #f0f2f7; */
 }
 
-.chat-popup {
-	max-height: 92vh;
-	padding: 30rpx 26rpx calc(30rpx + env(safe-area-inset-bottom));
-	background: #f5f7fb;
-	border-radius: 24rpx 24rpx 0 0;
-	box-sizing: border-box;
-	overflow-y: auto;
-}
-
-.chat-popup-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding-bottom: 22rpx;
-	margin-bottom: 18rpx;
-	border-bottom: 1rpx solid #e8edf7;
-}
-
-.chat-popup-title {
-	font-size: 32rpx;
-	font-weight: 700;
-	color: #182338;
-}
-
-.chat-popup-subtitle {
-	margin-top: 6rpx;
-	font-size: 23rpx;
-	color: #96a0b5;
-}
-
-.chat-popup-close {
-	width: 62rpx;
-	height: 62rpx;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	border-radius: 50%;
-	background: #ffffff;
-	flex-shrink: 0;
-}
-
-.chat-section-title {
-	margin: 4rpx 0 14rpx;
-	font-size: 26rpx;
-	font-weight: 700;
-	color: #344054;
-}
-
-.chat-message-scroll {
-	height: 560rpx;
-	padding: 22rpx;
-	background: #ffffff;
-	border-radius: 22rpx;
-	box-sizing: border-box;
-	box-shadow: 0 8rpx 24rpx rgba(28, 45, 85, 0.04);
-}
-
-.popup-state {
-	min-height: 220rpx;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	color: #96a0b5;
-}
-
-.popup-state.mini {
-	min-height: 150rpx;
-}
-
-.popup-state-text {
-	margin-top: 12rpx;
-	font-size: 24rpx;
-}
-
-.popup-msg-item {
-	display: flex;
-	margin-bottom: 24rpx;
-}
-
-.popup-msg-item.mine {
-	flex-direction: row-reverse;
-}
-
-.popup-msg-avatar,
-.member-avatar {
-	width: 68rpx;
-	height: 68rpx;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	border-radius: 50%;
-	background: #edf4ff;
-	flex-shrink: 0;
-	overflow: hidden;
-}
-
-.popup-msg-avatar {
-	margin-right: 14rpx;
-}
-
-.popup-msg-item.mine .popup-msg-avatar {
-	margin-right: 0;
-	margin-left: 14rpx;
-	background: #2563ff;
-}
-
-.popup-avatar-img {
-	width: 100%;
-	height: 100%;
-}
-
-.popup-msg-body {
-	max-width: 78%;
-	min-width: 0;
-}
-
-.popup-sender {
-	display: flex;
-	align-items: center;
-	margin-bottom: 8rpx;
-	font-size: 23rpx;
-	color: #5e687c;
-}
-
-.popup-msg-item.mine .popup-sender {
-	justify-content: flex-end;
-}
-
-.popup-role-tag,
-.member-role {
-	margin-left: 8rpx;
-	padding: 2rpx 10rpx;
-	border-radius: 999rpx;
-	background: #eef4ff;
-	color: #2563ff;
-	font-size: 20rpx;
-}
-
-.popup-bubble {
-	padding: 18rpx 22rpx;
-	border-radius: 8rpx 20rpx 20rpx 20rpx;
-	background: #f4f6fa;
-	font-size: 26rpx;
-	line-height: 1.55;
-	color: #263247;
-	word-break: break-all;
-}
-
-.popup-msg-item.mine .popup-bubble {
-	border-radius: 20rpx 8rpx 20rpx 20rpx;
-	background: #2563ff;
-	color: #ffffff;
-}
-
-.popup-bubble.fail {
-	background: #fff1f0;
-	color: #cf1322;
-}
-
-.popup-msg-meta {
-	display: flex;
-	gap: 12rpx;
-	margin-top: 6rpx;
-	font-size: 20rpx;
-	color: #a1aabc;
-}
-
-.popup-msg-item.mine .popup-msg-meta {
-	justify-content: flex-end;
-}
-
-.chat-input-row {
-	display: flex;
-	align-items: center;
-	gap: 14rpx;
-	margin: 18rpx 0 20rpx;
-}
-
-.chat-popup-input {
-	flex: 1;
-	height: 72rpx;
-	padding: 0 24rpx;
-	border-radius: 999rpx;
-	background: #ffffff;
-	font-size: 26rpx;
-	box-sizing: border-box;
-	box-shadow: 0 8rpx 24rpx rgba(28, 45, 85, 0.04);
-}
-
-.chat-input-row ::v-deep .u-button {
-	flex-shrink: 0;
-}
-
-.collapse-panel {
-	margin-bottom: 16rpx;
-	background: #ffffff;
-	border-radius: 22rpx;
-	overflow: hidden;
-	box-shadow: 0 8rpx 24rpx rgba(28, 45, 85, 0.04);
-}
-
-.collapse-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 24rpx 22rpx;
-}
-
-.collapse-left {
-	display: flex;
-	align-items: center;
-	min-width: 0;
-}
-
-.collapse-title {
-	margin-left: 10rpx;
-	font-size: 27rpx;
-	font-weight: 700;
-	color: #263247;
-}
-
-.collapse-count {
-	margin-left: 8rpx;
-	font-size: 24rpx;
-	color: #96a0b5;
-}
-
-.collapse-content {
-	padding: 0 22rpx 22rpx;
-}
-
-.popup-empty-inline {
-	padding: 28rpx 20rpx;
-	text-align: center;
-	font-size: 24rpx;
-	color: #96a0b5;
-	background: #f7f9fc;
-	border-radius: 18rpx;
-}
-
-.member-item {
-	display: flex;
-	align-items: center;
-	padding: 20rpx;
-	margin-bottom: 14rpx;
-	border-radius: 18rpx;
-	background: #f7f9fc;
-}
-
-.member-info {
-	flex: 1;
-	min-width: 0;
-	margin-left: 16rpx;
-}
-
-.member-name-row {
-	display: flex;
-	align-items: center;
-	margin-bottom: 8rpx;
-}
-
-.member-name {
-	font-size: 27rpx;
-	font-weight: 700;
-	color: #263247;
-}
-
-.member-remark {
-	font-size: 23rpx;
-	color: #8b95a9;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-}
-
-.profile-grid {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 14rpx;
-}
-
-.profile-item {
-	width: calc(50% - 7rpx);
-	padding: 18rpx;
-	background: #f7f9fc;
-	border-radius: 18rpx;
-	box-sizing: border-box;
-}
-
-.profile-item.wide {
-	width: 100%;
-}
-
-.profile-label {
-	display: block;
-	margin-bottom: 8rpx;
-	font-size: 22rpx;
-	color: #96a0b5;
-}
-
-.profile-value {
-	display: block;
-	font-size: 26rpx;
-	line-height: 1.45;
-	color: #344054;
-	word-break: break-all;
-}
-
-.profile-value.strong {
-	color: #2563ff;
-	font-weight: 600;
-}
-
 .record-popup {
 	padding: 32rpx 28rpx calc(36rpx + env(safe-area-inset-bottom));
 	background: #ffffff;
@@ -2848,638 +1451,31 @@ export default {
 	flex: 1;
 }
 
-/* 新增：全屏健康管理群聊天弹窗 */
-.full-chat-popup {
-	width: 100vw;
-	height: 100vh;
-	display: flex;
-	flex-direction: column;
-	background: #f5f7fb;
-	overflow: hidden;
-}
-
-.full-chat-header {
-	flex-shrink: 0;
-	display: flex;
-	align-items: center;
-	padding: calc(20rpx + env(safe-area-inset-top)) 22rpx 18rpx;
-	background: #ffffff;
-	border-bottom: 1rpx solid #edf1f7;
-}
-
-.full-header-back,
-.full-member-btn,
-.full-archive-btn {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-}
-
-.full-header-back {
-	width: 58rpx;
-	height: 58rpx;
-	margin-right: 8rpx;
-}
-
-.full-header-main {
-	flex: 1;
-	min-width: 0;
-}
-
-.full-title-row {
-	display: flex;
-	align-items: center;
-	min-width: 0;
-}
-
-.full-chat-title {
-	font-size: 30rpx;
-	font-weight: 700;
-	color: #172033;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-}
-
-.full-group-chip {
-	margin-left: 10rpx;
-	padding: 4rpx 10rpx;
-	display: flex;
-	align-items: center;
-	border-radius: 999rpx;
-	background: #eaf2ff;
-	color: #2563ff;
-	font-size: 19rpx;
-	flex-shrink: 0;
-}
-
-.full-group-chip text {
-	margin-left: 4rpx;
-}
-
-.full-chat-subtitle {
-	margin-top: 6rpx;
-	font-size: 22rpx;
-	color: #96a0b5;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-}
-
-.full-header-actions {
-	display: flex;
-	align-items: center;
-	flex-shrink: 0;
-	margin-left: 12rpx;
-}
-
-.full-archive-btn {
-	height: 52rpx;
-	padding: 0 16rpx;
-	margin-right: 12rpx;
-	border: 1rpx solid #b9d0ff;
-	border-radius: 999rpx;
-	color: #2563ff;
-	font-size: 22rpx;
-	box-sizing: border-box;
-}
-
-.full-archive-btn text {
-	margin-left: 4rpx;
-}
-
-.full-member-btn {
-	width: 58rpx;
-	height: 58rpx;
-	border-radius: 50%;
-	background: #eef4ff;
-}
-
-.full-message-scroll {
-	flex: 1;
-	min-height: 0;
-	padding: 24rpx 24rpx 18rpx;
-	box-sizing: border-box;
-}
-
-.full-chat-state {
-	min-height: 420rpx;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	color: #96a0b5;
-}
-
-.full-state-text {
-	margin-top: 16rpx;
-	font-size: 25rpx;
-}
-
-.full-msg-row {
-	display: flex;
-	align-items: flex-start;
-	margin-bottom: 24rpx;
-}
-
-.full-msg-row.mine {
-	justify-content: flex-end;
-}
-
-.full-msg-avatar,
-.archive-hero-avatar,
-.member-list-avatar {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: #eef4ff;
-	overflow: hidden;
-	flex-shrink: 0;
-}
-
-.full-msg-avatar {
-	width: 70rpx;
-	height: 70rpx;
-	margin-right: 14rpx;
-	border-radius: 22rpx;
-}
-
-.full-msg-avatar.mine {
-	margin-right: 0;
-	margin-left: 14rpx;
-	background: #2f73ff;
-}
-
-.full-avatar-img {
-	width: 100%;
-	height: 100%;
-}
-
-.full-msg-content {
-	max-width: 76%;
-	min-width: 0;
-}
-
-.full-msg-row.mine .full-msg-content {
-	display: flex;
-	flex-direction: column;
-	align-items: flex-end;
-}
-
-.full-sender-row {
-	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	margin-bottom: 8rpx;
-}
-
-.full-sender-row.mine {
-	justify-content: flex-end;
-}
-
-.full-sender-name {
-	font-size: 23rpx;
-	font-weight: 600;
-	color: #344054;
-}
-
-.full-sender-role {
-	margin-left: 8rpx;
-	padding: 2rpx 10rpx;
-	border-radius: 999rpx;
-	background: #eef4ff;
-	color: #2563ff;
-	font-size: 19rpx;
-}
-
-.full-sender-time,
-.full-mine-meta {
-	font-size: 20rpx;
-	color: #a1aabc;
-}
-
-.full-sender-time {
-	margin-left: 10rpx;
-}
-
-.full-bubble {
-	padding: 18rpx 20rpx;
-	border-radius: 8rpx 22rpx 22rpx 22rpx;
-	background: #ffffff;
-	box-shadow: 0 6rpx 18rpx rgba(28, 45, 85, 0.04);
-	font-size: 27rpx;
-	line-height: 1.55;
-	color: #263247;
-	word-break: break-word;
-	box-sizing: border-box;
-}
-
-.full-msg-row.mine .full-bubble {
-	border-radius: 22rpx 8rpx 22rpx 22rpx;
-	background: #2f73ff;
-	color: #ffffff;
-}
-
-.edited-mark {
-	margin-left: 6rpx;
-	font-size: 21rpx;
-	color: #8a94a8;
-}
-
-.full-msg-row.mine .edited-mark {
-	color: rgba(255, 255, 255, 0.82);
-}
-
-.full-bubble.fail {
-	background: #fff1f0;
-	color: #cf1322;
-}
-
-.full-mine-meta {
-	display: flex;
-	align-items: center;
-	justify-content: flex-end;
-	margin-top: 8rpx;
-}
-
-.full-mine-meta text + text {
-	margin-left: 10rpx;
-}
-
-.edit-message-btn {
-	display: flex;
-	align-items: center;
-	margin-left: 14rpx;
-	font-size: 21rpx;
-	color: #2563ff;
-}
-
-.edit-message-btn text {
-	margin-left: 3rpx;
-}
-
-.full-chat-footer {
-	flex-shrink: 0;
-	display: flex;
-	align-items: center;
-	position: relative;
-	z-index: 2;
-	min-height: 104rpx;
-	padding: 16rpx 20rpx calc(18rpx + env(safe-area-inset-bottom));
-	background: #ffffff;
-	border-top: 1rpx solid #edf1f7;
-	box-sizing: border-box;
-}
-
-.full-chat-input {
-	flex: 1;
-	height: 72rpx;
-	line-height: 72rpx;
-	padding: 0 24rpx;
-	margin-right: 12rpx;
-	background: #f3f6fb;
-	border: 1rpx solid #e4e9f2;
-	border-radius: 999rpx;
-	font-size: 25rpx;
-	color: #263247;
-	box-sizing: border-box;
-}
-
-
-.send-btn {
-		width: 72rpx;
-		height: 72rpx;
-		border-radius: 20rpx;
-		background: #2563eb;
-		color: #fff;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 32rpx;
-	}
-.full-send-btn text {
-	margin-left: 4rpx;
-	font-size: 25rpx;
-	color: #ffffff;
-	font-weight: 600;
-}
-
-.full-send-btn.disabled {
-	background: #b8d3ff;
-	box-shadow: none;
-}
-	
-
-/* 新增：编辑群聊消息弹窗 */
-.edit-chat-popup {
-	width: 640rpx;
-	padding: 34rpx 30rpx 30rpx;
-	background: #ffffff;
-	border-radius: 24rpx;
-	box-sizing: border-box;
-}
-
-.edit-chat-title {
-	font-size: 32rpx;
-	font-weight: 700;
-	color: #172033;
-	text-align: center;
-}
-
-.edit-original-box {
-	margin-top: 28rpx;
-	padding: 20rpx;
-	background: #f5f7fb;
-	border-radius: 16rpx;
-}
-
-.edit-original-label {
-	display: block;
-	margin-bottom: 10rpx;
-	font-size: 22rpx;
-	color: #8a94a8;
-}
-
-.edit-original-text {
-	font-size: 26rpx;
-	line-height: 1.5;
-	color: #344054;
-	word-break: break-word;
-}
-
-.edit-chat-textarea {
-	width: 100%;
-	height: 180rpx;
-	margin-top: 22rpx;
-	padding: 20rpx;
-	background: #ffffff;
-	border: 1rpx solid #dce3f0;
-	border-radius: 16rpx;
-	font-size: 26rpx;
-	line-height: 1.5;
-	color: #263247;
-	box-sizing: border-box;
-}
-
-.edit-tip {
-	margin-top: 16rpx;
-	font-size: 21rpx;
-	line-height: 1.5;
-	color: #96a0b5;
-}
-
-.edit-actions {
-	display: flex;
-	margin-top: 28rpx;
-}
-
-.edit-action-btn {
-	flex: 1;
-	margin: 0 8rpx;
-}
-
-/* 新增：患者档案与群成员独立弹窗 */
-.archive-popup,
-.member-popup {
-	width: 100vw;
-	height: 100vh;
-	display: flex;
-	flex-direction: column;
-	background: #f5f7fb;
-	overflow: hidden;
-}
-
-.side-popup-header {
-	flex-shrink: 0;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: calc(22rpx + env(safe-area-inset-top)) 24rpx 20rpx;
-	background: #ffffff;
-	border-bottom: 1rpx solid #edf1f7;
-}
-
-.side-title-wrap {
-	display: flex;
-	align-items: center;
-	min-width: 0;
-}
-
-.side-title-icon {
-	width: 56rpx;
-	height: 56rpx;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	margin-right: 14rpx;
-	border-radius: 18rpx;
-}
-
-.side-title-icon.blue {
-	background: #eef4ff;
-}
-
-.side-popup-title {
-	font-size: 30rpx;
-	font-weight: 700;
-	color: #172033;
-}
-
-.side-close {
-	width: 60rpx;
-	height: 60rpx;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-}
-
-.side-body-scroll {
-	flex: 1;
-	min-height: 0;
-	padding: 22rpx 24rpx;
-	box-sizing: border-box;
-}
-
-.archive-hero-card,
-.archive-card,
-.member-list-card {
-	background: #ffffff;
-	border-radius: 24rpx;
-	box-shadow: 0 8rpx 24rpx rgba(28, 45, 85, 0.04);
-	box-sizing: border-box;
-}
-
-.archive-hero-card {
-	display: flex;
-	align-items: center;
-	padding: 28rpx;
-}
-
-.archive-hero-avatar {
-	width: 96rpx;
-	height: 96rpx;
-	margin-right: 22rpx;
-	border-radius: 28rpx;
-}
-
-.archive-hero-info {
-	flex: 1;
-	min-width: 0;
-}
-
-.archive-name-row,
-.archive-sub-row,
-.member-list-title-row {
-	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-}
-
-.archive-name {
-	margin-right: 14rpx;
-	font-size: 34rpx;
-	font-weight: 700;
-	color: #182338;
-}
-
-.archive-gender-age {
-	font-size: 25rpx;
-	color: #677085;
-}
-
-.archive-sub-row {
-	margin-top: 12rpx;
-	justify-content: space-between;
-	font-size: 24rpx;
-	color: #677085;
-}
-
-.archive-card {
-	margin-top: 20rpx;
-	padding: 26rpx;
-}
-
-.archive-card-title {
-	margin-bottom: 20rpx;
-	font-size: 29rpx;
-	font-weight: 700;
-	color: #182338;
-}
-
-.archive-grid {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 18rpx 0;
-}
-
-.archive-field {
-	width: 50%;
-	display: flex;
-	flex-direction: column;
-	padding-right: 16rpx;
-	box-sizing: border-box;
-}
-
-.archive-label {
-	margin-bottom: 8rpx;
-	font-size: 22rpx;
-	color: #96a0b5;
-}
-
-.archive-value {
-	font-size: 26rpx;
-	line-height: 1.45;
-	color: #344054;
-	word-break: break-all;
-	margin-left: 12rpx;
-}
-
-.archive-value.strong {
-	color: #2563ff;
-	font-weight: 600;
-}
-
-.diagnosis-row {
-	padding: 18rpx 0;
-	border-top: 1rpx solid #f0f2f7;
-}
-
-.diagnosis-row .archive-value {
-	margin-top: 8rpx;
-}
-
-.source-text {
-	display: block;
-	margin-top: 8rpx;
-	font-size: 21rpx;
-	color: #16a34a;
-}
-
-.archive-footer {
-	flex-shrink: 0;
-	padding: 16rpx 24rpx calc(20rpx + env(safe-area-inset-bottom));
-	background: #ffffff;
-	border-top: 1rpx solid #edf1f7;
-}
-
-.member-desc {
-	flex-shrink: 0;
-	padding: 18rpx 24rpx 0;
-	font-size: 23rpx;
-	line-height: 1.5;
-	color: #96a0b5;
-}
-
-.member-body {
-	padding-top: 18rpx;
-}
-
-.member-list-card {
-	display: flex;
-	align-items: center;
-	padding: 24rpx;
-	margin-bottom: 18rpx;
-}
-
-.member-list-avatar {
-	width: 82rpx;
-	height: 82rpx;
-	margin-right: 18rpx;
-	border-radius: 24rpx;
-}
-
-.member-list-info {
-	flex: 1;
-	min-width: 0;
-}
-
-.member-list-name {
-	margin-right: 10rpx;
-	font-size: 28rpx;
-	font-weight: 700;
-	color: #182338;
-}
-
-.member-list-role {
-	padding: 3rpx 12rpx;
-	border-radius: 999rpx;
-	background: #eef4ff;
-	color: #2563ff;
-	font-size: 20rpx;
-}
-
-.member-list-remark {
-	display: block;
-	margin-top: 10rpx;
-	font-size: 23rpx;
-	color: #8b95a9;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-}
 .user-avatar{
 	position: relative
 }
+.stat-row {
+		display: flex;
+		justify-content: space-between;
+		position: relative;
+		background-color: #fff;
+		border-radius: 20rpx;
+		padding:30rpx 0;
+	}
+
+	.stat-item {
+		text-align: center;
+		flex: 1;
+	}
+
+	.stat-item .num {
+		font-size: 38rpx;
+		font-weight: bold;
+	}
+
+	.stat-item .label {
+		font-size: 26rpx;
+		color: #666;
+		margin-top: 6rpx;
+	}
 </style>

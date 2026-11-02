@@ -1,98 +1,105 @@
 <template>
 	<view class="page-my">
-		 <!-- 顶部渐变区域 -->
-    <view class="top-wrap">
-      <view class="user-info">
-        <image class="avatar" :src="userInfo.avatar" mode="aspectFill"></image>
-        <view class="user-right">
-          <view class="name-row">
-            <text class="username">{{ userInfo.username }}</text>
-           
-          </view>
-          <!-- <view class="meta">{{ userInfo.city }} | {{ userInfo.age }}岁 | {{ userInfo.height }}</view> -->
-          
-        </view>
-      </view>
+		<view class="content-wrap">
+			<!-- 顶部渐变区域 -->
+			<view class="top-wrap">
+				<view class="user-info">
+					<view class="avatar avatar-male"></view>
+					<!-- <view  class="avatar avatar-female"></view> -->
 
-      <!-- 统计行 -->
-      <view class="stat-row">
-        <view class="stat-item">
-          <view class="num">{{ stat.totalCount }}</view>
-          <view class="label">累计服务</view>
-        </view>
-        <view class="stat-item">
-          <view class="num">{{ stat.monthCount }}</view>
-          <view class="label">本月服务</view>
-        </view>
-        <view class="stat-item">
-          <view class="num">{{ stat.rating }}</view>
-          <view class="label">服务评分</view>
-        </view>
-       
-      </view>
-    </view>
 
-		<!-- 功能菜单卡片 -->
-		<view class="menu-card">
-			<view class="menu-item"  v-for="(item,key) in routeList"  @click="routeTo(item.routeTo)">
-				<u-icon :name="item.icon" color="#909399" size="45rpx"></u-icon>
-				<text class="menu-label">{{ item.name }}</text>
-				<u-icon class="arrow" name="arrow-right" color="#ddd" size="32rpx"></u-icon>
+					<view class="user-right">
+						<view class="name-row">
+							<text class="username">{{ userInfo.username }}</text>
+
+						</view>
+						<view class="meta font-info">专业陪诊师</view>
+
+					</view>
+				</view>
+
+				<!-- 统计行 -->
+				<view class="stat-row">
+					<view class="stat-item">
+						<view class="num">{{ stat.totalCount }}</view>
+						<view class="label">累计服务</view>
+					</view>
+					<view class="stat-item">
+						<view class="num">{{ stat.monthCount }}</view>
+						<view class="label">本月服务</view>
+					</view>
+					<view class="stat-item">
+						<view class="num">{{ stat.rating }}</view>
+						<view class="label">服务评分</view>
+					</view>
+
+				</view>
 			</view>
-			
-		</view>
-		<!-- 退出登录按钮 -->
-		<view class="logout-btn">
-			<u-button  :hairline="false" @click="logOut()"  text="退出登录"></u-button>
+
+			<!-- 功能菜单卡片 -->
+			<view class="menu-card">
+				<view class="menu-item" v-for="(item,key) in routeList" @click="routeTo(item.routeTo)">
+					<u-icon :name="item.icon" color="#231f32" size="40rpx"></u-icon>
+					<text class="menu-label">{{ item.name }}</text>
+					<u-icon class="arrow" name="arrow-right" color="#ddd" size="22rpx"></u-icon>
+				</view>
+
+			</view>
+			<!-- 退出登录按钮 -->
+			<view class="logout-btn" @click="logOut()">退出登录 </view>
 		</view>
 		<myTabbar :current="2"></myTabbar>
 	</view>
 </template>
 <script>
 	import myTabbar from "@/components/myTabbar.vue";
-	import { postAuthLogoutApi,getEscortProfileStatsApi } from '@/api/frontApikit.js'
+	import {
+		postAuthLogoutApi,
+		getEscortProfileStatsApi
+	} from '@/api/frontApikit.js'
 	export default {
 		components: {
 			myTabbar
 		},
 		data() {
-			
+
 			return {
 				logoutLoading: false,
-						userInfo:{} ,
-      stat: {
-        monthCount: 0,
-        rating: 0,
-        totalCount: 0,
-        
-      },
-	  routeList:[
-		{
-			name:'我的排班',
-			routeTo:'',
-			icon:'calendar'
-		},
-		{
-			name:'服务记录',
-			routeTo:'',
-			icon:'file-text'
-		},
-		{
-			name:'消息通知',
-			routeTo:'',
-			icon:'bell'
-		},
-		{
-			name:'账号设置',
-			routeTo:'',
-			icon:'setting'
-		},
-		{
-			name:'帮助中心',
-			routeTo:'',
-			icon:'question-circle'
-		},
-	  ]
+				userInfo: {
+
+				},
+				stat: {
+					monthCount: 0,
+					rating: 0,
+					totalCount: 0,
+
+				},
+				routeList: [{
+						name: '我的排班',
+						routeTo: '',
+						icon: 'calendar'
+					},
+					{
+						name: '服务记录',
+						routeTo: '',
+						icon: 'file-text'
+					},
+					{
+						name: '消息通知',
+						routeTo: '',
+						icon: 'bell'
+					},
+					{
+						name: '账号设置',
+						routeTo: '',
+						icon: 'setting'
+					},
+					{
+						name: '帮助中心',
+						routeTo: '',
+						icon: 'question-circle'
+					},
+				]
 			}
 		},
 		onLoad() {
@@ -100,26 +107,26 @@
 			this.loadData()
 		},
 		methods: {
-				// 读取本地登录信息，兼容字符串和对象两种缓存格式
-		readCurrentUser() {
-			try {
-				const raw = uni.getStorageSync('userInfo')
-				if (!raw) return {}
-				return typeof raw === 'string' ? JSON.parse(raw) : raw
-			} catch (error) {
-				return {}
-			}
-		},
-	
-	  async loadData() {
-      const res = await getEscortProfileStatsApi()
-	  console.log(res)
-        this.stat = res
+			// 读取本地登录信息，兼容字符串和对象两种缓存格式
+			readCurrentUser() {
+				try {
+					const raw = uni.getStorageSync('userInfo')
+					if (!raw) return {}
+					return typeof raw === 'string' ? JSON.parse(raw) : raw
+				} catch (error) {
+					return {}
+				}
+			},
 
-      if (res.code === 200) {
-        this.userInfo = res.data.userInfo
-      }
-    },
+			async loadData() {
+				const res = await getEscortProfileStatsApi()
+				console.log(res)
+				this.stat = res
+
+				if (res.code === 200) {
+					this.userInfo = res.data.userInfo
+				}
+			},
 			routeTo(res) {
 				let data = {
 					title: 'hello',
@@ -178,39 +185,122 @@
 </script>
 <style scoped>
 	.page-my {
-		background-color: #f9fafb;
+		background-color: #eef0f6;
 		padding-bottom: calc(120rpx + var(--safe-area-inset-bottom));
 		max-width: 500px;
 		margin: 0 auto;
+		padding: 0 30rpx;
+		min-height: 100vh;
+		box-sizing: border-box;
+
+		padding-top: calc(60rpx + var(--status-bar-height));
+		/* padding-bottom: calc(60px + var(--safe-area-inset-bottom)); */
 	}
 
-	/* 紫色头部 */
-	.header {
-		padding: 80rpx 40rpx 60rpx;
-		display: flex;
-		align-items: center;
-		border-bottom-left-radius: 60rpx;
-		border-bottom-right-radius: 60rpx;
+	.page-my>.content-wrap {
+		flex: 1;
 	}
 
-	.avatar-wrap {
-		width: 140rpx;
-		height: 140rpx;
-		background: #a84fef;
-		border-radius: 32rpx;
-		border: 1px solid #c284f4;
+	.avatar {
+		width: 200rpx;
+		height: 200rpx;
+		border-radius: 50%;
+		margin-right: 24rpx;
+		border: 2px solid #fff;
+		overflow: hidden;
+		background-size: 100% auto;
+		background-repeat: no-repeat;
+		position: relative;
+		top: -60rpx;
+	}
+
+	.avatar-male {
+
+		background-image: url("@/static/img/maleAvatar.png");
+
+	}
+
+	.avatar-female {
+		background-image: url("@/static/img/femaleAvatar.png");
+	}
+
+	.user-info {
 		display: flex;
-		align-items: center;
-		justify-content: center;
-		margin-right: 30rpx;
+		/* align-items: center; */
+		/* margin-bottom: 40rpx; */
 	}
 
 	.user-info .username {
-		font-size: 48rpx;
+		font-size: 38rpx;
 		/* color: #fff; */
 		font-weight: bold;
 		display: block;
 		margin-bottom: 16rpx;
+	}
+
+
+	.meta {
+		font-size: 22rpx;
+	}
+
+	.name-row {
+		display: flex;
+		align-items: center;
+	}
+
+	.username {
+		font-size: 38rpx;
+		font-weight: 600;
+	}
+
+	.online-tag {
+		display: flex;
+		align-items: center;
+		background: #e6f9e9;
+		color: #36b346;
+		padding: 4rpx 12rpx;
+		border-radius: 20rpx;
+		margin-left: 16rpx;
+		font-size: 24rpx;
+	}
+
+	.green-dot {
+		width: 12rpx;
+		height: 12rpx;
+		background-color: #36b346;
+		border-radius: 50%;
+		margin-right: 6rpx;
+	}
+
+	.stat-row {
+		display: flex;
+		justify-content: space-between;
+		position: relative;
+		top: -30rpx;
+	}
+
+	.stat-item {
+		text-align: center;
+		flex: 1;
+	}
+
+	.stat-item .num {
+		font-size: 38rpx;
+		font-weight: bold;
+	}
+
+	.stat-item .label {
+		font-size: 26rpx;
+		color: #666;
+		margin-top: 6rpx;
+	}
+
+	.top-wrap {
+		/* background: linear-gradient(180deg, #fff1dd, #ffffff); */
+		padding: 20rpx 30rpx;
+		border: 1px solid #fff;
+		border-radius: 10px;
+		background: radial-gradient(circle at top right, #fff1dd, #ffffff 70%);
 	}
 
 	.tag {
@@ -240,17 +330,17 @@
 		/* margin: -30rpx 30rpx 40rpx; */
 		background: #fff;
 		border-radius: 20rpx;
-		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
+		/* border: 1px solid #fff; */
 		overflow: hidden;
-		margin: 30rpx;
+		margin: 30rpx 0;
 	}
 
 	.menu-item {
 		display: flex;
 		align-items: center;
 		padding: 28rpx 32rpx;
-		color:#909399;
-	
+		color: #231f32;
+
 	}
 
 
@@ -262,14 +352,20 @@
 
 	.menu-label {
 		flex: 1;
-		font-size: 28rpx;
+		font-size: 26rpx;
 		margin-left: 5px;
 		line-height: 45rpx;
 	}
 
 	/* 退出登录 */
 	.logout-btn {
-		padding: 0 30rpx;
+		/* border: 1px solid #ddd; */
+		text-align: center;
+		font-size: 26rpx;
+		height: 70rpx;
+		line-height: 70rpx;
+		background-color: #fff;
+		border-radius: 15rpx;
 	}
 
 	.logout-icon,
@@ -281,61 +377,9 @@
 	.logout-icon {
 		margin-right: 12rpx;
 	}
-	.top-wrap {
-  background: linear-gradient(180deg, #fff1dd, #ffffff);
-  padding: 40rpx 30rpx 20rpx;
-}
-.user-info {
-  display: flex;
-  align-items: center;
-  margin-bottom: 40rpx;
-}
-.avatar {
-  width: 140rpx;
-  height: 140rpx;
-  border-radius: 50%;
-  margin-right: 24rpx;
-}
-.name-row {
-  display: flex;
-  align-items: center;
-}
-.username {
-  font-size: 38rpx;
-  font-weight: 600;
-}
-.online-tag {
-  display: flex;
-  align-items: center;
-  background: #e6f9e9;
-  color: #36b346;
-  padding: 4rpx 12rpx;
-  border-radius: 20rpx;
-  margin-left: 16rpx;
-  font-size: 24rpx;
-}
-.green-dot {
-  width: 12rpx;
-  height: 12rpx;
-  background-color: #36b346;
-  border-radius: 50%;
-  margin-right: 6rpx;
-}
-.stat-row {
-  display: flex;
-  justify-content: space-between;
-}
-.stat-item {
-  text-align: center;
-  flex: 1;
-}
-.stat-item .num {
-  font-size: 44rpx;
-  font-weight: bold;
-}
-.stat-item .label {
-  font-size: 26rpx;
-  color: #666;
-  margin-top: 6rpx;
+</style>
+<style>
+uni-page-body {
+  overflow: hidden !important;
 }
 </style>

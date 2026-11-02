@@ -1,5 +1,13 @@
 <template>
 	<view class="page-content">
+		<view  class="start-banner">
+			<view class="start-info">
+				<text class="start-title">患者已确认，等待开始服务</text>
+				<text class="start-desc">开始后可进行到院签到和服务记录</text>
+			</view>
+			<button class="start-btn" :disabled="actionLoading" @click="startService">开始服务</button>
+		</view>
+
 		<!-- 改动位置：新增页面加载态 -->
 		<view v-if="pageLoading" class="state-box">
 			<u-loading-icon mode="circle" color="#2563ff" size="48rpx"></u-loading-icon>
@@ -1030,8 +1038,8 @@
 	}
 
 	.start-banner {
-		background: #f3e8fc;
-		border: 1rpx solid #d8b4fe;
+		    background: #f6fafe;
+    border: 1px solid #447dfd;
 		border-radius: 20rpx;
 		padding: 28rpx;
 		margin-bottom: 30rpx;
@@ -1049,13 +1057,13 @@
 		display: block;
 		font-size: 30rpx;
 		font-weight: bold;
-		color: #581c87;
+		color: #447dfd;
 	}
 
 	.start-desc {
 		display: block;
-		font-size: 24rpx;
-		color: #7e3af2;
+		font-size: 22rpx;
+		color: #447dfd;
 		margin-top: 8rpx;
 	}
 

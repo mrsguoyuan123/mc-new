@@ -1,149 +1,507 @@
 <template>
   <view class="page-doctor-index">
-    <!-- 头部 -->
-    <view class="header">
-      <view class="title-wrap">
-        <view class="icon-doc"></view>
-        <view class="title">医生</view>
-      </view>
-      <view class="sub-title">术后患者全流程管理</view>
-    </view>
-    <!-- 搜索 -->
-    <view class="search-wrap">
-      <input class="search-input" placeholder="搜索患者姓名、手机号、手术名称..." v-model="keyword" @input="onSearch" />
-    </view>
-    <!-- 筛选行 -->
-    <view class="filter-row">
-      <picker mode="selector" :range="sortOptions" :value="sortIndex" @change="onSortChange">
-        <view class="filter-item">
-          <text>时间倒序 (默认最近)</text>
-        </view>
-      </picker>
-      <picker mode="selector" :range="deptOptions" :value="deptIndex" @change="onDeptChange">
-        <view class="filter-item">
-          <text>科室</text>
-        </view>
-      </picker>
-    </view>
-    <!-- 时间标签 -->
-    <view class="time-tab">
-      <view class="time-tab-item" :class="{active:timeType==='all'}" @click="timeType='all'">全部</view>
-      <view class="time-tab-item" :class="{active:timeType==='7d'}" @click="timeType='7d'">近7天</view>
-      <view class="time-tab-item" :class="{active:timeType==='30d'}" @click="timeType='30d'">近30天</view>
-      <view class="time-tab-item" :class="{active:timeType==='custom'}" @click="openCustomDate">自定义</view>
-    </view>
-    <!-- 列表统计 -->
-    <view class="list-tip">
-      <text>共 {{total}} 位患者记录</text>
-      <text class="right">点击进入详情</text>
-    </view>
-    <!-- 患者列表 -->
-    <view class="patient-list">
-      <view class="patient-item" v-for="item in patientList" :key="item.id">
-        <view class="left-avatar">
-          <view class="avatar-circle">{{item.name.charAt(0)}}</view>
-        </view>
-        <view class="content">
-          <view class="name-row">
-            <text class="name">{{item.name}}</text>
-            <text class="gender">{{item.gender}}</text>
-            <button class="btn-chat" >查看沟通记录</button>
+    <view class="top-panel">
+      <view class="header">
+        <view class="header-info">
+          <view class="title-wrap">
+            <view class="icon-doc"></view>
+            <view class="title">医生工作台</view>
           </view>
-          <view class="surgery-name">{{item.surgeryType}}</view>
-          <view class="time-row">
-            <text>手术时间：{{item.surgeryDate}}</text>
-            <text class="btn-archive" @click="routeTo(item.id)">查看详情报告</text>
-          </view>
+          <view class="sub-title">术后患者全流程管理</view>
+        </view>
+        <view class="patient-count">
+          <text class="count-num">{{ total }}</text>
+          <text class="count-label">位患者</text>
         </view>
       </view>
+
+      <view class="search-wrap">
+        <u-icon name="search" color="#98a2b3" size="21"></u-icon>
+        <input
+          v-model="keyword"
+          class="search-input"
+          placeholder="搜索患者姓名、手机号、手术名称"
+          placeholder-class="search-placeholder"
+          confirm-type="search"
+          @input="onSearchInput"
+          @confirm="resetAndLoad"
+        />
+        <view v-if="keyword" class="search-clear" @click="clearKeyword">
+          <u-icon name="close-circle-fill" color="#c0c6d2" size="18"></u-icon>
+        </view>
+      </view>
+
+      <view class="filter-row">
+        <picker mode="selector" :range="departmentNames" :value="departmentIndex" @change="onDepartmentChange">
+          <view class="filter-item">
+            <u-icon name="home" color="#2563eb" size="16"></u-icon>
+            <text class="filter-text">{{ currentDepartmentName }}</text>
+            <u-icon name="arrow-down" color="#667085" size="13"></u-icon>
+          </view>
+        </picker>
+        <picker mode="selector" :range="sortNames" :value="sortIndex" @change="onSortChange">
+          <view class="filter-item">
+            <u-icon :name="sort === 'desc' ? 'arrow-down' : 'arrow-up'" color="#2563eb" size="16"></u-icon>
+            <text class="filter-text">{{ sort === 'desc' ? '手术日期倒序' : '手术日期正序' }}</text>
+          </view>
+        </picker>
+      </view>
+
+      <view class="date-row">
+        <view class="quick-date-list">
+          <view
+            v-for="item in quickDateOptions"
+            :key="item.value"
+            class="time-tab-item"
+            :class="{ active: timeType === item.value }"
+            @click="selectQuickDate(item.value)"
+          >{{ item.label }}</view>
+        </view>
+        <view class="custom-date-range" :class="{ active: timeType === 'custom' }">
+          <picker mode="date" :value="from" :end="to || today" @change="onFromChange">
+            <view class="date-box">{{ from || '开始日期' }}</view>
+          </picker>
+          <text class="date-line">至</text>
+          <picker mode="date" :value="to" :start="from" :end="today" @change="onToChange">
+            <view class="date-box">{{ to || '结束日期' }}</view>
+          </picker>
+        </view>
+      </view>
     </view>
+
+    <scroll-view
+      scroll-y
+      class="patient-scroll"
+      refresher-enabled
+      :refresher-triggered="refreshing"
+      @refresherrefresh="onPullDownRefresh"
+      @scrolltolower="loadMorePatients"
+    >
+      <view class="list-tip">
+        <text>共 {{ total }} 位患者记录</text>
+        <text class="right">按 surgery_date {{ sort === 'desc' ? '倒序' : '正序' }}</text>
+      </view>
+
+      <view v-if="listLoading && page === 1" class="state-card">
+        <u-loading-icon mode="circle" color="#2563eb" size="28"></u-loading-icon>
+        <text>患者列表加载中...</text>
+      </view>
+
+      <view v-else-if="!patientList.length" class="state-card empty-card">
+        <u-icon name="account" color="#cbd5e1" size="48"></u-icon>
+        <text class="empty-title">暂无符合条件的患者</text>
+        <text class="empty-desc">可调整搜索词、科室或手术日期后重试</text>
+      </view>
+
+      <template v-else>
+        <view class="patient-item" v-for="item in patientList" :key="item.id">
+          <view class="patient-card-head">
+            <view class="left-avatar">
+              <image v-if="item.avatar" :src="item.avatar" mode="aspectFill" class="avatar-img"></image>
+              <text v-else class="avatar-text">{{ item.avatarText }}</text>
+            </view>
+            <view class="patient-base">
+              <view class="name-row">
+                <text class="name">{{ item.name }}</text>
+                <text v-if="item.genderText" class="gender">{{ item.genderText }}</text>
+                <text v-if="item.ageText" class="age">{{ item.ageText }}</text>
+              </view>
+              <view class="patient-meta">
+                <text v-if="item.departmentName">{{ item.departmentName }}</text>
+                <text v-if="item.inpatientNo">住院号：{{ item.inpatientNo }}</text>
+              </view>
+            </view>
+            <button class="btn-chat" @click="showMessage(item)">查看沟通记录</button>
+          </view>
+
+          <view class="surgery-name">{{ item.surgeryType || '手术方式待补充' }}</view>
+          <view v-if="item.diagnosis" class="diagnosis">诊断：{{ item.diagnosis }}</view>
+
+          <view class="card-footer">
+            <view class="time-row">
+              <u-icon name="clock" color="#667085" size="15"></u-icon>
+              <text>手术时间：{{ item.surgeryDate || '待补充' }}</text>
+            </view>
+            <view class="btn-archive" @click="routeTo(item.id)">
+              <text>查看详情报告</text>
+              <u-icon name="arrow-right" color="#2563eb" size="14"></u-icon>
+            </view>
+          </view>
+        </view>
+
+        <u-loadmore
+          :status="loadmoreStatus"
+          loadmore-text="上拉加载更多"
+          loading-text="正在加载..."
+          nomore-text="没有更多患者了"
+          @loadmore="loadMorePatients"
+        ></u-loadmore>
+      </template>
+    </scroll-view>
+
+    <message-pop
+      v-if="messagePopupVisible"
+      role="DOCTOR"
+      :patient-id="activePatientId"
+      :conversation-id="activePatientId"
+      :current-user-id="currentUserId"
+      :show-input="false"
+      @close="closeMessagePopup"
+    ></message-pop>
 
     <myTabbar :current="1"></myTabbar>
   </view>
 </template>
 
 <script>
-import myTabbar from "@/components/myTabbar";
-import { getDoctorPatientsApi,getDoctorPatientsByIdConversationApi,postDoctorPatientsByIdAttachmentsApi,deleteDoctorPatientsByIdAttachmentsByAttIdApi } from '@/api/frontApikit.js'
+import myTabbar from '@/components/myTabbar.vue'
+import MessagePop from '@/components/pop/messagePop.vue'
+import {
+  getDoctorPatientsApi,
+  getDictDepartmentsApi
+} from '@/api/frontApikit.js'
+
 export default {
   components: {
-    myTabbar
+    myTabbar,
+    MessagePop
   },
   data() {
     return {
       userInfo: {},
-      keyword:'',
-      departmentId:'',
-      from:'',
-      to:'',
-      sort:'desc',
-      page:1,
-      pageSize:20,
-      patientList:[],
-      total:0,
-      timeType:'all',
-      sortOptions:['时间倒序','时间正序'],
-      sortIndex:0,
-      deptOptions:['全部科室'],
-      deptIndex:0
+      keyword: '',
+      departmentId: '',
+      departmentList: [{ id: '', name: '全部科室' }],
+      departmentIndex: 0,
+      from: '',
+      to: '',
+      today: '',
+      sort: 'desc',
+      sortIndex: 0,
+      sortNames: ['手术日期倒序', '手术日期正序'],
+      quickDateOptions: [
+        { value: 'all', label: '全部' },
+        { value: '7d', label: '近7天' },
+        { value: '30d', label: '近30天' },
+        { value: 'custom', label: '自定义' }
+      ],
+      timeType: 'all',
+      page: 1,
+      pageSize: 20,
+      patientList: [],
+      total: 0,
+      hasMore: false,
+      listLoading: false,
+      refreshing: false,
+      searchTimer: null,
+      messagePopupVisible: false,
+      activePatientId: ''
+    }
+  },
+  computed: {
+    departmentNames() {
+      return this.departmentList.map(item => item.name || item.departmentName || '未命名科室')
+    },
+    currentDepartmentName() {
+      return this.departmentNames[this.departmentIndex] || '全部科室'
+    },
+    currentUserId() {
+      return this.userInfo.id || this.userInfo.userId || this.userInfo.doctorId || ''
+    },
+    loadmoreStatus() {
+      if (this.listLoading) return 'loading'
+      return this.hasMore ? 'loadmore' : 'nomore'
     }
   },
   onLoad() {
-    const userInfo = this.readCurrentUser()
-    this.userInfo = userInfo
-    this.loadData();
+    this.userInfo = this.readCurrentUser()
+    this.today = this.formatDate(new Date())
+    this.bootstrap()
+  },
+  onReachBottom() {
+    this.loadMorePatients()
+  },
+  beforeDestroy() {
+    this.clearSearchTimer()
   },
   methods: {
-       readCurrentUser() {
+    async bootstrap() {
+      await Promise.all([
+        this.loadDepartments(),
+        this.loadPatients(true)
+      ])
+    },
+
+    readCurrentUser() {
       try {
         const raw = uni.getStorageSync('userInfo')
         if (!raw) return {}
         return typeof raw === 'string' ? JSON.parse(raw) : raw
       } catch (error) {
-        console.error('读取userInfo失败', error)
         return {}
       }
     },
-    // 获取患者列表
-    async loadData() {
-     
-      const res = await getDoctorPatientsApi({
-        keyword:this.keyword,
-        departmentId:this.departmentId,
-        from:this.from,
-        to:this.to,
-        sort:this.sort,
-        page:this.page,
-        pageSize:this.pageSize
-      })
-      console.log('患者列表',res)
-        this.patientList = res.list
-        this.total = res.total
 
-     
+    async loadDepartments() {
+      try {
+        const result = await getDictDepartmentsApi({})
+        const list = this.extractList(result)
+        const options = [{ id: '', name: '全部科室' }].concat(
+          list.map((item, index) => this.normalizeDepartment(item, index)).filter(item => item.name)
+        )
+        this.departmentList = this.uniqueById(options)
+        this.syncDepartmentIndex()
+      } catch (error) {
+        this.departmentList = [{ id: '', name: '全部科室' }]
+        this.departmentIndex = 0
+      }
     },
-    onSearch(){
+
+    normalizeDepartment(item, index) {
+      const source = item || {}
+      return {
+        id: source.id || source.departmentId || source.value || '',
+        name: source.name || source.departmentName || source.title || `科室${index + 1}`
+      }
+    },
+
+    uniqueById(list) {
+      const exists = {}
+      return list.filter(item => {
+        const key = item.id === undefined || item.id === null || item.id === ''
+          ? `name_${item.name}`
+          : String(item.id)
+        if (exists[key]) return false
+        exists[key] = true
+        return true
+      })
+    },
+
+    syncDepartmentIndex() {
+      const index = this.departmentList.findIndex(item => String(item.id) === String(this.departmentId || ''))
+      this.departmentIndex = index > -1 ? index : 0
+    },
+
+    async loadPatients(reset) {
+      if (this.listLoading) return
+      if (reset) {
+        this.page = 1
+        this.hasMore = false
+      }
+      this.listLoading = true
+      try {
+        const result = await getDoctorPatientsApi(this.buildQuery())
+        const pageData = this.normalizePageResult(result)
+        const nextList = pageData.list.map((item, index) => this.normalizePatient(item, index))
+        this.patientList = this.page === 1 ? nextList : this.patientList.concat(nextList)
+        this.total = pageData.total
+        this.hasMore = nextList.length > 0 && this.patientList.length < this.total
+      } catch (error) {
+        if (this.page > 1) this.page -= 1
+        this.hasMore = false
+        uni.showToast({ title: '患者列表加载失败', icon: 'none' })
+      } finally {
+        this.listLoading = false
+        this.refreshing = false
+        uni.stopPullDownRefresh()
+      }
+    },
+
+    buildQuery() {
+      return {
+        keyword: this.keyword.trim(),
+        departmentId: this.departmentId || '',
+        from: this.from || '',
+        to: this.to || '',
+        sort: this.sort || 'desc',
+        page: this.page,
+        pageSize: this.pageSize
+      }
+    },
+
+    normalizePageResult(result) {
+      const data = result || {}
+      if (Array.isArray(data)) return { list: data, total: data.length }
+      const list = this.extractList(data)
+      let total = this.toNumber(
+        data.total !== undefined ? data.total :
+        data.totalCount !== undefined ? data.totalCount :
+        data.count !== undefined ? data.count :
+        data.pagination && data.pagination.total
+      )
+      if (!total && list.length) {
+        const pageSize = Math.max(
+          this.toNumber(data.pageSize || (data.pagination && data.pagination.pageSize)),
+          this.pageSize
+        )
+        const currentPage = Math.max(
+          this.toNumber(data.page || (data.pagination && data.pagination.page) || this.page),
+          1
+        )
+        total = list.length < pageSize
+          ? (currentPage - 1) * pageSize + list.length
+          : currentPage * pageSize + 1
+      }
+      return { list, total }
+    },
+
+    extractList(data) {
+      if (Array.isArray(data)) return data
+      if (!data) return []
+      const keys = ['list', 'records', 'rows', 'items', 'patients', 'data', 'content']
+      for (let i = 0; i < keys.length; i += 1) {
+        if (Array.isArray(data[keys[i]])) return data[keys[i]]
+      }
+      if (data.page && Array.isArray(data.page.list)) return data.page.list
+      return []
+    },
+
+    normalizePatient(item, index) {
+      const source = item || {}
+      const gender = source.gender || source.sex || source.genderText || ''
+      const genderText = gender === 'MALE' || gender === 1 || gender === '男'
+        ? '男'
+        : gender === 'FEMALE' || gender === 2 || gender === '女'
+          ? '女'
+          : gender
+      const age = this.toNumber(source.age)
+      const name = source.name || source.patientName || source.nickname || `患者${index + 1}`
+      return Object.assign({}, source, {
+        id: source.id || source.patientId || source.userId || '',
+        name,
+        avatarText: name.charAt(0),
+        avatar: source.avatar || source.avatarUrl || source.headImg || '',
+        genderText,
+        age,
+        ageText: age ? `${age}岁` : '',
+        departmentName: source.departmentName || source.deptName || source.department || '',
+        inpatientNo: source.inpatientNo || source.hospitalNo || source.admissionNo || source.patientNo || '',
+        surgeryType: source.surgeryType || source.surgeryName || source.operationType || source.operationName || '',
+        surgeryDate: this.formatDate(source.surgeryDate || source.surgeryTime || source.operationDate),
+        diagnosis: source.diagnosis || source.diagnosisName || source.mainDiagnosis || ''
+      })
+    },
+
+    resetAndLoad() {
+      this.loadPatients(true)
+    },
+
+    onSearchInput() {
+      this.clearSearchTimer()
+      this.searchTimer = setTimeout(() => {
+        this.resetAndLoad()
+      }, 350)
+    },
+
+    clearKeyword() {
+      this.keyword = ''
+      this.resetAndLoad()
+    },
+
+    clearSearchTimer() {
+      if (this.searchTimer) {
+        clearTimeout(this.searchTimer)
+        this.searchTimer = null
+      }
+    },
+
+    onSortChange(e) {
+      this.sortIndex = Number(e.detail.value)
+      this.sort = this.sortIndex === 0 ? 'desc' : 'asc'
+      this.resetAndLoad()
+    },
+
+    onDepartmentChange(e) {
+      this.departmentIndex = Number(e.detail.value)
+      const department = this.departmentList[this.departmentIndex] || {}
+      this.departmentId = department.id || ''
+      this.resetAndLoad()
+    },
+
+    selectQuickDate(value) {
+      this.timeType = value
+      if (value === 'custom') {
+        if (!this.from) this.from = this.formatDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000))
+        if (!this.to) this.to = this.today
+        this.resetAndLoad()
+        return
+      }
+      const range = this.getQuickDateRange(value)
+      this.from = range.from
+      this.to = range.to
+      this.resetAndLoad()
+    },
+
+    getQuickDateRange(value) {
+      if (value === 'all') return { from: '', to: '' }
+      const days = value === '7d' ? 7 : 30
+      const start = new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000)
+      return {
+        from: this.formatDate(start),
+        to: this.formatDate(new Date())
+      }
+    },
+
+    onFromChange(e) {
+      this.timeType = 'custom'
+      this.from = e.detail.value
+      if (this.to && this.from > this.to) this.to = this.from
+      this.resetAndLoad()
+    },
+
+    onToChange(e) {
+      this.timeType = 'custom'
+      this.to = e.detail.value
+      if (this.from && this.to < this.from) this.from = this.to
+      this.resetAndLoad()
+    },
+
+    onPullDownRefresh() {
+      this.refreshing = true
       this.page = 1
-      this.loadData()
+      this.loadPatients(true)
     },
-    onSortChange(e){
-      this.sort = e.detail.value === 0 ? 'desc' : 'asc'
-      this.loadData()
+
+    loadMorePatients() {
+      if (this.listLoading || !this.hasMore || this.messagePopupVisible) return
+      this.page += 1
+      this.loadPatients(false)
     },
-    onDeptChange(e){
-      // 这里后续对接科室ID
-      this.loadData()
+
+    showMessage(patient) {
+      const item = patient || {}
+      this.activePatientId = item.id || item.patientId || ''
+      if (!this.activePatientId) {
+        uni.showToast({ title: '患者ID缺失，无法查看沟通记录', icon: 'none' })
+        return
+      }
+      this.messagePopupVisible = true
     },
-    openCustomDate(){
-      uni.showToast({title:'自定义时间',icon:'none'})
+
+    closeMessagePopup() {
+      this.messagePopupVisible = false
+      this.activePatientId = ''
     },
-   
-   
-    // 跳转患者档案（详情报告）
-    routeTo(patientId){
-      
+
+    toNumber(value) {
+      const number = Number(value)
+      return Number.isFinite(number) ? number : 0
+    },
+
+    formatDate(value) {
+      if (!value) return ''
+      if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10)
+      const date = new Date(value)
+      if (Number.isNaN(date.getTime())) return String(value).slice(0, 10)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    },
+
+    routeTo(patientId) {
       uni.navigateTo({
-        url:`/pages/index/myHealthRecord?id=${patientId}`
+        url: `/pages/index/myHealthRecord?id=${patientId}`
       })
     }
   }
@@ -151,129 +509,381 @@ export default {
 </script>
 
 <style scoped>
-.page-doctor-index{
-  padding:24rpx;
-  background-color:#f7f8fa;
-  min-height:100vh;
-  padding-bottom:140rpx;
+.page-doctor-index {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f5f7fb;
+  overflow: hidden;
 }
-.header{
-  margin-bottom:20rpx;
+
+.top-panel {
+  flex-shrink: 0;
+  padding: calc(20rpx + env(safe-area-inset-top)) 24rpx 18rpx;
+  background: #f5f7fb;
+  box-sizing: border-box;
 }
-.title-wrap{
-  display:flex;
-  align-items:center;
-  gap:16rpx;
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18rpx;
 }
-.title{
-  font-size:36rpx;
-  font-weight:bold;
+
+.header-info {
+  flex: 1;
+  min-width: 0;
 }
-.sub-title{
-  font-size:26rpx;
-  color:#666;
-  margin-top:4rpx;
+
+.title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
 }
-.search-wrap{
-  background:#fff;
-  border-radius:16rpx;
-  padding:20rpx;
-  margin-bottom:20rpx;
+
+.icon-doc {
+  width: 12rpx;
+  height: 36rpx;
+  border-radius: 8rpx;
+  background: #2563eb;
 }
-.search-input{
-  height:60rpx;
-  font-size:28rpx;
+
+.title {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #172033;
 }
-.filter-row{
-  display:flex;
-  gap:20rpx;
-  margin-bottom:20rpx;
+
+.sub-title {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #98a2b3;
 }
-.filter-item{
-  background:#fff;
-  padding:16rpx 24rpx;
-  border-radius:12rpx;
-  font-size:26rpx;
-  color:#333;
+
+.patient-count {
+  width: 104rpx;
+  height: 82rpx;
+  border-radius: 18rpx;
+  background: #eaf2ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
-.time-tab{
-  display:flex;
-  gap:16rpx;
-  margin-bottom:24rpx;
+
+.count-num {
+  font-size: 32rpx;
+  line-height: 36rpx;
+  font-weight: 700;
+  color: #2563eb;
 }
-.time-tab-item{
-  padding:12rpx 24rpx;
-  background:#fff;
-  border-radius:12rpx;
-  font-size:26rpx;
+
+.count-label {
+  margin-top: 2rpx;
+  font-size: 20rpx;
+  color: #2563eb;
 }
-.time-tab-item.active{
-  background:#0066ff;
-  color:#fff;
+
+.search-wrap {
+  height: 76rpx;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 999rpx;
+  padding: 0 24rpx;
+  margin-bottom: 16rpx;
+  box-sizing: border-box;
 }
-.list-tip{
-  display:flex;
-  justify-content:space-between;
-  font-size:26rpx;
-  color:#666;
-  margin-bottom:20rpx;
+
+.search-input {
+  flex: 1;
+  height: 76rpx;
+  margin: 0 12rpx;
+  font-size: 27rpx;
+  color: #172033;
 }
-.patient-item{
-  background:#fff;
-  border-radius:16rpx;
-  padding:24rpx;
-  display:flex;
-  gap:20rpx;
-  margin-bottom:20rpx;
-  border-left:8rpx solid #4080ff;
+
+.search-placeholder {
+  color: #98a2b3;
 }
-.avatar-circle{
-  width:80rpx;
-  height:80rpx;
-  border-radius:50%;
-  background:#e8f0fe;
-  color:#4080ff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:32rpx;
+
+.search-clear {
+  width: 44rpx;
+  height: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.content{
-  flex:1;
+
+.filter-row {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 14rpx;
 }
-.name-row{
-  display:flex;
-  align-items:center;
-  gap:12rpx;
+
+.filter-item {
+  flex: 1;
+  min-width: 0;
+  height: 64rpx;
+  background: #fff;
+  border-radius: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14rpx;
+  box-sizing: border-box;
 }
-.name{
-  font-size:32rpx;
-  font-weight:500;
+
+.filter-text {
+  max-width: 210rpx;
+  margin: 0 6rpx;
+  font-size: 24rpx;
+  color: #344054;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
-.gender{
-  color:#666;
-  font-size:26rpx;
+
+.date-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
 }
-.btn-chat{
-  margin-left:auto;
-  font-size:24rpx;
-  color:#4080ff;
-  border:1rpx solid #4080ff;
-  padding:8rpx 16rpx;
-  border-radius:8rpx;
+
+.quick-date-list {
+  display: flex;
+  gap: 10rpx;
+  flex-shrink: 0;
 }
-.surgery-name{
-  font-size:28rpx;
-  color:#444;
-  margin:8rpx 0;
+
+.custom-date-range {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8rpx;
 }
-.time-row{
-  display:flex;
-  justify-content:space-between;
-  font-size:26rpx;
-  color:#666;
+
+.time-tab-item {
+  padding: 10rpx 18rpx;
+  background: #fff;
+  border-radius: 999rpx;
+  font-size: 23rpx;
+  color: #667085;
 }
-.btn-archive{
-  color:#4080ff;
+
+.time-tab-item.active {
+  background: #2563eb;
+  color: #fff;
+}
+
+.date-box {
+  max-width: 150rpx;
+  padding: 10rpx 12rpx;
+  background: #fff;
+  border-radius: 10rpx;
+  font-size: 22rpx;
+  color: #344054;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.custom-date-range.active .date-box {
+  background: #eaf2ff;
+  color: #2563eb;
+}
+
+.date-line {
+  font-size: 22rpx;
+  color: #98a2b3;
+}
+
+.patient-scroll {
+  flex: 1;
+  min-height: 0;
+  padding: 0 24rpx 150rpx;
+  box-sizing: border-box;
+}
+
+.list-tip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4rpx 4rpx 16rpx;
+  font-size: 23rpx;
+  color: #98a2b3;
+}
+
+.list-tip .right {
+  color: #b0b8c8;
+}
+
+.state-card {
+  margin-top: 40rpx;
+  padding: 60rpx 30rpx;
+  background: #fff;
+  border-radius: 18rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #667085;
+  font-size: 26rpx;
+}
+
+.empty-title {
+  margin-top: 20rpx;
+  font-size: 30rpx;
+  color: #344054;
+}
+
+.empty-desc {
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #98a2b3;
+}
+
+.patient-item {
+  background: #fff;
+  border-radius: 18rpx;
+  padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 18rpx;
+  box-shadow: 0 8rpx 24rpx rgba(31, 41, 55, 0.04);
+}
+
+.patient-card-head {
+  display: flex;
+  align-items: center;
+}
+
+.left-avatar {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #eaf2ff, #dfeaff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar-img {
+  width: 84rpx;
+  height: 84rpx;
+}
+
+.avatar-text {
+  font-size: 34rpx;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.patient-base {
+  flex: 1;
+  min-width: 0;
+  margin-left: 18rpx;
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.name {
+  max-width: 220rpx;
+  font-size: 31rpx;
+  font-weight: 700;
+  color: #172033;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.gender {
+  font-size: 22rpx;
+  color: #667085;
+}
+
+.age {
+  font-size: 22rpx;
+  color: #667085;
+}
+
+.patient-meta {
+  margin-top: 8rpx;
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  font-size: 22rpx;
+  color: #98a2b3;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.btn-chat {
+  flex-shrink: 0;
+  margin-left: 12rpx;
+  height: 56rpx;
+  line-height: 56rpx;
+  padding: 0 18rpx;
+  font-size: 23rpx;
+  color: #fff;
+  background: #2563eb;
+  border-radius: 999rpx;
+  border: 0;
+}
+
+.btn-chat::after {
+  border: 0;
+}
+
+.surgery-name {
+  margin-top: 18rpx;
+  font-size: 27rpx;
+  color: #344054;
+  line-height: 1.5;
+}
+
+.diagnosis {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #667085;
+  line-height: 1.5;
+}
+
+.card-footer {
+  margin-top: 18rpx;
+  padding-top: 18rpx;
+  border-top: 1rpx solid #edf1f7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.time-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  min-width: 0;
+  font-size: 23rpx;
+  color: #666;
+  white-space: nowrap;
+}
+
+.btn-archive {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  font-size: 23rpx;
+  color: #2563eb;
 }
 </style>
