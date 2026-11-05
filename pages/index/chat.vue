@@ -25,14 +25,14 @@
 						</view>
 					</view>
 					<view class="card-sub-info">
-						<view class="info-item u-flex mr-30">
+						<view class="info-item u-flex mr-10">
 							<text class="custom-icon custom-icon-activity "
 								style="font-size:30rpx;color:#009966;"></text>
 							<view class="margin-left-5">
 								{{healthOption.surgeryType}}
 							</view>
 						</view>
-						<view class="info-item u-flex  mr-30">
+						<view class="info-item u-flex  mr-10">
 							<text class="custom-icon custom-icon-hospital-line"
 								style="font-size:30rpx;color:#009966;"></text>
 							<view class="margin-left-5">
@@ -43,7 +43,7 @@
 							<text class="custom-icon custom-icon-stethoscope1"
 								style="font-size:30rpx;color:#009966;"></text>
 							<view class="margin-left-5">
-								{{healthOption.value}}·{{healthOption.surgeon}}
+								{{healthOption.value}}{{healthOption.surgeon}}
 							</view>
 						</view>
 
@@ -52,11 +52,11 @@
 				<view class="intent-tag-wrapper">
 					<text class="intent-tag" :class="healthOption.intentClass">{{ healthOption.intent }}</text>
 				</view>
-				<view class="nav-actions">
+				<!-- <view class="nav-actions">
 					<view class="nav-action" @click="openConversationPanel">会话</view>
 					<view class="nav-action" @click="openInfoPanel">AI</view>
 					<view class="nav-action" @click="openFaqPanel">FAQ</view>
-				</view>
+				</view> -->
 				<!-- <view class="badge-normal">{{healthOption.tag}}</view> -->
 
 			</view>
@@ -67,8 +67,9 @@
 						style="font-size:36rpx;color:#009966;"></text>
 					<text class="ml-">沟通初步预判</text>
 					<view class="predict-actions">
-						<text class="predict-action" @click="refreshAssistData">刷新</text>
+						<!-- <text class="predict-action" @click="refreshAssistData">刷新</text> -->
 						<text class="predict-status" v-if="aiPrediction.source">{{ aiPrediction.source === 'MOCK' ? '示例' : 'AI' }}</text>
+								
 					</view>
 				</view>
 				<view class="block-list">
@@ -192,19 +193,19 @@
 						推送医助
 					</view>
 				</view> -->
-				<view class="quick-btn u-flex bg-green border-green font-green" @click="answerList = !answerList">
+				<!-- <view class="quick-btn u-flex bg-green border-green font-green" @click="answerList = !answerList">
 					<text class="custom-icon custom-icon-message-circle" style="font-size:20rpx;color:#009966;"></text>
 					<view class="margin-left-5">回复模板</view>
-				</view>
-				<view class="quick-btn u-flex bg-green border-green font-green" @click="openFaqPanel">
-					<u-icon name="bookmark" size="18rpx" color="#009966"></u-icon>
-					<view class="margin-left-5">FAQ</view>
-				</view>
-				<view class="quick-btn u-flex bg-green border-green font-green" @click="showUploadPopup = true">
+				</view> -->
+				
+				<view class="quick-btn u-flex bg-green border-green font-green">
 					<u-icon name="photo" size="18rpx" color="#009966"></u-icon>
-					<view class="margin-left-5">上传照片</view>
+					<view class="margin-left-5">推送医助</view>
 				</view>
-
+<view class="quick-btn u-flex bg-green border-green font-green" @click="openFaqPanel">
+					<u-icon name="bookmark" size="18rpx" color="#009966"></u-icon>
+					<view class="margin-left-5">回复模板</view>
+				</view>
 			</view>
 			<view class="answer-wrapper" v-show="answerList">
 				<view class="answer-title font-s font-green">专业回复模板</view>
@@ -216,7 +217,7 @@
 				</view> -->
 			</view>
 			<view class="input-row">
-				<view class="phone-box" @click="openAlbum">
+				<view class="phone-box"  @click="showUploadPopup = true">
 					<u-icon name="photo" color="#909399" size="50rpx"></u-icon>
 				</view>
 				<input v-model="inputText" class="chat-input  mr-16 ml-16" placeholder="输入回复消息..." confirm-type="send"
@@ -444,13 +445,7 @@
 				tagList: ['专业度高', '回复及时', '态度亲切', '建议实用', '沟通顺畅'],
 				selectTagList: [],
 				chatList: [],
-				replyPool: [
-					'您好，收到您的问题，请不要过于担心，我们会为您跟进。',
-					'您描述的情况属于术后较为常见现象，请保持伤口干燥清洁，密切观察。',
-					'建议您多休息，如果出现发热、出血加重，请及时联系我们。',
-					'已记录您反馈的情况，医生稍后会给出专业建议，请耐心等待。',
-					'饮食建议清淡，忌辛辣刺激，按医嘱按时用药。'
-				]
+				replyPool: []
 			}
 		},
 		onReady() {
@@ -539,6 +534,7 @@
 					uni.hideLoading()
 				}
 			},
+			// 会话详情（患者信息+成员）
 			async openRouteConversation() {
 				let conversation = this.conversationList.find(item => String(item.id) === String(this.routeConversationId))
 				if (!conversation) {
@@ -600,6 +596,7 @@
 					return null
 				}
 			},
+			// AI 沟通初步预判（30 分钟缓存，失败降级 mock）
 			async fetchAiPrediction() {
 				if (!this.id) {
 					this.aiError = false
@@ -621,6 +618,7 @@
 					this.aiLoading = false
 				}
 			},
+			//  客服 FAQ（启用知识库，按术式+关键词）
 			async fetchFaqList() {
 				this.faqLoading = true
 				try {
@@ -645,6 +643,7 @@
 				this.showFaqPanel = false
 				this.answerList = false
 			},
+			//  会话列表（客服工作台）
 			async fetchConversations() {
 				this.conversationLoading = true
 				try {
@@ -711,6 +710,7 @@
 					await this.sendHealthCard()
 				}
 			},
+			// 历史消息
 			async loadMessages(conversation, options) {
 				options = options || {}
 				if (!conversation || !conversation.id) return false
@@ -761,6 +761,7 @@
 					}
 				}, 15000)
 			},
+			// 标记已读
 			async markConversationRead(id, silent) {
 				id = id || this.conversationId
 				if (!id) return
@@ -1078,6 +1079,7 @@
 				}
 				return ''
 			},
+			// 发送消息
 			async sendMessage(contentOverride) {
 				const text = String(contentOverride || this.inputText || '').trim()
 				if (!text) {
@@ -1458,6 +1460,7 @@
 				this.editingMessage = null
 				this.editText = ''
 			},
+			// 编辑消息（仅作者本人；AI/SYSTEM 锁定）
 			async submitEditMessage() {
 				const newText = String(this.editText || '').trim()
 				if (!this.editingMessage || !this.conversationId) return
@@ -1503,6 +1506,7 @@
 					}
 				})
 			},
+			// 解决/重新打开会话（客服）
 			async updateConversationStatus(status) {
 				this.actionLoading = true
 				uni.showLoading({ title: '处理中...', mask: true })
@@ -1536,6 +1540,7 @@
 					}
 				})
 			},
+			// 紧急标记
 			async updateConversationPriority(priority) {
 				this.actionLoading = true
 				uni.showLoading({ title: '处理中...', mask: true })
@@ -1575,6 +1580,7 @@
 					}
 				})
 			},
+			// 显式访问审计（陪诊师/客服/公司管理）
 			async auditConversation(silent) {
 				if (!this.conversationId) return
 				try {
@@ -1931,7 +1937,8 @@
 	.quick-btn-group {
 		display: flex;
 		margin-bottom: 20rpx;
-		font-size: 18rpx
+		font-size: 18rpx;
+		gap:20rpx
 	}
 
 	.quick-btn {
@@ -2034,7 +2041,7 @@
 
 	.info-item {
 		font-size: 18rpx;
-		font-weight: bold;
+		/* font-weight: bold; */
 	}
 
 	.badge-normal {
@@ -2344,7 +2351,7 @@
 
 	.mini-btn {
 		padding: 8rpx 18rpx;
-		border-radius: 999rpx;
+		border-radius: 10rpx;
 		font-size: 22rpx;
 		background: #e8faf0;
 		color: #008855;
@@ -2448,7 +2455,7 @@
 		height: 68rpx;
 		padding: 0 20rpx;
 		box-sizing: border-box;
-		border-radius: 999rpx;
+		border-radius: 10rpx;
 		background: #f3f6f5;
 		font-size: 24rpx;
 	}
@@ -2457,7 +2464,7 @@
 		padding: 0 24rpx;
 		height: 68rpx;
 		line-height: 68rpx;
-		border-radius: 999rpx;
+		border-radius: 10rpx;
 		background: #008855;
 		color: #fff;
 		font-size: 24rpx;

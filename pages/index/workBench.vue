@@ -14,7 +14,7 @@
 			</view>
 		</view>
 		<!-- 搜索框 -->
-		<view class="margin-30 ">
+		<view class="margin-30">
 			<u--input placeholder="搜索患者姓名、意向、手机号" shape="" v-model="searchKey" prefixIcon="search"
 				prefixIconStyle="font-size: 22px;color: #909399"></u--input>
 		</view>

@@ -9,10 +9,9 @@
 				</view>
 				<view class="full-header-main">
 					<view class="full-title-row">
-						<text class="full-chat-title">{{ chatTitle }} · 健康管理群</text>
-						<view class="full-group-chip">
-							<u-icon name="account-fill" color="#2563ff" size="13"></u-icon>
-							<text>多学科</text>
+						<text class="full-chat-title">{{ chatTitle }} · {{ groupDisplayName }}</text>
+						<view class="full-group-chip" :class="isReadonly ? 'readonly' : 'normal'">
+							<text>{{ groupStatusText }}</text>
 						</view>
 					</view>
 					<view class="full-chat-subtitle">{{ chatSubtitle }}</view>
@@ -20,14 +19,36 @@
 				<view class="full-header-actions">
 					<view class="full-archive-btn" @click="openArchivePopup">
 						<u-icon name="file-text" color="#2563ff" size="15"></u-icon>
-						<text>患者档案</text>
+						<text>档案</text>
 					</view>
 					<view class="full-member-btn" @click="openMemberPopup">
-						<u-icon name="account-fill" color="#2563ff" size="22"></u-icon>
+						<u-icon name="account-fill" color="#4b5563" size="18"></u-icon>
+						<text>群成员</text>
 					</view>
 				</view>
 			</view>
-
+			
+			<view class="full-role-row">
+				<text class="full-role-label">群角色：</text>
+				<scroll-view scroll-x class="full-role-scroll" :show-scrollbar="false" enhanced>
+					<view class="full-role-list">
+						<view v-for="item in roleChips" :key="item.key" class="full-role-chip" :class="item.key">
+							<u-icon :name="item.icon" :color="item.color" size="14"></u-icon>
+							<text>{{ item.label }}</text>
+						</view>
+					</view>
+				</scroll-view>
+				<view class="full-member-link" @click="openMemberPopup">
+					<text>查看全员</text>
+				</view>
+			</view>
+<view v-if="isReadonly" class="readonly-notice">
+				<view class="readonly-notice-left">
+					<u-icon name="info-circle-fill" color="#d97706" size="17"></u-icon>
+					<text class="readonly-notice-text">当前为医生历史沟通记录查阅模式（只读）。您未加入该群，无发言及改动群配置权限。</text>
+				</view>
+				<text class="readonly-audit-text">已开启会话审计留痕</text>
+			</view>
 			<scroll-view scroll-y class="full-message-scroll" :scroll-into-view="chatScrollIntoView"
 				:scroll-with-animation="true">
 				<view v-if="chatMessagesLoading" class="full-chat-state">
@@ -287,6 +308,9 @@ export default {
 		canWrite() {
 			return this.normalizedRole === 'CAREGIVER'
 		},
+		isReadonly() {
+			return !this.canWrite
+		},
 		activeConversationId() {
 			return this.normalizedRole === 'DOCTOR'
 				? (this.patientId || this.conversationId || '')
@@ -296,13 +320,42 @@ export default {
 			return this.canWrite ? '在多学科群内沟通（客服、医助、客户全员可见）' : '医生端仅可查看群聊消息'
 		},
 		chatTitle() {
-			return (this.patientProfile && this.patientProfile.name) ||
-				(this.currentConversation && (this.currentConversation.name || this.currentConversation.patientName)) ||
-				'健康管理群'
+			return this.displayPatientName
 		},
 		chatSubtitle() {
 			return (this.currentConversation && (this.currentConversation.hospitalSurgery || this.currentConversation.subtitle)) ||
-				'多学科随诊群沟通'
+				(this.patientProfile && this.patientProfile.hospital && this.patientProfile.hospital !== '暂无医院信息' ? this.patientProfile.hospital : '多学科随诊群沟通')
+		},
+		displayPatientName() {
+			const conversation = this.currentConversation || {}
+			return (this.patientProfile && this.patientProfile.name) ||
+				conversation.name ||
+				conversation.patientName ||
+				'健康管理群'
+		},
+		groupStatusText() {
+			return this.isReadonly ? '只读记录' : `${this.groupMemberCount}人多学科群`
+		},
+		groupDisplayName() {
+			const conversation = this.currentConversation || {}
+			return conversation.groupName || conversation.group_name || '健康管理群'
+		},
+		groupMemberCount() {
+			const conversation = this.currentConversation || {}
+			const keys = ['memberCount', 'memberTotal', 'userCount', 'participantCount', 'membersCount', 'totalMemberCount', 'peopleCount']
+			for (let index = 0; index < keys.length; index += 1) {
+				const count = Number(conversation[keys[index]])
+				if (Number.isFinite(count) && count > 0) return count
+			}
+			return this.conversationMembers.length || 4
+		},
+		roleChips() {
+			return [
+				{ key: 'service', label: '客服', icon: 'kefu-ermai', color: '#059669' },
+				{ key: 'patient', label: `客户(${this.displayPatientName})`, icon: 'account-fill', color: '#c26a12' },
+				{ key: 'assistant', label: '医生助理', icon: 'server-fill', color: '#2563ff' },
+				{ key: 'robot', label: '机器人', icon: 'android-fill', color: '#7c3aed' }
+			]
 		}
 	},
 	watch: {
@@ -372,7 +425,9 @@ export default {
 			const result = await getDoctorPatientsByIdConversationApi({ id: this.activeConversationId })
 			const data = result || {}
 			const conversation = this.normalizeConversation(
-				Object.assign({}, data.groupMeta || {}, data.conversation || {})
+				Object.assign({}, data.groupMeta || {}, data.conversation || {}, {
+					patient: data.patient || data.archive || data.profile || {}
+				})
 			)
 			conversation.id = conversation.id || this.activeConversationId
 			conversation.patientId = conversation.patientId || this.activeConversationId
@@ -392,6 +447,7 @@ export default {
 				conversation.id = conversation.id || this.activeConversationId
 				this.currentConversation = conversation
 				this.conversationMembers = this.extractMembers(conversation)
+				
 				this.patientProfile = this.normalizePopupProfile(conversation.patient || conversation.patientInfo || conversation)
 			} catch (error) {
 				this.currentConversation = Object.assign({ id: this.activeConversationId }, this.currentConversation || {})
@@ -643,7 +699,7 @@ export default {
 		},
 		normalizeConversation(item) {
 			const source = item || {}
-			const patient = source.patient || {}
+			const patient = source.patient || source.patientInfo || {}
 			const hospital = source.hospital || source.hospitalName || patient.hospitalName || ''
 			const department = source.department || source.deptName || patient.department || ''
 			const surgeryType = source.surgeryType || source.surgeryName || patient.surgeryType || ''
@@ -651,6 +707,7 @@ export default {
 				id: source.id || source.conversationId || source.chatId || this.activeConversationId,
 				patientId: source.patientId || source.patient_id || source.patientID || patient.id || '',
 				name: source.name || source.title || source.patientName || patient.name || '',
+				groupName: source.groupName || source.group_name || patient.groupName || '健康管理群',
 				hospitalSurgery: [hospital, department, surgeryType].filter(Boolean).join(' · ')
 			})
 		},
@@ -688,13 +745,34 @@ export default {
 				}
 			})
 			const exists = {}
-			return rawList.map((item, index) => this.normalizeMember(item, index)).filter(item => {
+			const members = []
+			rawList.map((item, index) => this.normalizeMember(item, index)).forEach(item => {
 				if (!item.name) return false
-				const key = String(item.id || item.name)
-				if (exists[key]) return false
-				exists[key] = true
-				return true
+				const keys = this.getMemberIdentityKeys(item)
+				const duplicateKey = keys.find(key => exists[key])
+				if (duplicateKey) {
+					const existing = members.find(member => this.getMemberIdentityKeys(member).indexOf(duplicateKey) > -1)
+					if (existing && !existing.role && item.role) existing.role = item.role
+					return
+				}
+				keys.forEach(key => { exists[key] = true })
+				// console.log(item)
+				members.push(item)
 			})
+			return members
+		},
+		getMemberIdentityKeys(member) {
+			const name = this.normalizeMemberIdentityValue(member.name)
+			const role = String(member.role || '').toUpperCase()
+			const keys = [`role:${role}:name:${name}`, `name:${name}`]
+			const id = this.normalizeMemberIdentityValue(member.id)
+			const phone = this.normalizeMemberIdentityValue(member.phone || member.mobile || member.contactPhone || member.telephone)
+			if (id && id.indexOf('member_') !== 0) keys.push(`id:${id}`)
+			if (phone && !/^1\d{10}$/.test(phone) === false) keys.push(`phone:${phone}`)
+			return keys
+		},
+		normalizeMemberIdentityValue(value) {
+			return String(value || '').trim().replace(/\s+/g, '').toLowerCase()
 		},
 		parseMembersSnapshot(conversation) {
 			if (!conversation) return []
@@ -741,28 +819,65 @@ export default {
 		},
 		normalizeMember(raw, index) {
 			if (typeof raw === 'string' || typeof raw === 'number') {
+				const parsed = this.parseMemberIdentityText(String(raw))
+				// console.log(12334,parsed)
 				return {
 					id: `member_${index}`,
-					name: String(raw),
+					name: parsed.name || String(raw),
 					avatar: '',
-					role: '',
-					roleText: '',
+					role: parsed.role,
+					roleText: this.getRoleText(parsed.role),
 					remark: '群成员'
 				}
 			}
 			const source = raw || {}
 			const nested = source.user || source.profile || source.member || {}
 			const data = Object.assign({}, nested, source)
-			const role = String(data.role || data.senderType || data.userType || data.memberRole || '').toUpperCase()
+			const rawRole = data.role || data.roleCode || data.roleType || data.roleName ||
+				data.senderType || data.senderRole || data.userType || data.memberRole || data.memberType ||
+				data.type || data.identity || data.staffType || data.actorType ||
+				data.participantRole || data.conversationRole || data.position || data.jobTitle || data.groupRole || ''
+			const role = this.normalizeRoleValue(rawRole)
 			const baseRemark = data.remark || data.description || data.title || data.department || data.hospitalName || ''
+			const nameText = data.name || data.nickname || data.staffName || data.patientName ||
+				data.userName || data.realName || data.memberName || data.displayName || ''
+			const parsed = this.parseMemberIdentityText(nameText, role)
+			const memberRole = parsed.role || role ||
+				this.normalizeRoleValue(baseRemark) ||
+				this.scanRoleFromMemberData(data)
 			return {
 				id: data.id || data.userId || data.memberId || `member_${index}`,
-				name: data.name || data.nickname || data.staffName || data.patientName || '',
+				name: parsed.name || data.name || data.nickname || data.staffName || data.patientName || '',
 				avatar: data.avatar || data.avatarUrl || data.headImg || '',
-				role,
-				roleText: this.getRoleText(role),
+				phone: data.phone || data.mobile || data.contactPhone || data.telephone || '',
+				role: memberRole,
+				roleText: this.getRoleText(memberRole),
 				remark: baseRemark || '群成员'
 			}
+		},
+		parseMemberIdentityText(rawText, fallbackRole) {
+			const text = String(rawText || '').trim()
+			const rolePatterns = [
+				{ role: 'AI', patterns: ['机器人', 'AI', '智能机器人'] },
+				{ role: 'CS', patterns: ['CS','人工客服', '客服'] },
+				{ role: 'PATIENT', patterns: ['PATIENT',  '患者'] },
+				{ role: 'DOCTOR_ASSISTANT', patterns: ['DOCTOR_ASSISTANT','医生助理', '医助'] },
+				{ role: 'CAREGIVER', patterns: ['CAREGIVER','陪诊师', '陪护'] },
+				{ role: 'DOCTOR', patterns: [ 'DOCTOR','医生'] }
+			]
+			for (let index = 0; index < rolePatterns.length; index += 1) {
+				const item = rolePatterns[index]
+				
+				const pattern = item.patterns.find(keyword => text.indexOf(keyword) > -1)
+				if (!pattern) continue
+				const name = text
+					.replace(new RegExp(`[（(]\\s*(人工)?${pattern}\\s*[)）]`, 'g'), '')
+					.replace(new RegExp(`^(人工)?${pattern}\\s*[-—:：·]?\\s*`, 'g'), '')
+					.replace(new RegExp(`\\s*[-—:：·]\\s*(人工)?${pattern}$`, 'g'), '')
+					.trim()
+				return { name: name || text, role: item.role }
+			}
+			return { name: text, role: fallbackRole || '' }
 		},
 		normalizePopupProfile(raw) {
 			const source = raw || {}
@@ -866,32 +981,44 @@ export default {
 				''
 		},
 		normalizeSenderRole(role) {
+			return this.normalizeRoleValue(role)
+		},
+		normalizeRoleValue(role) {
+			const origin = String(role || '').trim()
+			if (!origin) return ''
+			const chinesePatterns = [
+				{ role: 'DOCTOR_ASSISTANT', patterns: ['医生助理', '医助', '医师助理'] },
+				{ role: 'AI', patterns: ['机器人', '智能', 'AI'] },
+				{ role: 'CS', patterns: ['人工客服', '客服', '客户服务'] },
+				{ role: 'PATIENT', patterns: ['患者'] },
+				{ role: 'CAREGIVER', patterns: ['陪诊师', '陪护', '陪诊员'] },
+				{ role: 'DOCTOR', patterns: ['医生', '医师'] },
+				{ role: 'SYSTEM', patterns: ['系统'] }
+			]
+			for (let index = 0; index < chinesePatterns.length; index += 1) {
+				const item = chinesePatterns[index]
+				if (item.patterns.some(keyword => origin.indexOf(keyword) > -1)) return item.role
+			}
 			const text = String(role || '').toUpperCase()
-			if (!text) return ''
-			if (text.indexOf('CUSTOMER_SERVICE') > -1 || text === 'CS') return 'CS'
-			if (text.indexOf('PATIENT') > -1 || text === 'CUSTOMER' || text.indexOf('CLIENT') > -1) return 'PATIENT'
-			if (text.indexOf('CARE') > -1 || text.indexOf('ESCORT') > -1 || text.indexOf('STATION') > -1) return 'CAREGIVER'
-			if (text.indexOf('DOCTOR') > -1) return 'DOCTOR'
+			if (text === 'CS' || text.indexOf('CUSTOMER_SERVICE') > -1 || text === 'AGENT' || text.indexOf('SERVICE') > -1) return 'CS'
+			if (text.indexOf('PATIENT') > -1 || text === 'CUSTOMER' || text.indexOf('CLIENT') > -1 || text === 'MEMBER' || text === 'USER') return 'PATIENT'
 			if (text.indexOf('ASSISTANT') > -1) return 'DOCTOR_ASSISTANT'
+			if (text.indexOf('CARE') > -1 || text.indexOf('ESCORT') > -1 || text.indexOf('STATION') > -1 || text.indexOf('COMPANION') > -1) return 'CAREGIVER'
+			if (text.indexOf('DOCTOR') > -1 || text.indexOf('PHYSICIAN') > -1) return 'DOCTOR'
 			if (text.indexOf('SYSTEM') > -1) return 'SYSTEM'
-			if (text.indexOf('AI') > -1 || text.indexOf('ROBOT') > -1) return 'AI'
+			if (text === 'AI' || text.indexOf('AI') > -1 || text.indexOf('ROBOT') > -1 || text.indexOf('BOT') > -1) return 'AI'
 			return text
 		},
 		getRoleText(role) {
 			const map = {
-				PATIENT: '客户',
-				CUSTOMER: '客户',
-				CLIENT: '客户',
+				AI:'机器人',
+				ADMIN: '公司管理',
+				HOSPITAL_ADMIN: '医院管理',
 				CS: '客服',
-				CUSTOMER_SERVICE: '客服',
 				CAREGIVER: '陪诊师',
-				ESCORT: '陪诊师',
 				DOCTOR: '医生',
 				DOCTOR_ASSISTANT: '医生助理',
-				MEDICAL_ASSISTANT: '医生助理',
-				AI: '机器人',
-				ROBOT: '机器人',
-				SYSTEM: '系统'
+				PATIENT: '患者'
 			}
 			return map[role] || ''
 		},
@@ -970,7 +1097,6 @@ export default {
 	align-items: center;
 	padding: calc(20rpx + env(safe-area-inset-top)) 22rpx 18rpx;
 	background: #fff;
-	border-bottom: 1rpx solid #edf1f7;
 }
 .full-header-back,
 .full-member-btn,
@@ -998,22 +1124,29 @@ export default {
 	font-size: 30rpx;
 	font-weight: 700;
 	color: #172033;
+	max-width: 330rpx;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
 }
 .full-group-chip {
-	margin-left: 10rpx;
-	padding: 4rpx 10rpx;
+	margin-left: 12rpx;
+	padding: 5rpx 14rpx;
 	display: flex;
 	align-items: center;
 	border-radius: 999rpx;
-	background: #eaf2ff;
-	color: #2563ff;
-	font-size: 19rpx;
+	font-size: 20rpx;
+	line-height: 1;
 	flex-shrink: 0;
 }
-.full-group-chip text { margin-left: 4rpx; }
+.full-group-chip.readonly {
+	background: #fff4d6;
+	color: #b86b00;
+}
+.full-group-chip.normal {
+	background: #e9f2ff;
+	color: #2563ff;
+}
 .full-chat-subtitle {
 	margin-top: 6rpx;
 	font-size: 22rpx;
@@ -1040,10 +1173,117 @@ export default {
 }
 .full-archive-btn text { margin-left: 4rpx; }
 .full-member-btn {
-	width: 58rpx;
+	height: 52rpx;
+	padding: 0 16rpx;
 	height: 58rpx;
-	border-radius: 50%;
-	background: #eef4ff;
+	border: 1rpx solid #d8deea;
+	border-radius: 999rpx;
+	background: #fff;
+	color: #374151;
+	font-size: 22rpx;
+	box-sizing: border-box;
+}
+.full-member-btn text { margin-left: 5rpx; }
+.readonly-notice {
+	flex-shrink: 0;
+	margin:  24rpx 16rpx;
+	padding: 14rpx 18rpx;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background: #fff8e8;
+	border: 1rpx solid #f0d89a;
+	border-radius: 16rpx;
+	box-sizing: border-box;
+}
+.readonly-notice-left {
+	min-width: 0;
+	display: flex;
+	align-items: center;
+}
+.readonly-notice-text {
+	margin-left: 8rpx;
+	font-size: 21rpx;
+	line-height: 30rpx;
+	color: #a85a07;
+}
+.readonly-audit-text {
+	margin-left: 18rpx;
+	font-size: 22rpx;
+	font-weight: 600;
+	color: #d97706;
+	flex-shrink: 0;
+}
+.full-role-row {
+    flex-shrink: 0;
+    padding: 0 24rpx 18rpx;
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border-bottom: 1rpx solid #edf1f7;
+    box-sizing: border-box;
+    gap: 12rpx;
+}
+.full-role-label {
+    font-size: 24rpx;
+    color: #98a2b3;
+    flex-shrink: 0;
+}
+.full-role-scroll {
+    flex: 1;
+    min-width: 0;
+}
+.full-role-list {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+.full-role-chip {
+    height: 44rpx;
+    padding: 0 14rpx;
+    margin-right: 12rpx;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    border-radius: 10rpx;
+    font-size: 22rpx;
+    line-height: 1;
+    box-sizing: border-box;
+}
+.full-role-chip text {
+    margin-left: 5rpx;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+.full-member-link {
+    flex-shrink: 0; 
+    font-size: 24rpx;
+    color: #3370ff;
+}
+
+.full-role-chip text { margin-left: 5rpx; }
+.full-role-chip.service {
+	background: #dff8ec;
+	color: #059669;
+}
+.full-role-chip.patient {
+	background: #fff4d6;
+	color: #b45a0e;
+}
+.full-role-chip.assistant {
+	background: #e9f1ff;
+	color: #2563ff;
+}
+.full-role-chip.robot {
+	background: #f3e8ff;
+	color: #7c3aed;
+}
+.full-member-link {
+	margin-left: 14rpx;
+	font-size: 22rpx;
+	font-weight: 600;
+	color: #2563ff;
+	flex-shrink: 0;
 }
 .full-message-scroll {
 	flex: 1;

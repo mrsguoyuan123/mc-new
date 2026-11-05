@@ -32,6 +32,12 @@
       </view>
 
       <view class="filter-row">
+        <picker mode="selector" :range="sortNames" :value="sortIndex" @change="onSortChange">
+          <view class="filter-item">
+            <u-icon :name="sort === 'desc' ? 'arrow-down' : 'arrow-up'" color="#2563eb" size="16"></u-icon>
+            <text class="filter-text">{{ sort === 'desc' ? '手术日期倒序' : '手术日期正序' }}</text>
+          </view>
+        </picker>
         <picker mode="selector" :range="departmentNames" :value="departmentIndex" @change="onDepartmentChange">
           <view class="filter-item">
             <u-icon name="home" color="#2563eb" size="16"></u-icon>
@@ -39,12 +45,7 @@
             <u-icon name="arrow-down" color="#667085" size="13"></u-icon>
           </view>
         </picker>
-        <picker mode="selector" :range="sortNames" :value="sortIndex" @change="onSortChange">
-          <view class="filter-item">
-            <u-icon :name="sort === 'desc' ? 'arrow-down' : 'arrow-up'" color="#2563eb" size="16"></u-icon>
-            <text class="filter-text">{{ sort === 'desc' ? '手术日期倒序' : '手术日期正序' }}</text>
-          </view>
-        </picker>
+
       </view>
 
       <view class="date-row">
@@ -57,15 +58,6 @@
             @click="selectQuickDate(item.value)"
           >{{ item.label }}</view>
         </view>
-        <view class="custom-date-range" :class="{ active: timeType === 'custom' }">
-          <picker mode="date" :value="from" :end="to || today" @change="onFromChange">
-            <view class="date-box">{{ from || '开始日期' }}</view>
-          </picker>
-          <text class="date-line">至</text>
-          <picker mode="date" :value="to" :start="from" :end="today" @change="onToChange">
-            <view class="date-box">{{ to || '结束日期' }}</view>
-          </picker>
-        </view>
       </view>
     </view>
 
@@ -74,12 +66,12 @@
       class="patient-scroll"
       refresher-enabled
       :refresher-triggered="refreshing"
-      @refresherrefresh="onPullDownRefresh"
+      @refresherrefresh="handlePatientRefresh"
       @scrolltolower="loadMorePatients"
     >
       <view class="list-tip">
         <text>共 {{ total }} 位患者记录</text>
-        <text class="right">按 surgery_date {{ sort === 'desc' ? '倒序' : '正序' }}</text>
+        <!-- <text class="right">按 surgery_date {{ sort === 'desc' ? '倒序' : '正序' }}</text> -->
       </view>
 
       <view v-if="listLoading && page === 1" class="state-card">
@@ -149,6 +141,51 @@
       @close="closeMessagePopup"
     ></message-pop>
 
+    <u-popup
+      :show="customDateVisible"
+      mode="center"
+      :round="32"
+      :zIndex="10090"
+      :overlayStyle="{ zIndex: 10080, backgroundColor: 'rgba(15, 23, 42, 0.45)' }"
+      :safeAreaInsetBottom="false"
+      :closeOnClickOverlay="true"
+      @close="closeCustomDatePopup"
+    >
+      <view class="custom-date-modal" @click.stop>
+        <view class="custom-date-header">
+          <text class="custom-date-title">自定义手术时间范围</text>
+          <view class="custom-date-close" @click="closeCustomDatePopup">
+            <u-icon name="close" color="#98a2b3" size="20"></u-icon>
+          </view>
+        </view>
+
+        <view class="custom-date-field">
+          <text class="custom-date-label">起始日期</text>
+          <picker mode="date" :value="customFrom" :end="customTo || today" @change="onCustomFromChange">
+            <view class="custom-date-input">
+              <text>{{ formatDateDisplay(customFrom) }}</text>
+              <u-icon name="calendar" color="#1f2937" size="25"></u-icon>
+            </view>
+          </picker>
+        </view>
+
+        <view class="custom-date-field">
+          <text class="custom-date-label">截止日期</text>
+          <picker mode="date" :value="customTo" :start="customFrom" :end="today" @change="onCustomToChange">
+            <view class="custom-date-input">
+              <text>{{ formatDateDisplay(customTo) }}</text>
+              <u-icon name="calendar" color="#1f2937" size="25"></u-icon>
+            </view>
+          </picker>
+        </view>
+
+        <view class="custom-date-actions">
+          <view class="custom-date-cancel" @click="closeCustomDatePopup">取消</view>
+          <view class="custom-date-confirm" @click="confirmCustomDate">确认筛选</view>
+        </view>
+      </view>
+    </u-popup>
+
     <myTabbar :current="1"></myTabbar>
   </view>
 </template>
@@ -175,6 +212,9 @@ export default {
       departmentIndex: 0,
       from: '',
       to: '',
+      customFrom: '',
+      customTo: '',
+      customDateVisible: false,
       today: '',
       sort: 'desc',
       sortIndex: 0,
@@ -220,6 +260,9 @@ export default {
   },
   onReachBottom() {
     this.loadMorePatients()
+  },
+  onPullDownRefresh() {
+    this.handlePatientRefresh()
   },
   beforeDestroy() {
     this.clearSearchTimer()
@@ -419,16 +462,54 @@ export default {
     },
 
     selectQuickDate(value) {
-      this.timeType = value
       if (value === 'custom') {
-        if (!this.from) this.from = this.formatDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000))
-        if (!this.to) this.to = this.today
-        this.resetAndLoad()
+        this.openCustomDatePopup()
         return
       }
+      this.timeType = value
       const range = this.getQuickDateRange(value)
       this.from = range.from
       this.to = range.to
+      this.resetAndLoad()
+    },
+
+    openCustomDatePopup() {
+      this.customFrom = this.from || this.getMonthStartDate()
+      this.customTo = this.to || this.today
+      this.customDateVisible = true
+    },
+
+    closeCustomDatePopup() {
+      this.customDateVisible = false
+    },
+
+    onCustomFromChange(e) {
+      this.customFrom = e.detail.value
+      if (this.customTo && this.customFrom > this.customTo) {
+        this.customTo = this.customFrom
+      }
+    },
+
+    onCustomToChange(e) {
+      this.customTo = e.detail.value
+      if (this.customFrom && this.customTo < this.customFrom) {
+        this.customFrom = this.customTo
+      }
+    },
+
+    confirmCustomDate() {
+      if (!this.customFrom || !this.customTo) {
+        uni.showToast({ title: '请选择完整日期范围', icon: 'none' })
+        return
+      }
+      if (this.customFrom > this.customTo) {
+        uni.showToast({ title: '起始日期不能晚于截止日期', icon: 'none' })
+        return
+      }
+      this.timeType = 'custom'
+      this.from = this.customFrom
+      this.to = this.customTo
+      this.customDateVisible = false
       this.resetAndLoad()
     },
 
@@ -442,21 +523,7 @@ export default {
       }
     },
 
-    onFromChange(e) {
-      this.timeType = 'custom'
-      this.from = e.detail.value
-      if (this.to && this.from > this.to) this.to = this.from
-      this.resetAndLoad()
-    },
-
-    onToChange(e) {
-      this.timeType = 'custom'
-      this.to = e.detail.value
-      if (this.from && this.to < this.from) this.from = this.to
-      this.resetAndLoad()
-    },
-
-    onPullDownRefresh() {
+    handlePatientRefresh() {
       this.refreshing = true
       this.page = 1
       this.loadPatients(true)
@@ -497,6 +564,15 @@ export default {
       const month = String(date.getMonth() + 1).padStart(2, '0')
       const day = String(date.getDate()).padStart(2, '0')
       return `${year}-${month}-${day}`
+    },
+
+    getMonthStartDate() {
+      const date = new Date()
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`
+    },
+
+    formatDateDisplay(value) {
+      return value ? value.replace(/-/g, '/') : ''
     },
 
     routeTo(patientId) {
@@ -591,7 +667,7 @@ export default {
   display: flex;
   align-items: center;
   background: #fff;
-  border-radius: 999rpx;
+  border-radius: 10rpx;
   padding: 0 24rpx;
   margin-bottom: 16rpx;
   box-sizing: border-box;
@@ -628,10 +704,10 @@ export default {
   min-width: 0;
   height: 64rpx;
   background: #fff;
-  border-radius: 14rpx;
+  border-radius: 10rpx;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: start;
   padding: 0 14rpx;
   box-sizing: border-box;
 }
@@ -654,25 +730,20 @@ export default {
 
 .quick-date-list {
   display: flex;
-  gap: 10rpx;
-  flex-shrink: 0;
-}
-
-.custom-date-range {
   flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8rpx;
+  gap: 10rpx;
 }
 
 .time-tab-item {
-  padding: 10rpx 18rpx;
+  flex: 1;
+  height: 52rpx;
+  line-height: 52rpx;
+  text-align: center;
   background: #fff;
-  border-radius: 999rpx;
+  border-radius: 10rpx;
   font-size: 23rpx;
   color: #667085;
+  box-sizing: border-box;
 }
 
 .time-tab-item.active {
@@ -680,33 +751,98 @@ export default {
   color: #fff;
 }
 
-.date-box {
-  max-width: 150rpx;
-  padding: 10rpx 12rpx;
-  background: #fff;
-  border-radius: 10rpx;
-  font-size: 22rpx;
-  color: #344054;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.custom-date-range.active .date-box {
-  background: #eaf2ff;
-  color: #2563eb;
-}
-
-.date-line {
-  font-size: 22rpx;
-  color: #98a2b3;
-}
-
 .patient-scroll {
   flex: 1;
-  min-height: 0;
+  /* min-height: 0; */
   padding: 0 24rpx 150rpx;
   box-sizing: border-box;
+}
+
+.custom-date-modal {
+  width: 650rpx;
+  padding: 40rpx 30rpx;
+  background: #fff;
+  border-radius: 32rpx;
+  box-sizing: border-box;
+}
+
+.custom-date-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 38rpx;
+}
+
+.custom-date-title {
+  font-size: 30rpx;
+  line-height: 44rpx;
+  font-weight: 700;
+  color: #111827;
+}
+
+.custom-date-close {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-date-field {
+  margin-bottom: 28rpx;
+}
+
+.custom-date-label {
+  display: block;
+  margin-bottom: 12rpx;
+  font-size: 24rpx;
+  line-height: 36rpx;
+  /* font-weight: 600; */
+  color: #667085;
+}
+
+.custom-date-input {
+  height: 80rpx;
+  padding: 0 30rpx;
+  border-radius: 20rpx;
+  background: #f8fafc;
+  border: 1rpx solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  font-size: 24rpx;
+  color: #111827;
+}
+
+.custom-date-actions {
+  display: flex;
+  gap: 24rpx;
+  margin-top: 44rpx;
+}
+
+.custom-date-cancel,
+.custom-date-confirm {
+  flex: 1;
+  height: 80rpx;
+  line-height: 80rpx;
+  border-radius: 20rpx;
+  text-align: center;
+  font-size: 28rpx;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
+.custom-date-cancel {
+  color: #4b5563;
+  background: #fff;
+  border: 1rpx solid #e5e7eb;
+}
+
+.custom-date-confirm {
+  color: #fff;
+  background: #2563eb;
+  box-shadow: 0 10rpx 22rpx rgba(37, 99, 235, 0.18);
 }
 
 .list-tip {
@@ -833,10 +969,10 @@ export default {
   height: 56rpx;
   line-height: 56rpx;
   padding: 0 18rpx;
-  font-size: 23rpx;
+  font-size: 18rpx;
   color: #fff;
   background: #2563eb;
-  border-radius: 999rpx;
+  border-radius: 10rpx;
   border: 0;
 }
 
@@ -885,5 +1021,8 @@ export default {
   gap: 4rpx;
   font-size: 23rpx;
   color: #2563eb;
+}
+.filter-row uni-picker{
+  flex: 1;
 }
 </style>

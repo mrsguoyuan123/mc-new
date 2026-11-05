@@ -120,12 +120,10 @@
 
 			async loadData() {
 				const res = await getEscortProfileStatsApi()
-				console.log(res)
 				this.stat = res
+				console.log(res)
 
-				if (res.code === 200) {
-					this.userInfo = res.data.userInfo
-				}
+				
 			},
 			routeTo(res) {
 				let data = {
