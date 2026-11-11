@@ -237,6 +237,40 @@ function buildPublicFileUrl(params) {
     : encodePathSegment(dir);
   return BASE_URL + '/files/' + dirPath + '/' + encodeURIComponent(filename);
 }
+
+export function buildFileAccessUrl(relativePath) {
+  if (!relativePath) return ''
+  // 已经是完整http链接直接返回
+  if (/^https?:\/\//i.test(relativePath)) {
+    return relativePath
+  }
+  let path = String(relativePath)
+  // 直接拼接：BASE_URL + path
+  return `${BASE_URL}${path}`
+}
+
+
+export async function fetchFileRedirectUrl(relativePath) {
+  const url = buildFileAccessUrl(relativePath)
+  return new Promise((resolve, reject) => {
+    uni.request({
+      url,
+      method: 'GET',
+      followRedirect: true, // uni内置开启跟随302重定向
+      header: {
+        // 公开资源，清除Authorization，避免携带token
+      },
+      success(res) {
+        // followRedirect=true 之后，res.config.url 是跳转完毕的真实预签名地址
+        resolve(res.config.url || url)
+      },
+      fail(err) {
+        reject(new Error(err.errMsg || '获取文件地址失败'))
+      }
+    })
+  })
+}
+
 function rawRequest(config) {
   return new Promise(function(resolve, reject) {
     let requestTask;
@@ -821,6 +855,18 @@ export async function postPatientsApi(params = {}) { return callApi("POST", "/pa
  */
 export async function getPatientsByIdApi(params = {}) { return callApi("GET", "/patients/{id}", params, {"pathNames":["id"],"queryNames":[],"hasBody":false,"auth":true,"clearAuth":false}); }
 /**
+ * @name 用户档案聚合（客服“用户档案”入口）【V22 新增】
+ * @method GET
+ * @url /patients/{id}/profile
+ * @desc 患者基本信息+病历+服务关系聚合；CS/CAREGIVER/DOCTOR 在患者数据范围内可读。
+ *   约束：id 必须是患者 ID（patientId，取客服/陪诊列表行 id），禁止传 conversationId。
+ *   响应已被 callApi 解包为 data：{ patient, medicalRecord, serviceRelations, tags, sales, attachmentCount }。
+ *   medicalRecord 为 {} 表示暂无病历，不代表档案为空；基本信息始终取 patient，禁止把整个 data 当扁平患者对象。
+ * @param {Object} params 请求参数
+ * @param {string|number} params.id 患者 ID（列表行 id），必填
+ */
+export async function getPatientsByIdProfileApi(params = {}) { return callApi("GET", "/patients/{id}/profile", params, {"pathNames":["id"],"queryNames":[],"hasBody":false,"auth":true,"clearAuth":false}); }
+/**
  * @name 修改患者（公司管理）
  * @method PUT
  * @url /patients/{id}
@@ -941,6 +987,14 @@ export async function postMeMedicalRecordScanApi(params = {}) { return callApi("
  */
 export async function getMeMedicalRecordScanByTaskIdApi(params = {}) { return callApi("GET", "/me/medical-record/scan/{taskId}", params, {"pathNames":["taskId"],"queryNames":[],"hasBody":false,"auth":true,"clearAuth":false}); }
 /**
+ * @name 重试 OCR 检验自动入库（幂等）
+ * @method POST
+ * @url /me/medical-record/scan/{taskId}/apply
+ * @desc 仅用于检验报告自动入库失败（action=FAILED）或 PENDING 卡住时的幂等重试；任务无可入库检验报告或未 SUCCESS 时返回 400。
+ * @param {Object} params 请求参数，含路径参数 taskId（雪花ID，按字符串传递）
+ */
+export async function postMeMedicalRecordScanByTaskIdApplyApi(params = {}) { return callApi("POST", "/me/medical-record/scan/{taskId}/apply", params, {"pathNames":["taskId"],"queryNames":[],"hasBody":true,"auth":true,"clearAuth":false}); }
+/**
  * @name 确认 OCR 结果回填病历/检验指标（部分更新）
  * @method POST
  * @url /me/medical-record/confirm
@@ -988,6 +1042,27 @@ export async function getPatientsByIdHealthDashboardApi(params = {}) { return ca
  * @param {Object} params 请求参数
  */
 export async function getMeHealthDashboardApi(params = {}) { return callApi("GET", "/me/health-dashboard", params, {"pathNames":[],"queryNames":[],"hasBody":false,"auth":true,"clearAuth":false}); }
+/**
+ * @name 获取健康记录
+ * @method GET
+ * @url /me/health-records
+ * @desc 查询健康记录、今日营养统计
+ * @param {Object} params 请求参数
+ */
+export async function getMeHealthRecordsApi(params = {}) {
+  return callApi("GET", "/me/health-records", params, {"pathNames":[],"queryNames":[],"hasBody":false,"auth":true,"clearAuth":false});
+}
+
+/**
+ * @name 新增健康记录
+ * @method POST
+ * @url /me/health-records
+ * @desc 提交健康记录
+ * @param {Object} data 请求体
+ */
+export async function postMeHealthRecordsApi(data = {}) {
+  return callApi("POST", "/me/health-records", data, {"pathNames":[],"queryNames":[],"hasBody":true,"auth":true,"clearAuth":false});
+}
 /**
  * @name 拍照→AI 营养分析（失败降级 mock；每日 30 次）
  * @method POST
@@ -1537,6 +1612,9 @@ export async function getDoctorPatientsApi(params = {}) { return callApi("GET", 
  * @method GET
  * @url /doctor/patients/{id}/archive
  * @desc 10 模块临床档案（进入自动写访问审计）
+ * @permission 仅 DOCTOR 可调用；CS 客服/CAREGIVER 调用返回业务 code=403「无权限访问」。
+ *   客服档案入口必须改用 GET /patients/{id}/profile（getPatientsByIdProfileApi），禁止用本接口。
+ *   id 为患者 ID（取列表行 id 的 patientId），禁止传 conversationId。
  * @param {Object} params 请求参数
  */
 export async function getDoctorPatientsByIdArchiveApi(params = {}) { return callApi("GET", "/doctor/patients/{id}/archive", params, {"pathNames":["id"],"queryNames":[],"hasBody":false,"auth":true,"clearAuth":false}); }
@@ -1649,6 +1727,9 @@ export async function putEscortOrdersByIdStartApi(params = {}) { return callApi(
  * @method POST
  * @url /escort/orders/{id}/checkin
  * @desc 到院打卡（定位+地址+照片；记录 ARRIVE 打卡）
+ *   【V20】入参 { id: 订单ID, data: {...} }；data 必填 latitude(number,-90~90)/longitude(number,-180~180)/address(string,≤255)。
+ *   photos 为照片 URL 数组，必须 1~3 张，且先经 POST /files/upload 取得真实 URL 再传入。
+ *   capturedAt 为实际拍摄时间（yyyy-MM-ddTHH:mm:ss），禁止传未来时间；无历史证据时服务端拒绝归档。
  * @param {Object} params 请求参数
  */
 export async function postEscortOrdersByIdCheckinApi(params = {}) { return callApi("POST", "/escort/orders/{id}/checkin", params, {"pathNames":["id"],"queryNames":[],"hasBody":true,"auth":true,"clearAuth":false}); }
@@ -1657,6 +1738,9 @@ export async function postEscortOrdersByIdCheckinApi(params = {}) { return callA
  * @method POST
  * @url /escort/orders/{id}/service-record
  * @desc 提交服务记录（订单归档 COMPLETED；COMPLETED 才累加服务人次）
+ *   【V20】入参 { id: 订单ID, data: {...} }；recoveryDescription、otherSituation、taskCompleted 三项必填。
+ *   otherSituation 枚举 NORMAL|EMPTY_NESTER|MOBILITY_IMPAIRED|OTHER；taskCompleted 枚举 COMPLETED|INCOMPLETE。
+ *   结束时间 checkoutAt 由服务端记录，前端不要传；没有已保存签到证据时服务端拒绝归档，重复提交幂等不重复累加。
  * @param {Object} params 请求参数
  */
 export async function postEscortOrdersByIdServiceRecordApi(params = {}) { return callApi("POST", "/escort/orders/{id}/service-record", params, {"pathNames":["id"],"queryNames":[],"hasBody":true,"auth":true,"clearAuth":false}); }
@@ -2044,3 +2128,253 @@ export async function postFilesUploadsApi(params = {}) { return uploadMultipleFi
  * @param {Object} params 请求参数
  */
 export async function getFilesByDirByFilenameApi(params = {}) { return Promise.resolve(buildPublicFileUrl(params)); }
+
+/* ============================================================
+ * V20 / V21 / V22 新增接口（1104 服务端变更）
+ * 仅追加，不改动 V1~V19 既有接口逻辑。所有函数复用 callApi：
+ * 统一校验业务 code===0（非仅 HTTP 200），401 静默刷新重试一次、
+ * 402 清凭证跳登录、403 提示不跳转、400/500 弹 message，resolve 的已是 data 层。
+ * ============================================================ */
+
+/* ---------- V20：陪诊现场留痕 ---------- */
+
+/**
+ * @name 当前活动陪诊订单（跨页面恢复）【V20 新增】
+ * @method GET
+ * @url /escort/active-service
+ * @desc 陪诊师获取当前进行中的活动订单；无活动订单时服务端返回 null，前端按空态处理，不要伪造订单。
+ * @param {Object} params 请求参数
+ */
+export async function getEscortActiveServiceApi(params = {}) { return callApi("GET", "/escort/active-service", params, {"pathNames":[],"queryNames":[],"hasBody":false,"auth":true,"clearAuth":false}); }
+
+/* ---------- V22：医生私有留言（患者/PATIENT 不可读，收件人限后台配置的群医生） ---------- */
+
+/**
+ * @name 创建患者私有医生留言【V22 新增】
+ * @method POST
+ * @url /patients/{patientId}/doctor-notes
+ * @desc 客服/公司向指定医生发起私有问题。权限：患者本人与公开群均不可读取。
+ *   收件人 doctorIds 只能是患者主治/主管或后台显式配置的群医生（医生库 dict_doctor.id）。
+ * @param {Object} params 请求参数
+ * @param {string|number} params.patientId 患者 ID（列表行 id，非 conversationId），必填
+ * @param {Object} params.data 请求体
+ * @param {string} params.data.question 问题内容，必填
+ * @param {string} [params.data.priority] 重要程度枚举 NORMAL|IMPORTANT，默认 NORMAL
+ * @param {Array<string|number>} params.data.doctorIds 医生库 ID 数组，必填，服务端逐医生回执
+ * @param {string} [params.data.clientSeq] 幂等序列号，防重
+ */
+export async function postPatientsByIdDoctorNotesApi(params = {}) { return callApi("POST", "/patients/{patientId}/doctor-notes", params, {"pathNames":["patientId"],"queryNames":[],"hasBody":true,"auth":true,"clearAuth":false}); }
+
+/**
+ * @name 查询患者私有医生留言及逐医生回执【V22 新增】
+ * @method GET
+ * @url /patients/{patientId}/doctor-notes
+ * @desc 仅授权医生/客服范围可读；患者 PATIENT 调用无权限，公开群消息不包含这些私有问题。
+ * @param {Object} params 请求参数
+ * @param {string|number} params.patientId 患者 ID（列表行 id），必填
+ */
+export async function getPatientsByIdDoctorNotesApi(params = {}) { return callApi("GET", "/patients/{patientId}/doctor-notes", params, {"pathNames":["patientId"],"queryNames":[],"hasBody":false,"auth":true,"clearAuth":false}); }
+
+/**
+ * @name 医生标记私有留言已读【V22 新增】
+ * @method PUT
+ * @url /doctor/notes/{id}/read
+ * @desc 仅更新当前医生的已读回执，不影响其他收件医生，不替代实际沟通内容。
+ * @param {Object} params 请求参数
+ * @param {string|number} params.id 留言 ID，必填
+ */
+export async function putDoctorNotesByIdReadApi(params = {}) { return callApi("PUT", "/doctor/notes/{id}/read", params, {"pathNames":["id"],"queryNames":[],"hasBody":false,"auth":true,"clearAuth":false}); }
+
+/**
+ * @name 医生标记私有留言已回复【V22 新增】
+ * @method PUT
+ * @url /doctor/notes/{id}/replied
+ * @desc 仅标记回复状态（逐医生独立回执），不替代实际沟通内容。
+ * @param {Object} params 请求参数
+ * @param {string|number} params.id 留言 ID，必填
+ */
+export async function putDoctorNotesByIdRepliedApi(params = {}) { return callApi("PUT", "/doctor/notes/{id}/replied", params, {"pathNames":["id"],"queryNames":[],"hasBody":false,"auth":true,"clearAuth":false}); }
+
+/**
+ * @name 医生私有留言列表【V22 新增】
+ * @method GET
+ * @url /doctor/notes
+ * @desc 医生查看本人收到的私有留言，可按患者/已读/已回复筛选，分页 {list,total,page,pageSize}。
+ * @param {Object} params 请求参数
+ * @param {string|number} [params.patientId] 患者 ID 筛选
+ * @param {boolean} [params.isRead] 已读筛选
+ * @param {boolean} [params.replied] 已回复筛选
+ * @param {number} [params.page] 页码，从 1 开始
+ * @param {number} [params.pageSize] 每页条数，默认 20、最大 100
+ */
+export async function getDoctorNotesApi(params = {}) { return callApi("GET", "/doctor/notes", params, {"pathNames":[],"queryNames":["patientId","isRead","replied","page","pageSize"],"hasBody":false,"auth":true,"clearAuth":false}); }
+
+/**
+ * @name 医生各患者私有留言未读数【V22 新增】
+ * @method GET
+ * @url /doctor/notes/unread-counts
+ * @desc 按 patientIds 批量返回当前医生的未读留言数；患者列表字段 doctorNoteUnread 取自此口径。
+ * @param {Object} params 请求参数
+ * @param {Array<string|number>} [params.patientIds] 患者 ID 数组（查询参数，多个按后端约定传递）
+ */
+export async function getDoctorNotesUnreadCountsApi(params = {}) { return callApi("GET", "/doctor/notes/unread-counts", params, {"pathNames":[],"queryNames":["patientIds"],"hasBody":false,"auth":true,"clearAuth":false}); }
+
+/* ---------- V19/V22：群医生显式配置（主治关系不会自动授予群权限） ---------- */
+
+/**
+ * @name 全量替换会话群医生名单【V19/V22】
+ * @method PUT
+ * @url /conversations/{id}/doctors
+ * @desc 全量覆盖，传空数组即清空；需要 chat:assign 权限且在 ADMIN/CS 患者数据范围内。
+ *   医生仅在被显式加入后才能在 /me/conversations 看到该群，主治/主管关系不会自动进群。
+ * @param {Object} params 请求参数
+ * @param {string|number} params.id 会话 ID，必填
+ * @param {Object} params.data 请求体
+ * @param {Array<string|number>} params.data.doctorIds 医生库 dict_doctor.id 数组；空数组清空名单
+ */
+export async function putConversationsByIdDoctorsApi(params = {}) { return callApi("PUT", "/conversations/{id}/doctors", params, {"pathNames":["id"],"queryNames":[],"hasBody":true,"auth":true,"clearAuth":false}); }
+
+/* ---------- V21：通知红点与分类已读 ---------- */
+
+/**
+ * @name 未读通知分类汇总（小程序红点）【V21 新增】
+ * @method GET
+ * @url /notifications/unread-summary
+ * @desc 返回 userUnreadMessages/userHealthAlertCount/systemUnreadCount/doctorMentionCount/doctorNoteCount。
+ *   医生留言/艾特与群消息分属不同提醒，不重复累加聊天未读。
+ * @param {Object} params 请求参数
+ */
+export async function getNotificationsUnreadSummaryApi(params = {}) { return callApi("GET", "/notifications/unread-summary", params, {"pathNames":[],"queryNames":[],"hasBody":false,"auth":true,"clearAuth":false}); }
+
+/**
+ * @name 按分类标记通知已读【V21 新增】
+ * @method PUT
+ * @url /notifications/read-category
+ * @desc category 枚举 HEALTH|SYSTEM|DOCTOR_MENTION|DOCTOR_NOTE|ALL；聊天已读仍走 /conversations/{id}/read。
+ * @param {Object} params 请求参数
+ * @param {Object} params.data 请求体
+ * @param {string} params.data.category 已读分类，必填，枚举 HEALTH|SYSTEM|DOCTOR_MENTION|DOCTOR_NOTE|ALL
+ */
+export async function putNotificationsReadCategoryApi(params = {}) { return callApi("PUT", "/notifications/read-category", params, {"pathNames":[],"queryNames":[],"hasBody":true,"auth":true,"clearAuth":false}); }
+
+/* ---------- V21：消息中心（需 message:manage 权限，默认公司管理员） ---------- */
+
+/**
+ * @name 消息模板列表【V21 新增】
+ * @method GET
+ * @url /message-center/templates
+ * @desc 需要 message:manage 权限。
+ * @param {Object} params 请求参数
+ * @param {number} [params.page] 页码，从 1 开始
+ * @param {number} [params.pageSize] 每页条数
+ */
+export async function getMessageCenterTemplatesApi(params = {}) { return callApi("GET", "/message-center/templates", params, {"pathNames":[],"queryNames":["page","pageSize"],"hasBody":false,"auth":true,"clearAuth":false}); }
+
+/**
+ * @name 创建消息模板【V21 新增】
+ * @method POST
+ * @url /message-center/templates
+ * @desc 需要 message:manage 权限。
+ * @param {Object} params 请求参数
+ * @param {Object} params.data 请求体
+ * @param {string} params.data.name 模板名称，必填
+ * @param {string} params.data.scene 场景码，必填
+ * @param {string} params.data.channelsJson 渠道 JSON 数组字符串（如 ["IN_APP","BADGE"]），必须是字符串而非数组
+ * @param {string} params.data.title 消息标题，必填
+ * @param {string} params.data.content 模板内容，占位形式 {{用户姓名}}，必填
+ * @param {string} params.data.variablesJson 变量 JSON 数组字符串，必须是字符串；占位变量必须在此声明并在发送时提供
+ * @param {string} [params.data.status] 启停枚举 ENABLED|DISABLED
+ */
+export async function postMessageCenterTemplatesApi(params = {}) { return callApi("POST", "/message-center/templates", params, {"pathNames":[],"queryNames":[],"hasBody":true,"auth":true,"clearAuth":false}); }
+
+/**
+ * @name 修改消息模板【V21 新增】
+ * @method PUT
+ * @url /message-center/templates/{id}
+ * @desc 需要 message:manage 权限；channelsJson/variablesJson 同样传 JSON 数组字符串。
+ * @param {Object} params 请求参数
+ * @param {string|number} params.id 模板 ID，必填
+ * @param {Object} params.data 模板变更字段
+ */
+export async function putMessageCenterTemplatesByIdApi(params = {}) { return callApi("PUT", "/message-center/templates/{id}", params, {"pathNames":["id"],"queryNames":[],"hasBody":true,"auth":true,"clearAuth":false}); }
+
+/**
+ * @name 删除消息模板【V21 新增】
+ * @method DELETE
+ * @url /message-center/templates/{id}
+ * @param {Object} params 请求参数
+ * @param {string|number} params.id 模板 ID，必填
+ */
+export async function deleteMessageCenterTemplatesByIdApi(params = {}) { return callApi("DELETE", "/message-center/templates/{id}", params, {"pathNames":["id"],"queryNames":[],"hasBody":false,"auth":true,"clearAuth":false}); }
+
+/**
+ * @name 启用/停用消息模板【V21 新增】
+ * @method PUT
+ * @url /message-center/templates/{id}/status
+ * @param {Object} params 请求参数
+ * @param {string|number} params.id 模板 ID，必填
+ * @param {Object} params.data 请求体
+ * @param {string} params.data.status 目标状态枚举 ENABLED|DISABLED，必填
+ */
+export async function putMessageCenterTemplatesByIdStatusApi(params = {}) { return callApi("PUT", "/message-center/templates/{id}/status", params, {"pathNames":["id"],"queryNames":[],"hasBody":true,"auth":true,"clearAuth":false}); }
+
+/**
+ * @name 消息触发规则列表【V21 新增】
+ * @method GET
+ * @url /message-center/rules
+ * @param {Object} params 请求参数
+ */
+export async function getMessageCenterRulesApi(params = {}) { return callApi("GET", "/message-center/rules", params, {"pathNames":[],"queryNames":[],"hasBody":false,"auth":true,"clearAuth":false}); }
+
+/**
+ * @name 修改消息触发规则（scene/code 不可改）【V21 新增】
+ * @method PUT
+ * @url /message-center/rules/{id}
+ * @desc 仅可配置 name/rolesJson/redDot/jump/enabled；rolesJson 为 JSON 数组字符串。
+ * @param {Object} params 请求参数
+ * @param {string|number} params.id 规则 ID，必填
+ * @param {Object} params.data 规则变更字段
+ */
+export async function putMessageCenterRulesByIdApi(params = {}) { return callApi("PUT", "/message-center/rules/{id}", params, {"pathNames":["id"],"queryNames":[],"hasBody":true,"auth":true,"clearAuth":false}); }
+
+/**
+ * @name 消息投递台账列表【V21 新增】
+ * @method GET
+ * @url /message-center/records
+ * @desc 按 scene/sendStatus/isRead/source/keyword/userId/userType/channel/startTime/endTime 筛选，附 userName/templateName。
+ * @param {Object} params 请求参数
+ * @param {number} [params.page] 页码，从 1 开始
+ * @param {number} [params.pageSize] 每页条数
+ */
+export async function getMessageCenterRecordsApi(params = {}) { return callApi("GET", "/message-center/records", params, {"pathNames":[],"queryNames":["scene","sendStatus","isRead","source","keyword","userId","userType","channel","startTime","endTime","page","pageSize"],"hasBody":false,"auth":true,"clearAuth":false}); }
+
+/**
+ * @name 消息投递统计【V21 新增】
+ * @method GET
+ * @url /message-center/statistics
+ * @desc 返回 total/success/failed/pending/unread/successRate/readRate 及分场景统计；空分母返回 0。
+ * @param {Object} params 请求参数
+ */
+export async function getMessageCenterStatisticsApi(params = {}) { return callApi("GET", "/message-center/statistics", params, {"pathNames":[],"queryNames":[],"hasBody":false,"auth":true,"clearAuth":false}); }
+
+/* ---------- V21：健康总览/快照（无数据 NO_DATA/null，不伪造正常结论） ---------- */
+
+/**
+ * @name 患者健康状态总览统计【V21 新增】
+ * @method GET
+ * @url /patients/health-overview
+ * @desc 返回 total/normal/attention/abnormal/noData/pendingAlerts，统计口径为筛选前可访问患者。
+ * @param {Object} params 请求参数
+ */
+export async function getPatientsHealthOverviewApi(params = {}) { return callApi("GET", "/patients/health-overview", params, {"pathNames":[],"queryNames":[],"hasBody":false,"auth":true,"clearAuth":false}); }
+
+/**
+ * @name 单患者健康快照【V21 新增】
+ * @method GET
+ * @url /patients/{id}/health-snapshot
+ * @desc 含各类型最新记录/日期、weight7dChange、今日用药、有效 PSQI、运动方案与今日完成状态、reasons、pendingAlerts。
+ *   无数据用 NO_DATA/null，未取得准确 7 日前基线时 weight7dChange 为空，前端不得伪造指标或临床正常结论。
+ * @param {Object} params 请求参数
+ * @param {string|number} params.id 患者 ID（列表行 id），必填
+ */
+export async function getPatientsByIdHealthSnapshotApi(params = {}) { return callApi("GET", "/patients/{id}/health-snapshot", params, {"pathNames":["id"],"queryNames":[],"hasBody":false,"auth":true,"clearAuth":false}); }

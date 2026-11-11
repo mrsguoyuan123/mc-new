@@ -15,40 +15,102 @@
 		</view>
 		<!-- 搜索框 -->
 		<view class="margin-30">
-			<u--input placeholder="搜索患者姓名、意向、手机号" shape="" v-model="searchKey" prefixIcon="search"
-				prefixIconStyle="font-size: 22px;color: #909399"></u--input>
+			<u--input placeholder="搜索患者姓名、手机号" style="background-color: #fff;" shape="" v-model="searchKey"
+				prefixIcon="search" prefixIconStyle="font-size: 22px;color: #909399"></u--input>
 		</view>
-		<!-- 统计数字卡片组 -->
-		<view class="stat-row">
-			<view class="stat-item mr-24">
-				<view class="dot red"></view>
-				<view class="badge-num">
-					<u-badge bgColor="#f53f3f" max="99" value="3"></u-badge>
+		<view class="notice-wrap">
+			<view class="notice-wrap">
+				<!-- 卡片1：待信息回复 -->
+				<view class="notice-card normal-card">
+					<view class="notice-header">
+						<view class="card-left">
+							<view class="icon-box green">
+								<u-icon name="chat" color="#22b573" size="30"></u-icon>
+							</view>
+							<view class="text-group">
+								<view class="card-title">
+									<text>
+										待信息回复
+									</text>
+									<u-badge :value="unreadMessages" :max="99" type="error" class=""></u-badge>
+
+								</view>
+								<view class="card-desc">优先处理用户最新消息</view>
+							</view>
+						</view>
+						<view class="card-right">
+							<view>
+								待回复信息
+								<text class="count-big">{{ pendingReply }}</text>
+
+							</view>
+							<!-- <view class="unread-badge">{{ unreadCount }}条未读</view> -->
+						</view>
+					</view>
+
 				</view>
-				<text class="num">{{highIntent}}</text>
-				<text class="stat-label">高意向</text>
-			</view>
-			<view class="stat-item  mr-24">
-				<view class="dot orange"></view>
-				<view class="badge-num">
-					<u-badge bgColor="#f53f3f" max="99" value="143"></u-badge>
+
+				<!-- 卡片2：异常信息提醒 -->
+				<view class="notice-card warn-card" @click="toggleExpand">
+					<view class="notice-header">
+						<view class="card-left">
+							<view class="icon-box red">
+								<u-icon name="heart" color="#f53f3f" size="30"></u-icon>
+							</view>
+							<view class="text-group">
+								<view class="card-title">
+									<text>
+										异常信息提醒
+									</text>
+									<u-badge :value="riskAlertTotal" :max="99" type="error" class=""></u-badge>
+								</view>
+								<view class="card-desc">仅提醒当前客服负责用户的健康数据异常，处理后自动消失。</view>
+							</view>
+						</view>
+						<view class="card-right">
+							<!-- <u-icon name="shield" color="#f53f3f" size="34"></u-icon> -->
+							<u-icon :name="expand ? 'arrow-up' : 'arrow-down'" color="#f53f3f" size="15"
+								class="arrow-icon"></u-icon>
+						</view>
+					</view>
+
+					<!-- 展开列表区域 -->
+					<view v-if="expand" class="abnormal-list">
+						<view class="abnormal-item" v-for="item in riskAlertList" :key="item.id">
+							<view class="item-head">
+								<view class="alert-icon"
+									:class="item.level === 'HIGH' ? 'red' : item.level === 'MEDIUM' ? 'yellow' : 'blue'">
+									<u-icon name="error-circle"
+										:color="item.level === 'HIGH' ? '#f53f3f' : item.level === 'MEDIUM' ? '#ff9500' : '#007aff'"
+										size="20"></u-icon>
+								</view>
+								<view class="user-name">{{ item.patientName }}</view>
+								<view class="tag"
+									:class="item.level === 'HIGH' ? 'tag-red' : item.level === 'MEDIUM' ? 'tag-yellow' : 'tag-blue'">
+									{{ item.level === 'HIGH' ? '高危' : item.level === 'MEDIUM' ? '中危' : '低危' }}
+								</view>
+								<view class="time">{{ formatTime(item.createTime) }}</view>
+							</view>
+							<view class="value-text">{{ item.content }}</view>
+							<view class="remark-text">来源：{{ item.source === 'HEALTH_DATA' ? '健康监测数据' : item.source }}
+							</view>
+							<view class="btn-row">
+								<u-button type="primary" plain size="mini"
+									@click="routeTo(item,'alert')">进入沟通</u-button>
+								<u-button v-if="item.status === 'PENDING'" type="success" size="mini"
+									@click="markHandled(item)">标记已处理</u-button>
+								<u-button v-else type="default" size="mini" disabled>已处理</u-button>
+							</view>
+						</view>
+					</view>
+
 				</view>
-				<text class="num">{{pendingCall}}</text>
-				<text class="stat-label">待电话沟通</text>
-			</view>
-			<view class="stat-item">
-				<view class="dot green"></view>
-				<view class="badge-num">
-					<u-badge bgColor="#f53f3f" max="99" value="143"></u-badge>
-				</view>
-				<text class="num">{{pendingReply}}</text>
-				<text class="stat-label">待信息回复</text>
 			</view>
 		</view>
 		<!-- 沟通记录标题 -->
 		<view class="record-head">
-			<text class="font-m font-bold">沟通记录 (6)</text>
-			<text class="tip font-s font-info">实时同步意向</text>
+			<text class="font-m font-bold">用户列表（{{total}}） </text>
+			<text class="tip font-s font-info">实时同步</text>
 		</view>
 		<!-- 沟通记录列表 -->
 		<!-- 	<scroll-view scroll-y class="list-scroll">
@@ -67,7 +129,7 @@
 								:class="'tag-' + item.purchaseIntent">{{ item.purchaseIntent === 'HIGH' ? '高意向' : item.purchaseIntent === 'MEDIUM' ? '中等意向' : item.purchaseIntent === 'LOW' ? '低意向' : '' }}</text>
 						</view>
 						<text class="custom-icon custom-icon-message" style="font-size:45rpx;color:#1ec76f;"
-							@click="routeTo(item)"></text>
+							@click="routeTo(item,'list')"></text>
 					</view>
 					<view class="desc-line">
 						<text class="desc">{{ item.surgeryType }} | {{ item.hospitalName }}</text>
@@ -401,24 +463,77 @@
 			</view>
 		</view>
 		<myTabbar :current="0"></myTabbar>
+		<message-pop v-if="messagePopupVisible" role="CS" :patient-id="activePatientId"
+			:conversation-id="activeConversationId" :current-user-id="currentUser.id || currentUser.userId"
+			:show-input="true" @close="closeMessagePopup" @refresh="getList"></message-pop>
 		<u-toast ref="uToast"></u-toast>
 	</view>
+
 </template>
 <script>
 	import {
-		getConversationsStatsApi,
-		getCsPatientsApi
+		getRiskAlertsApi,
+		getCsPatientsApi,
+		getCsStatsApi,
+		getNotificationsUnreadSummaryApi,
+		putNotificationsReadCategoryApi,
+		putRiskAlertsByIdApi
 	} from '@/api/frontApikit.js'
 	import myTabbar from '@/components/myTabbar.vue'
+	import MessagePop from '@/components/pop/messagePop.vue'
 	export default {
 		options: {
 			styleIsolation: 'shared' // 解除小程序样式隔离，允许穿透样式生效
 		},
 		components: {
-			myTabbar
+			myTabbar,
+			MessagePop
 		},
 		data() {
 			return {
+				riskAlertList: [],
+				riskAlertTotal: 0,
+				pendingReply: 0, // 待回复数量
+				unreadMessages: 0, // 用户未读消息数
+
+				doctorMentionCount: 0, // 医生提及数
+				doctorNoteCount: 0, // 医生备注数
+				systemUnreadCount: 0, // 系统未读数
+				userHealthAlertCount: 0, // 用户健康预警数
+
+
+				expand: false,
+				// ==========【调试假数据，上线替换为接口返回】 ==========
+
+				abnormalList: [{
+						id: 1,
+						name: '张三',
+						tagText: '异常',
+						type: 'error',
+						time: '今日 09:20',
+						value: '血压 152/96 mmHg',
+						remark: '血压高于目标范围，需优先回访并确认今日用药情况。'
+					},
+					{
+						id: 2,
+						name: '李四',
+						tagText: '异常',
+						type: 'error',
+						time: '今日 08:45',
+						value: '空腹血糖 8.9 mmol/L',
+						remark: '血糖偏高且体重下降偏快，建议同步医生并安排复测。'
+					},
+					{
+						id: 3,
+						name: '赵六',
+						tagText: '关注',
+						type: 'attention',
+						time: '昨日 20:10',
+						value: '用药提醒未确认',
+						remark: '今日用药尚未确认，需要提醒用户及时服药并回复状态。'
+					}
+				],
+				total: 0,
 				searchKey: "",
 				showCallLoading: false,
 				formValue: null,
@@ -437,6 +552,11 @@
 				],
 				// 患者列表
 				list: [],
+				// 健康管理群弹框（客服）
+				messagePopupVisible: false,
+				activePatientId: '',
+				activeConversationId: '',
+				currentUser: {},
 				// 步骤条
 				stepList: [{
 						title: "第一步电话沟通"
@@ -489,40 +609,104 @@
 				const key = this.searchKey?.trim()
 				if (key) {
 					const lowKey = key.toLowerCase()
-					// 映射：中文/小写英文 匹配后端大写 HIGH MEDIUM LOW
-					const levelMap = {
-						'高意向': 'high',
-						'high': 'high',
-						'中等意向': 'medium',
-						'中意向': 'medium',
-						'medium': 'medium',
-						'低意向': 'low',
-						'low': 'low'
-					}
 					arr = arr.filter(item => {
+						// 姓名匹配（忽略大小写）
 						const matchName = item.name && item.name.toLowerCase().includes(lowKey)
-						const matchIntent = item.purchaseIntent && item.purchaseIntent.toLowerCase().includes(
-							lowKey)
-						const matchPhone = item.phone && item.phone.includes(key)
+						// 手机号模糊匹配
+						const matchPhone = item.phone && String(item.phone).includes(key)
 
-						// 匹配意向等级：把后端purchaseIntent转小写对比
-						const targetLevel = levelMap[lowKey]
-						const matchLevel = targetLevel ? item.purchaseIntent?.toLowerCase() === targetLevel : false
-
-						return matchName || matchIntent || matchPhone || matchLevel
+						return matchName || matchPhone
 					})
 				}
 				return arr
 			}
+
+
 		},
 
 
 		onLoad() {
-
+			this.currentUser = this.readCurrentUser()
 			this.getList()
-			this.getConversationsStats()
+			// this.getNotificationsUnreadSummary()
+			this.getCsStats()
+			this.getRiskAlerts()
 		},
+
 		methods: {
+			async putRiskAlertsById() {
+
+			},
+
+			async getRiskAlerts() {
+				try {
+					const data = await getRiskAlertsApi({
+
+					})
+					console.log('风险提示', data)
+					this.riskAlertList = data.list;
+					this.riskAlertTotal = data.total
+
+
+				} catch (e) {
+					console.log('风险提示报错：', e)
+				}
+			},
+			async getCsStats() {
+				try {
+					const data = await getCsStatsApi({
+
+					})
+					console.log(22222, data)
+					this.pendingReply = data.pendingReply
+					this.unreadMessages = data.unreadMessages
+
+
+				} catch (e) {
+					console.log('getList报错：', e)
+				}
+			},
+			toggleExpand() {
+				this.expand = !this.expand
+			},
+
+			async markHandled(item) {
+				console.log('标记已处理', item)
+				// 调用标记已处理接口
+				try {
+					const data = await putRiskAlertsByIdApi({
+						id: item.id
+					})
+					console.log(8888888, data)
+
+				} catch (e) {
+					console.log('风险提示报错：', e)
+				}
+
+			},
+			readCurrentUser() {
+				try {
+					const raw = uni.getStorageSync('userInfo')
+					if (!raw) return {}
+					return typeof raw === 'string' ? JSON.parse(raw) : raw
+				} catch (e) {
+					return {}
+				}
+			},
+			async getNotificationsUnreadSummary() {
+				try {
+					const result = await getNotificationsUnreadSummaryApi({})
+					console.log('未读消息', result)
+					this.doctorMentionCount = result.doctorMentionCount //医生提及数
+					this.doctorNoteCount = result.doctorNoteCount //医生备注数
+					this.systemUnreadCount = result.systemUnreadCount //系统未读数
+					this.userHealthAlertCount = result.userHealthAlertCount //用户健康预警数
+					this.userUnreadMessages = result.userUnreadMessages //用户未读消息数
+					this.userUnreadMessages = result.userUnreadMessages
+				} catch (e) {
+					console.log('getList报错：', e)
+				}
+			},
 			async getList() {
 
 				try {
@@ -532,23 +716,35 @@
 					})
 					console.log('列表返回：', listData)
 
-					this.list = listData.list
+					this.list = listData.list;
+					this.total = listData.total
 				} catch (e) {
 					console.log('getList报错：', e)
 				}
 			},
-			async getConversationsStats() {
-				try {
-					const statsData = await getConversationsStatsApi()
-					console.log('统计数据', statsData);
-					this.highIntent = statsData.highIntent ?? 0
-					this.pendingCall = statsData.pendingCall ?? 0
-					this.pendingReply = statsData.pendingReply ?? 0
-				} catch (e) {
-					console.log('统计接口报错', e)
+			// async getConversationsStats() {
+			// 	try {
+			// 		const statsData = await getConversationsStatsApi()
+			// 		console.log('统计数据', statsData);
+			// 		this.highIntent = statsData.highIntent ?? 0
+			// 		this.pendingCall = statsData.pendingCall ?? 0
+			// 		this.pendingReply = statsData.pendingReply ?? 0
+			// 	} catch (e) {
+			// 		console.log('统计接口报错', e)
+			// 	}
+			// },
+
+			// 把接口原始预警转成 riskAlertList 数组
+			normalizeAlert(raw) {
+				return {
+					...raw,
+					tagText: raw.level === 'HIGH' ? '高危' : raw.level === 'MEDIUM' ? '中危' : '低危'
 				}
 			},
-
+			formatTime(t) {
+				if (!t) return ''
+				return t.slice(0, 16).replace('T', ' ')
+			},
 
 
 			handleStatusChange(item, e, value) {
@@ -585,13 +781,24 @@
 				})
 
 			},
-			routeTo(res) {
+			routeTo(res, name) {
 				console.log(res)
-				const data = {
-					id: res.id
+				if (name == 'list') {
+					this.activePatientId = res.id
+					this.activeConversationId = res.conversationId || res.conversation_id || ''
+
+				} else {
+					this.activePatientId = res.patientId
+					this.activeConversationId = res.id
+
 				}
-				let routeUrl = `/pages/index/chat` + `?data=` + encodeURIComponent(JSON.stringify(data))
-				this.$safeJump(routeUrl)
+
+				this.messagePopupVisible = true
+			},
+			closeMessagePopup() {
+				this.messagePopupVisible = false
+				this.activePatientId = ''
+				this.activeConversationId = ''
 			},
 
 			onCallStatusChange(item, e) {
@@ -1215,7 +1422,7 @@
 	.picker-label {
 		display: flex;
 		align-items: center;
-		// margin-bottom:12rpx;
+
 	}
 
 	.required-star {
@@ -1584,5 +1791,203 @@
 
 	.bottom-space {
 		height: 160rpx;
+	}
+
+	.notice-wrap {
+		/* padding: 24rpx; */
+		display: flex;
+		flex-direction: column;
+		gap: 24rpx;
+	}
+
+	.notice-card {
+		background: #ffffff;
+		border-radius: 32rpx;
+		padding: 32rpx;
+		box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.06);
+	}
+
+	.normal-card {
+		border: none;
+	}
+
+	.warn-card {
+		border: 2rpx solid #ffe9e9;
+	}
+
+	.card-top-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.card-left {
+		display: flex;
+		align-items: center;
+		gap: 20rpx;
+	}
+
+	.icon-box {
+		width: 88rpx;
+		height: 88rpx;
+		border-radius: 20rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+
+	}
+
+	.icon-box.green {
+		background-color: #e8f8f2;
+	}
+
+	.icon-box.red {
+		background-color: #ffe9e9;
+	}
+
+	.card-title {
+
+		display: flex;
+		align-items: center;
+	}
+
+	.u-badge {
+		margin-left: 6rpx;
+	}
+
+	.card-right {
+		display: flex;
+		align-items: center;
+		gap: 16rpx;
+	}
+
+	.card-title {
+		font-size: 26rpx;
+	}
+
+	.card-desc {
+		font-size: 24rpx;
+		color: #909399;
+		margin-top: 10rpx;
+	}
+
+	.count-big {
+		font-size: 40rpx;
+		font-weight: bold;
+		color: #222;
+	}
+
+	.unread-badge {
+		background-color: #f53f3f;
+		color: #fff;
+		font-size: 20rpx;
+		padding: 8rpx 16rpx;
+		border-radius: 999rpx;
+	}
+
+	.arrow-icon {
+		margin-left: 8rpx;
+	}
+
+	.warn-desc {
+		margin-top: 20rpx;
+		font-size: 28rpx;
+		color: #999;
+		line-height: 1.6;
+	}
+
+	.abnormal-list {
+		margin-top: 24rpx;
+		display: flex;
+		flex-direction: column;
+		gap: 20rpx;
+	}
+
+	.abnormal-item {
+		background: #fff2f2;
+		border-radius: 24rpx;
+		padding: 28rpx;
+
+
+	}
+
+	.attention-item {
+		background: #fffdf4;
+	}
+
+	.item-head {
+		display: flex;
+		align-items: center;
+		gap: 12rpx;
+		margin-bottom: 12rpx;
+	}
+
+	/* .alert-icon {
+		width: 60rpx;
+		height: 60rpx;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+
+	} */
+
+	/* .alert-icon.red {
+		background: #ffe4e4;
+	}
+
+	.alert-icon.yellow {
+		background: #fff2cc;
+	} */
+
+	.user-name {
+		font-size: 32rpx;
+		font-weight: 600;
+		flex-shrink: 0;
+	}
+
+	.tag {
+		font-size: 24rpx;
+		padding: 4rpx 12rpx;
+		border-radius: 999rpx;
+
+
+	}
+
+	.tag.tag-red {
+		background: #ffe4e4;
+		color: #f53f3f;
+	}
+
+	.tag.tag-yellow {
+		background: #fff2cc;
+		color: #ff9500;
+	}
+
+	.time {
+		font-size: 24rpx;
+		color: #999;
+		margin-left: auto;
+	}
+
+	.value-text {
+		font-size: 30rpx;
+		color: #333;
+		margin-bottom: 8rpx;
+	}
+
+	.remark-text {
+		font-size: 26rpx;
+		color: #666;
+		line-height: 1.5;
+		margin-bottom: 24rpx;
+	}
+
+	.btn-row {
+		display: flex;
+		gap: 20rpx;
+		justify-content: flex-end;
 	}
 </style>

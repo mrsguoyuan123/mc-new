@@ -17,8 +17,9 @@
 							v-for="item in tabList2" :key="item.id"
 							class="tab-icons radius-1 card-border-gray u-flex space-between align-center u-flex-column margin-right-10">
 
-							<text :color="activeTab2 == item.id ? 'white' : '#a1a5af'" :class="'custom-icon-' + item.icon"
-								class="custom-icon  icon-bold margin-bottom-5" style="font-size:40rpx;"></text>
+							<text :color="activeTab2 == item.id ? 'white' : '#a1a5af'"
+								:class="'custom-icon-' + item.icon" class="custom-icon  icon-bold margin-bottom-5"
+								style="font-size:40rpx;"></text>
 							<view class="font-info font-s font-bold tab-font ">
 								{{ item.name }}
 							</view>
@@ -183,15 +184,15 @@
 				</view>
 				<view class="input-wrapper margin-bottom-5 font-gray-dark">血压 (mmHg)</view>
 				<view class="u-flex space-between align-center weight-wrapper">
-					<u--input placeholder="收缩压" type="number"></u--input>
+					<u--input placeholder="收缩压" type="number" v-model="formPressure.systolic"></u--input>
 					<view style="margin: 0 5px;">/</view>
-					<u--input placeholder="舒张压" type="number"></u--input>
+					<u--input placeholder="舒张压" type="number" v-model="formPressure.diastolic"></u--input>
 				</view>
 				<view class="input-wrapper margin-bottom-5 font-gray-dark margin-top-1">血糖 (mmol/L)</view>
 				<view class="u-flex space-between align-center weight-wrapper">
-					<u--input placeholder="请输入血糖" type="number"></u--input>
+					<u--input placeholder="请输入血糖" type="number" v-model="formGlucose.mmolL"></u--input>
 				</view>
-				<view class="button-wrapper-fill u-flex flex-center margin-top-15">
+				<view class="button-wrapper-fill u-flex flex-center margin-top-15" @click="saveItem()">
 					保存数据
 				</view>
 
@@ -214,8 +215,8 @@
 								血压
 							</view>
 						</view>
-						<view class="font-l font-bold">24.4</view>
-						<view class="font-s  font-green font-bold">正常范围</view>
+						<view class="font-l font-bold card-value">{{ bloodPressure.dbp }}/{{ bloodPressure.sbp }}</view>
+						<view class="font-s  font-green font-bold">{{ bloodPressure.level }}</view>
 					</view>
 
 					<view class="badge-green-bg radius-1 padding-15">
@@ -226,10 +227,18 @@
 								血糖
 							</view>
 						</view>
-						<view class="font-l font-bold">24.4</view>
-						<view class="font-s  font-green font-bold">控制良好</view>
+						<view class="card-value">
+							<text class="font-l font-bold">{{ bloodGlucose.value }}</text>
+							<text class="font-s font-info"> {{ bloodGlucose.unit }}</text>
+						</view>
+						<!-- <view class="font-s  font-green font-bold">控制良好</view> -->
 					</view>
 				</view>
+			</view>
+			<view class="button-wrapper u-flex flex-center font-s" @click="tomyGroup()">
+				<text class="custom-icon custom-icon-navigation icon-bold"
+					style="color:#155DFC;margin-right: 5px;"></text>
+				同步到我的私人医生团队
 			</view>
 		</view>
 		<!-- 今日用药 -->
@@ -399,10 +408,7 @@
 			<sleepManagement />
 
 		</view>
-		<view v-if="activeTab2 != 5" class="button-wrapper u-flex flex-center font-s" @click="showToast()" ref="uToast">
-			<text class="custom-icon custom-icon-navigation icon-bold" style="color:#155DFC;margin-right: 5px;"></text>
-			同步到我的私人医生团队
-		</view>
+
 		<myTabbar :current="1"></myTabbar>
 
 		<u-toast ref="uToast"></u-toast>
@@ -440,7 +446,8 @@
 </template>
 <script>
 import {
-
+	getMeHomeApi,
+	postMeHealthRecordsApi,
 	getMeExercisePlanApi,
 	getMeMedicationTodayApi,
 	postMeMedicationApi,
@@ -475,6 +482,18 @@ export default {
 
 
 		return {
+			bloodPressure: {},
+			bloodGlucose: {},
+			formPressure: {
+				"type": "BLOOD_PRESSURE",
+				"systolic": '',
+				"diastolic": '',
+			},
+			formGlucose: {
+				"type": "BLOOD_GLUCOSE",
+				"mmolL": ''
+			},
+
 			id: '',
 			showModal: false,
 			showModal2: false,
@@ -532,7 +551,7 @@ export default {
 			fontSize1: "30rpx",
 			fontSize2: "40rpx",
 			activeTab: 1,
-			activeTab2: 2,
+			activeTab2: 1,
 			medicationList: [],
 
 			tabList2: [{
@@ -576,9 +595,60 @@ export default {
 		const userInfo = this.readCurrentUser()
 		this.id = userInfo.userId
 		this.getMeMedicationTodayApi()
-
+		this.getMeHealthRecords()
 	},
 	methods: {
+
+		async saveItem() {
+			uni.showLoading({ title: '保存中...' })
+			try {
+				console.log(232323, this.formPressure, this.formGlucose)
+				const [pressureRes, glucoseRes] = await Promise.allSettled([
+					postMeHealthRecordsApi(this.formPressure),
+					postMeHealthRecordsApi(this.formGlucose)
+				])
+				const pressureOk = pressureRes.status === 'fulfilled'
+				const glucoseOk = glucoseRes.status === 'fulfilled'
+				if (pressureOk && glucoseOk) {
+					uni.showToast({ title: '保存成功', icon: 'success' })
+				} else if (pressureOk || glucoseOk) {
+					uni.showToast({ title: '部分保存成功', icon: 'none' })
+				} else {
+					uni.showToast({ title: '全部保存失败', icon: 'error' })
+				}
+
+			} catch (e) {
+				console.log('报错：', e)
+				uni.showToast({ title: '保存失败', icon: 'error' })
+			} finally {
+				uni.hideLoading()
+			}
+		},
+		async getMeHealthRecords() {
+			try {
+				if (!this.id) {
+					console.warn('id为空，跳过请求')
+					return
+				}
+				const data = await getMeHomeApi({
+					id: this.id
+				})
+				// console.log(' 患者首页聚合（术后天数/顾问名片/健康监测/陪诊/待确认告知书）', data)
+
+				// console.log('待确认告知书', data.consentPending)
+
+				// console.log('术后天数', data.postopDays)
+
+				const monitor = data.monitor || {}
+				this.bloodGlucose = monitor.bloodGlucose || {}
+				this.bloodPressure = monitor.bloodPressure || {}
+
+				console.log('nutrition', this.monitor)
+			} catch (e) {
+				console.log('报错：', e)
+			}
+
+		},
 		readCurrentUser() {
 			try {
 				const raw = uni.getStorageSync('userInfo')
@@ -738,17 +808,21 @@ export default {
 			this.activeTab2 = item.id;
 			console.log(this.activeTab2)
 		},
-		showToast(params) {
+		tomyGroup(params) {
 
-			const name = this.tabList2[this.activeTab2 - 1].name;
-			const data = {
-				value1: '1',
-				value2: '2',
-				healthType: name
+			const name = "血压血糖";
 
-			}
-			let routeUrl = "/pages/index/consultation" + `?data=` + encodeURIComponent(JSON.stringify(data))
 			const that = this;
+
+			const data = {
+				bloodGlucose: this.bloodGlucose.value,
+				dbp: this.bloodPressure.dbp,
+				sbp: this.bloodPressure.sbp,
+				name: '血压血糖',
+				type: 'card'
+			}
+
+			let routeUrl = "/pages/index/consultation" + `?data=` + encodeURIComponent(JSON.stringify(data))
 			this.$refs.uToast.show({
 				title: '',
 				position: 'top',
@@ -758,11 +832,16 @@ export default {
 				// 如果不需要图标，请设置为false
 				icon: 'checkmark-circle',
 				complete() {
-					this.$safeJump(routeUrl)
+					uni.navigateTo({
+						url: routeUrl
+					})
 				},
 			})
 
+
+
 		},
+
 		routeTo(res) {
 
 			let data = {
@@ -1262,5 +1341,9 @@ export default {
 	font-size: 20rpx;
 	color: #06b370;
 	margin-top: 4rpx;
+}
+
+.card-value {
+	margin: 10rpx 0;
 }
 </style>

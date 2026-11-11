@@ -32,11 +32,8 @@
 			</view>
 		</view>
 
-		<view class="stats-grid">
+		<!-- <view class="stats-grid">
 			<view v-for="card in statsCards" :key="card.key" class="stat-card">
-				<!-- <view class="stat-icon" :style="{ backgroundColor: card.bgColor }">
-					<u-icon :name="card.icon" :color="card.color" size="22"></u-icon>
-				</view> -->
 				<view class="stat-label">{{ card.label }}</view>
 				<view class="stat-value">{{ card.value }}</view>
 				<view class="stat-trend" :class="card.direction">
@@ -50,7 +47,7 @@
 					<text> {{ card.trendText }}</text>
 				</view>
 			</view>
-		</view>
+		</view> -->
 
 		<view class="schedule-calendar-card">
 			<view class="calendar-nav">
@@ -202,17 +199,17 @@
 				return map[new Date(this.year, this.selectMonth - 1, this.selectDay).getDay()] || ''
 			},
 			// 顶部统计卡片
-			statsCards() {
-				const totalTrend = this.calculateTrend(this.apiSchedules.length, this.previousStats.total)
-				const pendingTrend = this.calculateTrend(this.orderStats.pending, this.previousStats.pending)
-				const completedTrend = this.calculateTrend(this.orderStats.completed, this.previousStats.completed)
-				return [
-					{ key: 'month', label: '本月排期', value: this.apiSchedules.length, icon: 'calendar', color: '#2563ff', bgColor: '#e9f0ff', trendText: totalTrend.text, direction: totalTrend.direction },
-					{ key: 'pending', label: '待服务', value: this.orderStats.pending, icon: 'clock', color: '#f59e0b', bgColor: '#fff4df', trendText: pendingTrend.text, direction: pendingTrend.direction },
-					{ key: 'waitAccept', label: '待接单', value: this.orderStats.waitAccept, icon: 'order', color: '#2563ff', bgColor: '#e9f0ff', trendText: '--', direction: 'none' },
-					{ key: 'completed', label: '已服务', value: this.orderStats.completed, icon: 'checkmark-circle', color: '#16a34a', bgColor: '#eafaf0', trendText: completedTrend.text, direction: completedTrend.direction }
-				]
-			}
+			// statsCards() {
+			// 	const totalTrend = this.calculateTrend(this.apiSchedules.length, this.previousStats.total)
+			// 	const pendingTrend = this.calculateTrend(this.orderStats.pending, this.previousStats.pending)
+			// 	const completedTrend = this.calculateTrend(this.orderStats.completed, this.previousStats.completed)
+			// 	return [
+			// 		{ key: 'month', label: '本月排期', value: this.apiSchedules.length, icon: 'calendar', color: '#2563ff', bgColor: '#e9f0ff', trendText: totalTrend.text, direction: totalTrend.direction },
+			// 		{ key: 'pending', label: '待服务', value: this.orderStats.pending, icon: 'clock', color: '#f59e0b', bgColor: '#fff4df', trendText: pendingTrend.text, direction: pendingTrend.direction },
+			// 		{ key: 'waitAccept', label: '待接单', value: this.orderStats.waitAccept, icon: 'order', color: '#2563ff', bgColor: '#e9f0ff', trendText: '--', direction: 'none' },
+			// 		{ key: 'completed', label: '已服务', value: this.orderStats.completed, icon: 'checkmark-circle', color: '#16a34a', bgColor: '#eafaf0', trendText: completedTrend.text, direction: completedTrend.direction }
+			// 	]
+			// }
 		},
 		onLoad(options) {
 			this.initCalendarPage(options)
@@ -220,7 +217,7 @@
 		mounted() {
 			this.buildCalendar()
 			this.loadMonthSchedules()
-			this.loadOrderStats()
+			// this.loadOrderStats()
 		},
 		watch: {
 			year() {
@@ -420,7 +417,7 @@
 					this.scheduleMap = this.groupSchedulesByDate(this.apiSchedules)
 					this.buildCalendar()
 					this.filterSchedule()
-					this.loadPreviousSchedules(requestId)
+					// this.loadPreviousSchedules(requestId)
 				} catch (error) {
 					if (requestId !== this.scheduleRequestId) return
 					this.apiSchedules = []

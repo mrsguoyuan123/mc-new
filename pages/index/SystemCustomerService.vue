@@ -18,11 +18,11 @@
 					</view>
 				</view>
 
-			 <view v-if="!isEdit" class="edit-btn" @click="isEdit = true">编辑资料</view>
+			 <!-- <view v-if="!isEdit" class="edit-btn" @click="isEdit = true">编辑资料</view>
             <view v-else class="action-group">
                 <view class="cancel-btn" @click="cancelEdit">取消</view>
                 <view class="save-btn" @click="saveProfile">保存</view>
-            </view>
+            </view> -->
 			</view>
 			<view class="card-row">
 				
@@ -38,11 +38,11 @@
 					</view>
 					
 				</view>
-			<view class="btn-group">
+			<!-- <view class="btn-group">
 				<view class="func-btn" @click="showComingSoon('科室通知')">科室通知</view>
 				<view class="func-btn" @click="showComingSoon('隐私')">隐私</view>
 				<view class="func-btn" @click="showComingSoon('帮助')">帮助</view>
-			</view>
+			</view> -->
 
 			<view class="info-wrapper">
 				<view class="info-line">
@@ -68,9 +68,7 @@
 <script>
 	import myTabbar from "@/components/myTabbar.vue";
 	import {
-		getDoctorProfileApi,
-		putDoctorProfileApi,
-		postAuthLogoutApi
+		getMeProfileApi
 	} from '@/api/frontApikit.js'
 
 	export default {
@@ -167,7 +165,8 @@
 				this.form = localProfile
 				this.userList = localProfile
 				try {
-					const res = await getDoctorProfileApi()
+					const res = await getMeProfileApi()
+					console.log(999999999999,res)
 					const profile = this.normalizeProfile(res)
 					this.form = profile
 					this.userList = profile

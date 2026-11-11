@@ -282,6 +282,11 @@
 				</view>
 			</view>
 		</view>
+		<view  class="button-wrapper u-flex flex-center font-s" @click="tomyGroup()" >
+			<text class="custom-icon custom-icon-navigation icon-bold" style="color:#155DFC;margin-right: 5px;"></text>
+			同步到我的私人医生团队
+		</view>
+        <u-toast ref="uToast"></u-toast>
 	</view>
 </template>
 
@@ -324,16 +329,27 @@
 		computed: {
 			// 倒序：最新的排在数组最前面
 			sortedRecords() {
-				return this.weightRecords.slice().sort((a, b) => {
-					const timeA = a.recordDate ? new Date(a.recordDate.replace(/-/g, '/')).getTime() : 0
-					const timeB = b.recordDate ? new Date(b.recordDate.replace(/-/g, '/')).getTime() : 0
-					return timeB - timeA
-				})
-			},
+    const list = this.weightRecords.slice().sort((a, b) => {
+      const timeA = a.recordDate ? new Date(a.recordDate.replace(/-/g, '/')).getTime() : 0
+      const timeB = b.recordDate ? new Date(b.recordDate.replace(/-/g, '/')).getTime() : 0
+      return timeB - timeA
+    })
+    const map = {}
+    const result = []
+    for (const item of list) {
+      if (!item.recordDate) continue
+      const dayKey = item.recordDate.split(' ')[0]
+      if (!map[dayKey]) {
+        map[dayKey] = true
+        result.push(item)
+      }
+    }
+    return result
+  },
 			// 最新一条 sortedRecords[0]
 			latestRecord() {
-				return this.sortedRecords[0] || null
-			},
+    return this.sortedRecords[0] || null
+  },
 			todayDate() {
 				return this.formatDate(new Date(), 'YYYY-MM-DD')
 			},
@@ -490,6 +506,51 @@
 			this.clearSearchTimer()
 		},
 		methods: {
+			      tomyGroup(params) {
+					console.log(this.latestRecord)
+
+			const name = "体重动态";
+			
+			const that = this;
+            if(this.latestRecord){
+                const data = {
+				weightKg:this.latestRecord.weightKg,
+				source:this.latestRecord.source,
+				recordDate:this.latestRecord.recordDate,
+				changeFromLast:this.formatAbsChange(this.changeFromLast.value) ,
+				name: '体重动态',
+                type:'card'
+			}
+			console.log(data)
+
+			const cardKey = 'health_card_' + Date.now()
+getApp().globalData[cardKey] = data
+const routeUrl = `/pages/index/consultation?cardKey=${cardKey}`
+            this.$refs.uToast.show({
+				title: '',
+				position: 'top',
+				message: `${name}数据已加密发送至我的私人医生团队,已生成健康卡片同步至聊天窗口`,
+				// 如果不传此type参数，默认为default，也可以手动写上 type: 'default'
+				type: 'success',
+				// 如果不需要图标，请设置为false
+				icon: 'checkmark-circle',
+				complete() {
+					uni.navigateTo({
+						url: routeUrl
+					})
+				},
+			})
+            }else{
+                this.$refs.uToast.show({
+				title: '',
+				position: 'top',
+				message: `请先生成饮食报告`,
+				// 如果不传此type参数，默认为default，也可以手动写上 type: 'default'
+				type: 'error',					
+			})
+            }
+		
+		},
 			openGuidePopup() {
 				this.showGuide = true
 			},
@@ -497,23 +558,61 @@
 				this.bluetoothStatus = 'searching'
 				// 这里放蓝牙搜索逻辑
 			},
-			// 获取体重列表
+			// 获取体重列表：拉取后按天去重，每天只保留接口顺序中的最后一条，其余逐条调删除接口
 			async getMeWeightRecordsApi() {
+				uni.showLoading({ title: '加载中...', mask: true })
 				try {
 					const res = await getMeWeightRecordsApi({
 						range: this.activeRange
 					})
-
-					this.weightRecords = res || []
-					this.lastSyncTime = this.weightRecords[0].recordDate
-					console.log('获取体重列表', this.weightRecords[0])
+					const records = Array.isArray(res) ? res : []
+					this.weightRecords = await this.dedupeWeightRecords(records)
+					this.lastSyncTime = this.weightRecords.length ? this.weightRecords[0].recordDate : ''
 				} catch (e) {
 					console.error('获取体重报错：', e)
 					uni.showToast({
 						title: '加载失败',
 						icon: 'none'
 					})
+				} finally {
+					uni.hideLoading()
 				}
+			},
+			// 按 recordDate(yyyy-MM-dd) 分组：同天按接口返回顺序只留最后一条，其余调删除接口清理
+			async dedupeWeightRecords(records) {
+				const keepIndexSet = new Set()
+				const dayLastIndexMap = {}
+				records.forEach((item, index) => {
+					if (!item || !item.recordDate) return
+					const dayKey = String(item.recordDate).split(' ')[0]
+					dayLastIndexMap[dayKey] = index
+				})
+				Object.keys(dayLastIndexMap).forEach(dayKey => {
+					keepIndexSet.add(dayLastIndexMap[dayKey])
+				})
+				const keepList = []
+				const deleteList = []
+				records.forEach((item, index) => {
+					if (keepIndexSet.has(index)) {
+						keepList.push(item)
+					} else {
+						deleteList.push(item)
+					}
+				})
+				if (!deleteList.length) return keepList
+				let deletedCount = 0
+				for (const item of deleteList) {
+					try {
+						await deleteMeWeightRecordsByIdApi({ id: item.id })
+						deletedCount += 1
+					} catch (e) {
+						console.error('清理重复体重记录失败，id=', item.id, e)
+					}
+				}
+				if (deletedCount > 0) {
+					uni.showToast({ title: '已清理重复记录', icon: 'none' })
+				}
+				return keepList
 			},
 			// 新增体重记录
 			async postMeWeightRecordsApi(payload) {
@@ -536,20 +635,24 @@
 
 			// 删除单条
 			async delWeightRecord(id) {
-				alert()
-				try {
-					const res = await deleteMeWeightRecordsByIdApi({
-						id: id
-					})
-					uni.showToast({
-						title: '删除成功',
-						icon: 'success'
-					})
-					this.getMeWeightRecordsApi()
-
-				} catch (e) {
-					console.error('删除体重', e)
-				}
+				if (!id) return
+				uni.showModal({
+					title: '提示',
+					content: '确定删除这条体重记录吗？',
+					success: async (res) => {
+						if (!res.confirm) return
+						uni.showLoading({ title: '删除中...', mask: true })
+						try {
+							await deleteMeWeightRecordsByIdApi({ id: id })
+							uni.showToast({ title: '删除成功', icon: 'success' })
+							await this.getMeWeightRecordsApi()
+						} catch (e) {
+							console.error('删除体重', e)
+						} finally {
+							uni.hideLoading()
+						}
+					}
+				})
 			},
 			// 本人已绑定设备列表
 			async getDevicesList(payload) {

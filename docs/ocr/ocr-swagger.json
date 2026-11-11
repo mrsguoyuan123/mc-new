@@ -1,0 +1,500 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "随访服务平台 OCR API（病历/检验报告自动分类与入库）",
+    "description": "OCR 自动分类/检验指标自动入库接口子集。完整 API 见 frontend-api-kit/swagger.json。",
+    "version": "2026-11-10",
+    "contact": {
+      "name": "API Support"
+    }
+  },
+  "host": "127.0.0.1:8080",
+  "basePath": "/api/v1",
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "securityDefinitions": {
+    "bearerAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "JWT access token，格式：Bearer <token>"
+    }
+  },
+  "paths": {
+    "/me/medical-record/scan": {
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "扫一扫添加：LLM 自动分类病历/检验报告",
+        "description": "只传 imageUrls（scanType 已忽略）；后台 TokenHub 视觉模型自动分类并抽取病历字段/检验指标。AI 未启用/未配置 key 时返回业务错误，不创建任务；不允许 mock。",
+        "operationId": "post_me_medical-record_scan",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "description": "病历/检验图片",
+            "schema": {
+              "$ref": "#/definitions/OcrScanRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "HTTP 状态恒为 200，语义由响应体 code 表达：0成功 / 400业务错误(弹message不跳登录) / 401 access失效(静默刷新重试) / 402 refresh失效(清凭证跳登录) / 403无权限 / 500服务端错误",
+            "schema": {
+              "$ref": "#/definitions/OcrScanResponse"
+            }
+          }
+        },
+        "consumes": [
+          "application/json"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/me/medical-record/scan/{taskId}": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "OCR 识别结果（docType+fields+labReports）",
+        "description": "PENDING 无结果；SUCCESS 返回分类、病历字段与检验报告（含自动入库结果）；FAILED 返回 failReason，前端引导人工录入。",
+        "operationId": "get_me_medical-record_scan_bytaskId",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "taskId",
+            "required": true,
+            "description": "任务ID",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "HTTP 状态恒为 200，语义由响应体 code 表达：0成功 / 400业务错误(弹message不跳登录) / 401 access失效(静默刷新重试) / 402 refresh失效(清凭证跳登录) / 403无权限 / 500服务端错误",
+            "schema": {
+              "$ref": "#/definitions/OcrScanResult"
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/me/medical-record/scan/{taskId}/apply": {
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "重试 OCR 检验自动入库（幂等）",
+        "description": "从 task.result_json 重新 upsert 检验记录；任务没有可入库的检验报告时返回 400。",
+        "operationId": "post_me_medical-record_scan_bytaskId_apply",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "taskId",
+            "required": true,
+            "description": "任务ID",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "HTTP 状态恒为 200，语义由响应体 code 表达：0成功 / 400业务错误(弹message不跳登录) / 401 access失效(静默刷新重试) / 402 refresh失效(清凭证跳登录) / 403无权限 / 500服务端错误",
+            "schema": {
+              "$ref": "#/definitions/OcrApplyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/me/medical-record/confirm": {
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "确认 OCR 结果回填 patient + 病历/检验指标（部分更新）",
+        "description": "basicInfoPatch 同一事务写 patient + patient_medical_record（source=OCR）；labModule+indicators 按 patient+module+recordDate upsert（不覆盖 STAFF 记录）；都不传时兼容旧客户端，整个 body 视为补丁字段。",
+        "operationId": "post_me_medical-record_confirm",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "description": "确认内容",
+            "schema": {
+              "$ref": "#/definitions/OcrConfirmRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "HTTP 状态恒为 200，语义由响应体 code 表达：0成功 / 400业务错误(弹message不跳登录) / 401 access失效(静默刷新重试) / 402 refresh失效(清凭证跳登录) / 403无权限 / 500服务端错误",
+            "schema": {
+              "$ref": "#/definitions/ApiResponse"
+            }
+          }
+        },
+        "consumes": [
+          "application/json"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "ApiResponse": {
+      "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "0=成功，非0=错误码"
+        },
+        "message": {
+          "type": "string",
+          "description": "提示信息"
+        },
+        "data": {
+          "type": "object",
+          "description": "业务数据"
+        }
+      }
+    },
+    "OcrApplyOutcome": {
+      "type": "object",
+      "properties": {
+        "labModule": {
+          "type": "string",
+          "description": "TUMOR_MARKER/BLOOD_ROUTINE/LIVER_FUNCTION/OTHER"
+        },
+        "recordDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "dateInferred": {
+          "type": "boolean",
+          "description": "报告日期是否由服务端兜底"
+        },
+        "action": {
+          "type": "string",
+          "description": "PENDING/INSERTED/UPDATED/FAILED"
+        },
+        "recordId": {
+          "type": "integer",
+          "format": "int64",
+          "description": "写入的 health_record.id"
+        },
+        "autoSaved": {
+          "type": "boolean"
+        },
+        "applyError": {
+          "type": "string"
+        }
+      }
+    },
+    "OcrApplyResponse": {
+      "type": "object",
+      "properties": {
+        "applied": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OcrApplyOutcome"
+          },
+          "description": "逐报告入库结果"
+        }
+      }
+    },
+    "OcrConfirmRequest": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "type": "integer",
+          "format": "int64",
+          "description": "可选，归属校验 + 检验记录幂等"
+        },
+        "basicInfoPatch": {
+          "type": "object",
+          "description": "附件1样表字段（部分更新；可含 patient 字段，phone/idCard/name 建议患者主动勾选后提交）"
+        },
+        "labModule": {
+          "type": "string",
+          "description": "TUMOR_MARKER/BLOOD_ROUTINE/LIVER_FUNCTION",
+          "enum": [
+            "TUMOR_MARKER",
+            "BLOOD_ROUTINE",
+            "LIVER_FUNCTION"
+          ]
+        },
+        "recordDate": {
+          "type": "string",
+          "format": "date",
+          "description": "选填，检验报告日期；默认今天，未来日期 400"
+        },
+        "indicators": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OcrIndicator"
+          },
+          "description": "检验指标"
+        }
+      }
+    },
+    "OcrIndicator": {
+      "type": "object",
+      "required": [
+        "name",
+        "value"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "指标名（不能为保留字 date）"
+        },
+        "label": {
+          "type": "string",
+          "description": "报告原文指标名"
+        },
+        "value": {
+          "type": "string",
+          "description": "数字或字符串"
+        },
+        "qualifier": {
+          "type": "string",
+          "description": "LT/GT/null",
+          "enum": [
+            "LT",
+            "GT"
+          ]
+        },
+        "unit": {
+          "type": "string"
+        },
+        "referenceRange": {
+          "type": "string",
+          "description": "参考范围"
+        }
+      }
+    },
+    "OcrLabIndicator": {
+      "type": "object",
+      "required": [
+        "name",
+        "value"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "归一化指标名（常用英文缩写或中文名）"
+        },
+        "label": {
+          "type": "string",
+          "description": "报告原文指标名"
+        },
+        "value": {
+          "type": "string",
+          "description": "指标值（数字或字符串）"
+        },
+        "qualifier": {
+          "type": "string",
+          "description": "LT/GT/null（< / >）"
+        },
+        "unit": {
+          "type": "string",
+          "description": "单位"
+        },
+        "referenceRange": {
+          "type": "string",
+          "description": "参考范围"
+        },
+        "confidence": {
+          "type": "number",
+          "description": "指标置信度 0-1"
+        }
+      }
+    },
+    "OcrLabReport": {
+      "type": "object",
+      "properties": {
+        "labModule": {
+          "type": "string",
+          "description": "TUMOR_MARKER/BLOOD_ROUTINE/LIVER_FUNCTION/OTHER",
+          "enum": [
+            "TUMOR_MARKER",
+            "BLOOD_ROUTINE",
+            "LIVER_FUNCTION",
+            "OTHER"
+          ]
+        },
+        "recordDate": {
+          "type": "string",
+          "format": "date",
+          "description": "检验报告日期（识别不到按今天兜底）"
+        },
+        "dateInferred": {
+          "type": "boolean",
+          "description": "日期是否由服务端兜底"
+        },
+        "indicators": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OcrLabIndicator"
+          },
+          "description": "检验指标"
+        },
+        "autoSaved": {
+          "type": "boolean",
+          "description": "是否已自动写入 health_record"
+        },
+        "action": {
+          "type": "string",
+          "description": "PENDING/INSERTED/UPDATED/FAILED",
+          "enum": [
+            "PENDING",
+            "INSERTED",
+            "UPDATED",
+            "FAILED"
+          ]
+        },
+        "recordId": {
+          "type": "integer",
+          "format": "int64",
+          "description": "写入的 health_record.id"
+        },
+        "applyError": {
+          "type": "string",
+          "description": "自动入库失败原因"
+        }
+      }
+    },
+    "OcrResult": {
+      "type": "object",
+      "properties": {
+        "docType": {
+          "type": "string",
+          "description": "MEDICAL_RECORD/LAB_REPORT/MIXED/UNKNOWN",
+          "enum": [
+            "MEDICAL_RECORD",
+            "LAB_REPORT",
+            "MIXED",
+            "UNKNOWN"
+          ]
+        },
+        "classifyConfidence": {
+          "type": "number",
+          "description": "文档分类置信度 0-1"
+        },
+        "fields": {
+          "type": "object",
+          "description": "附件1样表字段（已归一化：疾病史 0/1、日期 yyyy-MM-dd）"
+        },
+        "confidence": {
+          "type": "object",
+          "description": "字段置信度 0-1"
+        },
+        "missing": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "未识别字段名"
+        },
+        "labReports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OcrLabReport"
+          },
+          "description": "检验报告（普通病历为空数组）"
+        }
+      }
+    },
+    "OcrScanRequest": {
+      "type": "object",
+      "required": [
+        "imageUrls"
+      ],
+      "properties": {
+        "imageUrls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "病历/检查报告图片 URL（1-5 张，必须是 /files/medical/...）"
+        }
+      }
+    },
+    "OcrScanResponse": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "string",
+          "description": "固定 PENDING（异步识别）"
+        }
+      }
+    },
+    "OcrScanResult": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "string",
+          "description": "PENDING/SUCCESS/FAILED"
+        },
+        "result": {
+          "$ref": "#/definitions/OcrResult",
+          "description": "识别结果；PENDING/FAILED 为 null"
+        },
+        "failReason": {
+          "type": "string",
+          "description": "FAILED 原因，前端引导人工录入"
+        },
+        "note": {
+          "type": "string",
+          "description": "再次识别为更新信息，支持部分更新，未识别字段空出"
+        }
+      }
+    }
+  }
+}

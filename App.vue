@@ -1,5 +1,8 @@
 <script>
 export default {
+  globalData: {
+    // 专门放健康卡片临时缓存
+  },
 	onLaunch() {
 	this.$store.dispatch('initSystemInfo')
 	}

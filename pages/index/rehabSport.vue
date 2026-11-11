@@ -399,11 +399,10 @@
 				</view>
 			</view>
 
-			<view class="sync-btn" @click="syncAdvisor">
-				<text class="send-symbol">➤</text>
-				<text>同步运动记录至我的私人健康顾问</text>
-			</view>
-
+			<view  class="button-wrapper u-flex flex-center font-s" @click="tomyGroup()" >
+			<text class="custom-icon custom-icon-navigation icon-bold" style="color:#155DFC;margin-right: 5px;"></text>
+			同步到我的私人医生团队
+		</view>
 			<!-- <text class="disclaimer">本测评与训练计划仅为健康筛查及术后康复参考，不构成医疗诊断。模板内容，最终以健康管理团队后台配置为准。</text> -->
 		</view>
 
@@ -423,6 +422,7 @@
 				</view>
 			</view>
 		</view>
+        <u-toast ref="uToast"></u-toast>
 
 
 	</view>
@@ -836,6 +836,84 @@
 			this.getMeExercisePlanApi()
 		},
 		methods: {
+								      tomyGroup(params) {
+
+			const name = "运动管理";
+			
+			const that = this;
+			const data = '已完成运动评估'
+            if( data == '已完成运动评估'){
+const data = {
+  name: "运动管理",
+  type: "card",
+  description: "今日运动方案已记录并完成评估，动作心率与体感反应平稳，数据已同步至健康管理团队。"
+}
+// ========== 方案一新逻辑 start ==========
+const cardKey = 'health_card_' + Date.now()
+getApp().globalData[cardKey] = data
+const routeUrl = `/pages/index/consultation?cardKey=${cardKey}`
+			this.$refs.uToast.show({
+				title: '',
+				position: 'top',
+				message: `${name}数据已加密发送至我的私人医生团队,已生成健康卡片同步至聊天窗口`,
+				// 如果不传此type参数，默认为default，也可以手动写上 type: 'default'
+				type: 'success',
+				// 如果不需要图标，请设置为false
+				icon: 'checkmark-circle',
+				complete() {
+					uni.navigateTo({
+						url: routeUrl
+					})
+				},
+			})
+            }else{
+                this.$refs.uToast.show({
+				title: '',
+				position: 'top',
+				message: `请先完成运动评估`,
+				// 如果不传此type参数，默认为default，也可以手动写上 type: 'default'
+				type: 'error',					
+			})
+            }
+		
+		},
+			      showToast(params) {
+
+			const name = "运动管理";
+			
+			const that = this;
+            if(this.analysis){
+                const data = {
+				
+				name: '运动管理',
+                type:'card'
+			}
+
+			let routeUrl = "/pages/index/consultation" + `?data=` + encodeURIComponent(JSON.stringify(data))
+            this.$refs.uToast.show({
+				title: '',
+				position: 'top',
+				message: `${name}数据已加密发送至我的私人医生团队,已生成健康卡片同步至聊天窗口`,
+				// 如果不传此type参数，默认为default，也可以手动写上 type: 'default'
+				type: 'success',
+				// 如果不需要图标，请设置为false
+				icon: 'checkmark-circle',
+				complete() {
+					uni.navigateTo({
+						url: routeUrl
+					})
+				},
+			})
+            }else{
+                this.$refs.uToast.show({
+				title: '',
+				position: 'top',
+				message: `请先完成运动评估`,	
+				type: 'error',					
+			})
+            }
+		
+		},
 			/**
 			 * 格式化秒数为 00:00
 			 * @param {number} targetDurationSec 总秒数

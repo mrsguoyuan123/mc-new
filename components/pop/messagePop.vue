@@ -72,7 +72,22 @@
 							<text class="full-sender-time">{{ msg.time }}</text>
 						</view>
 						<view class="full-bubble" :class="{ fail: msg.failed }">
-							<text>{{ msg.content }}<text v-if="msg.isEdited" class="edited-mark">（已编辑）</text></text>
+							<view class="bubble-content-wrap">
+ <view class="content-row">
+	 <text>{{ msg.content }}</text>
+	
+ </view>
+  <view v-if="msg.isEdited" class="edited-row">
+	<view>
+ <text class="edited-mark">已编辑</text>
+    <text class="edited-mark">{{formatDateTime(msg.editedAt)}}</text>
+
+	</view>
+   
+    <text class="view-origin-btn" @click="openEditRecordPopup(msg)">查看原内容</text>
+  </view>
+</view>
+							<!-- <text>{{ msg.content }}<text v-if="msg.isEdited" class="edited-mark">（已编辑）</text></text> -->
 						</view>
 						<view v-if="msg.type === 'mine'" class="full-mine-meta">
 							<text v-if="msg.sending">发送中</text>
@@ -115,8 +130,8 @@
 					placeholder="请输入修改后的内容" cursor-spacing="20" :adjust-position="true" />
 				<view class="edit-tip">保存后将在群内标记“已编辑”，并记录修改人与时间留痕</view>
 				<view class="edit-actions">
-					<u-button class="edit-action-btn" plain shape="circle" text="取消" @click="closeEditMessage"></u-button>
-					<u-button class="edit-action-btn" type="primary" shape="circle" text="保存修改"
+					<u-button class="edit-action-btn" plain  text="取消" @click="closeEditMessage"></u-button>
+					<u-button class="edit-action-btn" type="primary"  text="保存修改"
 						:loading="editSaving" @click="submitEditMessage"></u-button>
 				</view>
 			</view>
@@ -180,12 +195,31 @@
 								<text class="archive-value">{{ patientProfile.diagnosis || '暂无诊断信息' }}</text>
 							</view>
 							<view class="diagnosis-row">
-								<text class="archive-label">手术方式</text>
+								<text class="archive-label">手术类型</text>
 								<text class="archive-value">{{ patientProfile.surgeryType || '暂无手术信息' }}</text>
 							</view>
 							<view class="diagnosis-row">
 								<text class="archive-label">手术时间</text>
 								<text class="archive-value">{{ patientProfile.surgeryTime || '待补充' }}</text>
+							</view>
+							<view class="diagnosis-row">
+								<text class="archive-label">主刀/主管医生</text>
+								<text class="archive-value">{{ doctorInfoText || '待补充' }}</text>
+							</view>
+						
+							<!-- <view v-if="patientProfile.hasMedicalRecord === false" class="archive-empty-note">
+								<u-icon name="info-circle" color="#98a2b3" size="14"></u-icon>
+								<text>暂无病历内容，以上为患者基本档案信息</text>
+							</view> -->
+						</view>
+						<view  class="archive-card">
+								<view class="">
+								<text class="archive-label">既往病史</text>
+								<text class="archive-value">{{ pastMedicalHistoryText || '待补充' }}</text>
+							</view>
+							<view class="diagnosis-row">
+								<text class="archive-label">既往手术史</text>
+								<text class="archive-value">{{ pastSurgeryHistoryText || '待补充' }}</text>
 							</view>
 						</view>
 					</template>
@@ -195,7 +229,7 @@
 				</view>
 			</view>
 		</u-popup>
-
+<view v-if="editRecordPopupVisible" class="self-mask" @click="closeEditRecordPopup"></view>
 		<u-popup :show="memberPopupVisible" mode="right" :round="0" :zIndex="10100"
 			:closeOnClickOverlay="false" :mask-click="false" @close="closeMemberPopup">
 			<view class="member-popup">
@@ -226,8 +260,8 @@
 							</view>
 							<view class="member-list-info">
 								<view class="member-list-title-row">
-									<text class="member-list-name">{{ member.name }}</text>
-									<text v-if="member.roleText" class="member-list-role">{{ member.roleText }}</text>
+									<text class="member-list-name">{{ member.roleText }}</text>
+									<!-- <text v-if="member.roleText" class="member-list-role">{{ member. }}</text> -->
 								</view>
 								<text class="member-list-remark">{{ member.remark || '暂无角色备注' }}</text>
 							</view>
@@ -236,17 +270,61 @@
 				</scroll-view>
 			</view>
 		</u-popup>
+		<u-popup
+    :show="editRecordPopupVisible"
+    mode="center"
+    :mask="true"
+    :mask-close-able="true"
+    :round="24"
+    :zIndex="10130"
+    mask-style="background:rgba(0,0,0,0.55)"
+    @close="closeEditRecordPopup"
+>
+    <view class="edit-record-popup">
+        <view class="record-header">
+            <u-icon name="clock" color="#2563ff" size="22"></u-icon>
+            <text class="record-title">消息变更记录与留痕</text>
+        </view>
+        <view class="record-item origin-item">
+            <text class="record-label">原始发送内容：</text>
+            <view class="record-text grey">{{ editRecordForm.originContent }}</view>
+        </view>
+        <view class="record-item current-item">
+            <text class="record-label">当前修改后内容：</text>
+            <view class="record-text blue">{{ editRecordForm.newContent }}</view>
+        </view>
+        <view class="record-info">
+            <view class="record-row">
+                <text class="record-label">编辑人：</text>
+                <text class="record-value">{{ editRecordForm.editorName }}</text>
+            </view>
+            <view class="record-row">
+                <text class="record-label">修改时间：</text>
+                <text class="record-value">{{ editRecordForm.editTime }}</text>
+            </view>
+            <view class="record-row">
+                <text class="record-label">留痕合规状态：</text>
+                <text class="green">已同步临床会话审计日志</text>
+            </view>
+        </view>
+        <view class="record-actions">
+            <u-button type="primary" text="知道了" @click="closeEditRecordPopup"></u-button>
+        </view>
+    </view>
+</u-popup>
+
 	</view>
 </template>
 
 <script>
 import {
+	getConversationsApi,
 	getConversationsByIdApi,
 	getConversationsByIdMessagesApi,
 	postConversationsByIdMessagesApi,
 	putConversationsByIdMessagesByMessageIdApi,
 	getDoctorPatientsByIdConversationApi,
-	getEscortUsersApi
+	getPatientsByIdProfileApi
 } from '@/api/frontApikit.js'
 
 export default {
@@ -275,6 +353,13 @@ export default {
 	},
 	data() {
 		return {
+			editRecordPopupVisible: false,
+editRecordForm: {
+  originContent: '',
+  newContent: '',
+  editorName: '',
+  editTime: ''
+},
 			archivePopupVisible: false,
 			memberPopupVisible: false,
 			chatMessagesLoading: false,
@@ -287,6 +372,8 @@ export default {
 			currentConversation: null,
 			conversationMembers: [],
 			patientProfile: null,
+			resolvedConversationId: '',
+			csResolving: false,
 			chatMessages: [],
 			chatScrollIntoView: '',
 			chatMessagesSignature: '',
@@ -302,19 +389,61 @@ export default {
 		}
 	},
 	computed: {
+		// 【既往病史】拼接
+    pastMedicalHistoryText() {
+        const mr = this.patientProfile?.medicalRecord || {}
+        const list = []
+        if (mr.hypertension) list.push('高血压：' + mr.hypertension)
+        if (mr.heartDisease) list.push('心脏病：' + mr.heartDisease)
+        if (mr.diabetes) list.push('糖尿病：' + mr.diabetes)
+        if (mr.cerebrovascular) list.push('脑血管病：' + mr.cerebrovascular)
+        if (mr.respiratory) list.push('呼吸系统疾病：' + mr.respiratory)
+        if (mr.kidneyDisease) list.push('肾脏疾病：' + mr.kidneyDisease)
+        if (mr.liverDisease) list.push('肝脏疾病：' + mr.liverDisease)
+        if (mr.infectiousHistory) list.push('传染病史：' + mr.infectiousHistory)
+        if (mr.viralHepatitis) list.push('病毒性肝炎：' + mr.viralHepatitis)
+        if (mr.allergyHistory) list.push('过敏史：' + mr.allergyHistory)
+        if (mr.smokingDrinking) list.push('烟酒史：' + mr.smokingDrinking)
+        return list.length ? list.join('；') : '无既往特殊病史'
+    },
+    // 【既往手术史】
+    pastSurgeryHistoryText() {
+        const mr = this.patientProfile?.medicalRecord || {}
+        if (mr.surgeryHistory) return mr.surgeryHistory
+        // 同时也可以带上本次手术信息（patient里的手术）可选
+        // else if(this.patientProfile.surgeryInfo) return this.patientProfile.surgeryInfo
+        return '无既往手术史'
+    },
+    // 【主治医生 + 主诊（管床）医生】
+    doctorInfoText() {
+        const sr = this.patientProfile?.serviceRelations || {}
+        const arr = []
+        if (sr.doctor?.name) arr.push('责任医生：' + sr.doctor.name)
+        if (sr.attendingDoctor?.name) arr.push('主诊医师：' + sr.attendingDoctor.name)
+        return arr.length ? arr.join('；') : '暂未分配医生'
+    },
 		normalizedRole() {
-			return String(this.role || 'CAREGIVER').toUpperCase() === 'DOCTOR' ? 'DOCTOR' : 'CAREGIVER'
+			const role = String(this.role || 'CAREGIVER').toUpperCase()
+			if (role === 'DOCTOR') return 'DOCTOR'
+			if (role === 'CS' || role === 'CUSTOMER_SERVICE' || role === 'AGENT') return 'CS'
+			return 'CAREGIVER'
 		},
 		canWrite() {
-			return this.normalizedRole === 'CAREGIVER'
+			return this.normalizedRole === 'CAREGIVER' || this.normalizedRole === 'CS'
 		},
 		isReadonly() {
 			return !this.canWrite
 		},
 		activeConversationId() {
+			if (this.resolvedConversationId) return this.resolvedConversationId
 			return this.normalizedRole === 'DOCTOR'
 				? (this.patientId || this.conversationId || '')
 				: (this.conversationId || this.patientId || '')
+		},
+		conversationSeed() {
+			return this.normalizedRole === 'DOCTOR'
+				? String(this.patientId || this.conversationId || '')
+				: String(this.conversationId || this.patientId || '')
 		},
 		inputPlaceholder() {
 			return this.canWrite ? '在多学科群内沟通（客服、医助、客户全员可见）' : '医生端仅可查看群聊消息'
@@ -359,7 +488,7 @@ export default {
 		}
 	},
 	watch: {
-		activeConversationId: {
+		conversationSeed: {
 			immediate: true,
 			handler() {
 				this.resetChatState()
@@ -381,6 +510,26 @@ export default {
 		}
 	},
 	methods: {
+		openEditRecordPopup(msg) {
+			console.log(msg.raw)
+			
+  // 后端返回原始内容存在 msg.raw.originContent / msg.originalContent，这里兼容
+  this.editRecordForm.originContent = msg.raw?.originalText || msg.raw?.originalText || '暂无原始内容'
+  this.editRecordForm.newContent = msg.raw?.content
+  this.editRecordForm.editorName = msg.raw?.senderName 
+  this.editRecordForm.editTime = this.formatDateTime(msg.raw?.editedAt )
+  this.editRecordPopupVisible = true
+},
+closeEditRecordPopup() {
+  this.editRecordPopupVisible = false
+  this.editRecordForm = {
+    originContent: '',
+    newContent: '',
+    editorName: '',
+    editTime: ''
+  }
+},
+
 		close() {
 			this.$emit('close')
 		},
@@ -391,6 +540,8 @@ export default {
 			this.currentConversation = null
 			this.conversationMembers = []
 			this.patientProfile = null
+			this.resolvedConversationId = ''
+			this.csResolving = false
 			this.chatMessages = []
 			this.chatMessagesSignature = ''
 			this.chatInput = ''
@@ -398,6 +549,10 @@ export default {
 			this.chatScrollIntoView = ''
 		},
 		async loadConversation(manualLoading) {
+			if (this.normalizedRole === 'CS') {
+				await this.loadCsConversation(manualLoading)
+				return
+			}
 			if (!this.activeConversationId) {
 				this.chatError = '群聊会话尚未就绪'
 				return
@@ -420,6 +575,56 @@ export default {
 			} finally {
 				if (manualLoading) this.chatMessagesLoading = false
 			}
+		},
+		async loadCsConversation(manualLoading) {
+			if (manualLoading) this.chatMessagesLoading = true
+			try {
+				const conversationId = await this.resolveCsConversationId()
+				if (!conversationId) {
+					this.chatError = '该患者暂无可沟通的健康管理群'
+					return
+				}
+				await Promise.all([
+					this.loadCsConversationDetail(),
+					this.loadChatMessages(false)
+				])
+				this.chatError = ''
+				this.scrollChatToBottom()
+			} catch (error) {
+				this.chatError = '消息加载失败，可稍后重试'
+				this.handleError(error, '消息加载失败')
+			} finally {
+				if (manualLoading) this.chatMessagesLoading = false
+			}
+		},
+		async resolveCsConversationId() {
+			if (this.conversationId) return this.conversationId
+			if (this.resolvedConversationId) return this.resolvedConversationId
+			const patientId = this.patientId
+			if (!patientId) return ''
+			this.csResolving = true
+			try {
+				console.log(22222222222)
+				const result = await getConversationsApi({ page: 1, pageSize: 100 })
+				const list = this.extractList(result)
+				const matched = list.find(item =>
+					String(item.patientId || item.patient_id || item.patientID || '') === String(patientId)
+				)
+				const conversationId = matched && (matched.id || matched.conversationId) ? (matched.id || matched.conversationId) : ''
+				this.resolvedConversationId = conversationId
+				return conversationId
+			} finally {
+				this.csResolving = false
+			}
+		},
+		async loadCsConversationDetail() {
+			const id = this.activeConversationId
+			const detail = await getConversationsByIdApi({ id })
+			const conversation = this.normalizeConversation(detail || {})
+			conversation.id = conversation.id || id
+			if (!conversation.patientId && this.patientId) conversation.patientId = this.patientId
+			this.currentConversation = conversation
+			this.conversationMembers = this.extractMembers(conversation)
 		},
 		async loadDoctorConversation() {
 			const result = await getDoctorPatientsByIdConversationApi({ id: this.activeConversationId })
@@ -460,6 +665,7 @@ export default {
 				if (this.normalizedRole === 'DOCTOR') {
 					await this.loadDoctorConversation()
 				} else {
+					console.log(111111111111111)
 					const result = await getConversationsByIdMessagesApi({ id: this.activeConversationId, size: 50 })
 					this.applyMessages(this.extractList(result))
 				}
@@ -523,6 +729,8 @@ export default {
 			try {
 				if (this.normalizedRole === 'DOCTOR') {
 					await this.loadDoctorConversation()
+				} else if (this.normalizedRole === 'CS') {
+					await this.loadCsConversationDetail()
 				} else {
 					await this.loadCaregiverConversationDetail()
 				}
@@ -535,26 +743,39 @@ export default {
 		async loadPatientProfile() {
 			this.profileLoading = true
 			try {
-				if (this.normalizedRole === 'DOCTOR') {
-					await this.loadDoctorConversation()
-				} else {
-					let fallback = this.currentConversation || {}
-					try {
-						const result = await getEscortUsersApi()
-						const list = this.extractList(result)
-						const raw = list.find(item => this.samePatient(item, fallback)) || fallback
-						fallback = raw
-					} catch (error) {
-						// 会话详情里已有基础档案时，不因为补充接口失败阻断查看
-					}
-					this.patientProfile = this.normalizePopupProfile(fallback)
-				}
+				await this.loadRolePatientProfile()
 			} catch (error) {
 				this.patientProfile = this.patientProfile || this.normalizePopupProfile(this.currentConversation || {})
 				this.handleError(error, '患者档案加载失败')
 			} finally {
 				this.profileLoading = false
 			}
+		},
+		async loadRolePatientProfile() {
+			const patientId = this.resolvePatientId()
+			if (!patientId) {
+				this.patientProfile = this.normalizePopupProfile(this.currentConversation || {})
+				return
+			}
+			const profile = await getPatientsByIdProfileApi({ id: patientId })
+			const payload = profile || {}
+			const patient = payload.patient || {}
+			const medicalRecord = payload.medicalRecord || {}
+			const hasMedicalRecord = Object.keys(medicalRecord).length > 0
+			this.patientProfile = this.normalizePopupProfile(
+				Object.assign({}, patient, {
+					medicalRecord,
+					hasMedicalRecord,
+					serviceRelations: payload.serviceRelations || {},
+					profileTags: payload.tags || [],
+					attachmentCount: payload.attachmentCount || 0
+				})
+			)
+		},
+		resolvePatientId() {
+			if (this.patientId) return this.patientId
+			const conversation = this.currentConversation || {}
+			return conversation.patientId || conversation.patient_id || conversation.patientID || ''
 		},
 		async sendChatMessage() {
 			if (!this.showInput || !this.canWrite) return
@@ -568,14 +789,15 @@ export default {
 				return
 			}
 			if (this.chatSending) return
-			const clientSeq = 'caregiver_' + Date.now() + '_' + Math.random().toString(16).slice(2)
+			const senderType = this.getCurrentSenderType()
+			const clientSeq = senderType.toLowerCase() + '_' + Date.now() + '_' + Math.random().toString(16).slice(2)
 			const localMessage = {
 				id: clientSeq,
 				type: 'mine',
 				name: this.getCurrentUserName(),
-				roleText: '陪诊师',
+				roleText: this.getRoleText(senderType),
 				avatar: this.getCurrentUserAvatar(),
-				senderType: 'CAREGIVER',
+				senderType,
 				senderId: this.resolveCurrentUserId(),
 				messageId: '',
 				clientSeq,
@@ -597,7 +819,7 @@ export default {
 					id: this.activeConversationId,
 					type: 'TEXT',
 					content: text,
-					senderType: 'CAREGIVER',
+					senderType,
 					clientSeq
 				})
 				await this.loadChatMessages(false)
@@ -619,7 +841,7 @@ export default {
 			const senderId = String(msg.senderId || '').trim()
 			const currentId = String(this.resolveCurrentUserId() || '').trim()
 			if (senderId && currentId) return senderId === currentId
-			if (!senderId && !currentId && msg.senderType === 'CAREGIVER') return true
+			if (!senderId && !currentId && msg.senderType === this.getCurrentSenderType()) return true
 			return false
 		},
 		openEditMessage(msg) {
@@ -883,7 +1105,9 @@ export default {
 			const source = raw || {}
 			const patient = source.patient || source.patientInfo || source.userInfo || source.profile || {}
 			const data = Object.assign({}, patient, source)
-			const diagnosis = data.diagnosis || data.diagnosisName || data.mainDiagnosis || data.disease || ''
+			const medicalRecord = data.medicalRecord || {}
+			const diagnosis = data.diagnosis || data.diagnosisName || data.mainDiagnosis ||
+				medicalRecord.admissionDiagnosis || medicalRecord.dischargeDiagnosis || data.disease || data.diseaseIntro || ''
 			const surgery = data.surgeryType || data.surgeryName || data.operationType || data.operationName || ''
 			const surgeryTime = data.surgeryTime || data.operationTime || data.surgeryDate || ''
 			const gender = data.gender || data.sex || data.genderText || ''
@@ -911,7 +1135,12 @@ export default {
 				diagnosisSource: data.diagnosisSource || data.sourceText || '',
 				surgeryType: surgery,
 				surgeryTime,
-				surgeryInfo: surgery ? `${surgery}${surgeryTime ? `（${surgeryTime}）` : ''}` : ''
+				surgeryInfo: surgery ? `${surgery}${surgeryTime ? `（${surgeryTime}）` : ''}` : '',
+				medicalRecord,
+				hasMedicalRecord: typeof source.hasMedicalRecord === 'boolean'
+					? source.hasMedicalRecord
+					: Object.keys(medicalRecord).length > 0,
+				serviceRelations: source.serviceRelations || {}
 			}
 		},
 		normalizeChatMessage(raw, index) {
@@ -963,7 +1192,7 @@ export default {
 			).trim()
 			const currentId = String(this.resolveCurrentUserId() || '').trim()
 			if (senderId && currentId) return senderId === currentId
-			if (!senderId && !currentId && this.canWrite && senderType === 'CAREGIVER') return true
+			if (!senderId && !currentId && this.canWrite && senderType === this.getCurrentSenderType()) return true
 			return false
 		},
 		resolveCurrentUserId() {
@@ -1025,11 +1254,16 @@ export default {
 		getCurrentUserName() {
 			const user = this.currentUser || {}
 			return user.name || user.nickname || user.realName || user.userName || user.username ||
-				(this.canWrite ? '陪诊师' : '医生')
+				(this.getRoleText(this.getCurrentSenderType()) || '医生')
 		},
 		getCurrentUserAvatar() {
 			const user = this.currentUser || {}
 			return user.avatar || user.avatarUrl || user.headImg || user.headImage || ''
+		},
+		getCurrentSenderType() {
+			if (this.normalizedRole === 'CS') return 'CS'
+			if (this.normalizedRole === 'DOCTOR') return 'DOCTOR'
+			return 'CAREGIVER'
 		},
 		readCurrentUser() {
 			try {
@@ -1051,12 +1285,14 @@ export default {
 			return !!(name && (data.name === name || data.patientName === name))
 		},
 		handleError(error, fallback) {
+			console.log(error)
 			const message = (error && (error.message || error.errMsg)) || fallback || '请求失败'
 			uni.showToast({
 				title: fallback ? `${fallback}，请稍后重试` : message,
 				icon: 'none',
 				duration: 2200
 			})
+
 			console.warn('[messagePop]', fallback || message, error)
 		},
 		maskPhone(phone) {
@@ -1645,6 +1881,19 @@ export default {
 	border-top: 1rpx solid #f0f2f7;
 }
 .diagnosis-row .archive-value { margin-top: 8rpx; }
+.archive-empty-note {
+	margin-top: 12rpx;
+	padding: 14rpx 16rpx;
+	display: flex;
+	align-items: center;
+	background: #f8fafc;
+	border: 1rpx solid #eef1f6;
+	border-radius: 12rpx;
+	color: #98a2b3;
+	font-size: 21rpx;
+	line-height: 30rpx;
+}
+.archive-empty-note text { margin-left: 8rpx; }
 .archive-footer {
 	flex-shrink: 0;
 	padding: 16rpx 24rpx calc(20rpx + env(safe-area-inset-bottom));
@@ -1696,5 +1945,115 @@ export default {
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
+}
+
+ .edited-row {
+    display: flex;
+    align-items: center;
+    margin-top: 6rpx;
+  }
+.view-origin-btn {
+  font-size: 21rpx;
+  margin-left: 12rpx;
+  color: #2563ff;
+}
+.full-msg-row.mine .view-origin-btn {
+  color: rgba(255,255,255,0.85);
+}
+
+.edit-record-popup {
+  width: 620rpx;
+  padding: 34rpx 30rpx 30rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  box-sizing: border-box;
+}
+.record-header {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 24rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #172033;
+}
+.record-item {
+  margin-bottom: 20rpx;
+  padding: 20rpx 20rpx 0 20rpx;
+  border-radius: 10rpx;
+}
+.origin-item{
+background-color: #f9fafb;
+} 
+.current-item{
+background-color: #f3f8fe;
+
+}
+.record-label {
+  display: block;
+  font-size: 24rpx;
+  color: #364153;
+  margin-bottom: 8rpx;
+}
+.record-value {
+  display: block;
+  font-size: 24rpx;
+  color: #909399;
+  margin-bottom: 8rpx;
+}
+.record-text {
+  padding: 20rpx 20rpx 20rpx 0;
+
+  font-weight: bold;
+  font-size: 26rpx;
+  line-height: 1.5;
+  word-break: break-word;
+}
+.record-text.blue{
+color: #294491;
+}
+.record-info {
+  margin-top: 10rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #eee;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #444;
+ 
+}
+.record-row{
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+}
+ .audit-status {
+    display: block;
+    margin-top: 6rpx;
+  }
+  .green {
+    color: #009b5b;
+    font-weight: 600;
+  }
+.record-actions {
+  margin-top: 28rpx;
+}
+.edited-row{
+	border-top: 1px solid #ddd;
+	padding-top: 14rpx;
+margin-top: 14rpx;
+display: flex;
+justify-content: space-between;
+}
+/* .content-row{
+	padding-bottom: 20rpx;
+} */
+ .self-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 10129; /* 比弹窗zIndex小1 */
 }
 </style>

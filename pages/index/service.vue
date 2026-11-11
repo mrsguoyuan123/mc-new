@@ -1,12 +1,12 @@
 <template>
 	<view class="page-content">
-		<view  class="start-banner">
+		<!-- <view  class="start-banner">
 			<view class="start-info">
 				<text class="start-title">患者已确认，等待开始服务</text>
 				<text class="start-desc">开始后可进行到院签到和服务记录</text>
 			</view>
 			<button class="start-btn" :disabled="actionLoading" @click="startService">开始服务</button>
-		</view>
+		</view> -->
 
 		<!-- 改动位置：新增页面加载态 -->
 		<view v-if="pageLoading" class="state-box">
@@ -54,16 +54,16 @@
 				</view>
 			</view>
 			<view class="info-item">
-				<u-icon name="phone" color="#2563ff" size="32rpx"></u-icon>
+				<u-icon name="phone" color="#909399" size="32rpx"></u-icon>
 				<text class="info-val">{{user.phone}}</text>
 			</view>
 			<view class="info-item" v-if="user.serviceTime">
-				<u-icon name="clock" color="#2563ff" size="32rpx"></u-icon>
+				<u-icon name="clock" color="#909399" size="32rpx"></u-icon>
 				<text class="info-val">{{user.serviceTime}}</text>
 			</view>
 			<view class="info-item addr-row">
 				<view class="addr-left">
-					<u-icon name="map" size="32rpx" color="#666"></u-icon>
+					<u-icon name="map" size="32rpx" color="#909399"></u-icon>
 					<text class="info-val">{{user.hospital}}</text>
 				</view>
 				<view class="nav-btn" @click="goNav">
@@ -818,6 +818,20 @@
 				this.actionLoading = true;
 				uni.showLoading({ title: '签到提交中...', mask: true });
 				try {
+
+// 	postEscortOrdersByIdCheckinApi入参 
+// { id: 订单ID, 
+// data: {...} 
+// }；
+//
+// latitude(number,-90~90)
+// /longitude(number,-180~180)
+// address(string,≤255)。
+//  *   photos 为照片 URL 数组，必须 1~3 张，
+// 且先经 POST /files/upload 取得真实 URL 再传入。
+//  *   capturedAt 为实际拍摄时间（yyyy-MM-ddTHH:mm:ss），
+// 禁止传未来时间；
+// 无历史证据时服务端拒绝归档。
 					await postEscortOrdersByIdCheckinApi({
 						id: this.currentOrderId,
 						data: {
@@ -1156,27 +1170,27 @@
 	}
 
 	.age {
-		font-size: 32rpx;
-		color: #444;
+		font-size: 28rpx;
+		color: #909399;
 		margin-left: 12rpx;
 	}
 
 	.status-text {
-		font-size: 28rpx;
-		color: #888;
-		margin-top: 8rpx;
+		font-size: 26rpx;
+		color: #909399;
+		margin-top: 16rpx;
 	}
 
 	.info-item {
 		display: flex;
 		align-items: center;
 		margin: 20rpx 0;
-		font-size: 32rpx;
+		font-size: 28rpx;
 	}
 
 	.info-val {
 		margin-left: 14rpx;
-		color: #333;
+		color: #909399;
 	}
 
 	.addr-row {
@@ -1192,7 +1206,7 @@
 		display: flex;
 		align-items: center;
 		color: #2563ff;
-		font-size: 30rpx;
+		font-size: 28rpx;
 	}
 
 	.task-card {
@@ -1255,8 +1269,8 @@
 
 	.task-title {
 		font-size: 30rpx;
-		font-weight: 600;
-		color: #111;
+		font-weight: 700;
+		color: #414040;
 		margin-bottom: 16rpx;
 	}
 
@@ -1405,7 +1419,9 @@
 		color: #2563ff;
 	}
 
-
+	.radius-15{
+		border-radius: 10rpx;
+	}
 
 
 
