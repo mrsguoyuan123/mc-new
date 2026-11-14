@@ -1,329 +1,357 @@
 <template>
   <view class="archive-page">
-    <view v-if="loading" class="state-card">
-      <u-loading-icon mode="circle" color="#2563eb" size="28"></u-loading-icon>
-      <text class="state-text">正在加载患者临床档案...</text>
-    </view>
-    <view v-else-if="loadError" class="state-card error-state">
-      <u-icon name="close-circle" color="#f04438" size="42"></u-icon>
-      <text class="state-text">临床档案加载失败</text>
-      <view class="retry-btn" @click="fetchArchive">重新加载</view>
-    </view>
-    <block v-else>
-      <view class="patient-summary">
-        <view class="patient-avatar">{{ patientInitial }}</view>
-        <view class="patient-main">
-          <view class="patient-name-row">
-            <text class="patient-name">{{ display(basicInfo.name) }}</text>
-            <text class="patient-tag">{{ display(basicInfo.gender) }}</text>
-            <text class="patient-tag light">{{ basicInfo.age ? basicInfo.age + ' 岁' : '--' }}</text>
-          </view>
-          <view class="patient-meta">{{ display(basicInfo.hospitalName) }} · {{ display(basicInfo.departmentName) }}
-          </view>
-          <view class="patient-meta subtle">{{ display(basicInfo.phone) }} · {{ display(basicInfo.region ||
-            basicInfo.surgeryRegion) }}</view>
-        </view>
+    <!-- 状态栏占位 -->
+    <!-- <view class="status-bar" :style="{ height: (statusBarHeight || 0) + 'px' }"></view> -->
+    <!-- 自定义导航栏 -->
+    <view class="custom-nav">
+      <!-- 返回按钮 -->
+      <view class="nav-back" @click="handleBack()">
+        <u-icon name="arrow-left" color="#fff" size="36rpx"></u-icon>
       </view>
-
-      <view class="section-card">
-        <view class="section-head" @click="togglePanel('info')">
-          <view class="section-icon blue"><u-icon name="account" color="#2563eb" size="20"></u-icon></view>
-          <view class="section-heading">
-            <text class="section-title">1. 基本信息</text>
-            <text class="section-subtitle">身份档案 / 诊疗信息</text>
+      <!-- 中间标题 -->
+      <view class="nav-title">患者临床档案</view>
+    </view>
+    <view class="archive-content">
+      <view v-if="loading" class="state-card">
+        <u-loading-icon mode="circle" color="#2563eb" size="28"></u-loading-icon>
+        <text class="state-text">正在加载患者临床档案...</text>
+      </view>
+      <view v-else-if="loadError" class="state-card error-state">
+        <u-icon name="close-circle" color="#f04438" size="42"></u-icon>
+        <text class="state-text">临床档案加载失败</text>
+        <view class="retry-btn" @click="fetchArchive">重新加载</view>
+      </view>
+      <block v-else>
+        <view class="patient-summary">
+          <view class="patient-avatar">{{ patientInitial }}</view>
+          <view class="patient-main">
+            <view class="patient-name-row">
+              <text class="patient-name">{{ display(basicInfo.name) }}</text>
+              <text class="patient-tag">{{ display(basicInfo.gender) }}</text>
+              <text class="patient-tag light">{{ basicInfo.age ? basicInfo.age + ' 岁' : '--' }}</text>
+            </view>
+            <view class="patient-meta">{{ display(basicInfo.hospitalName) }} · {{ display(basicInfo.departmentName) }}
+            </view>
+            <view class="patient-meta subtle">{{ display(basicInfo.phone) }} · {{ display(basicInfo.region ||
+              basicInfo.surgeryRegion) }}</view>
           </view>
-          <view class="chevron" :class="{ collapsed: !panels.info }"></view>
         </view>
-        <view v-if="panels.info" class="section-body">
-          <view class="block-title">患者身份档案</view>
-          <view class="info-grid">
-            <view class="info-cell"><text class="info-label">患者姓名</text><text class="info-value">{{
-              display(basicInfo.name) }}</text></view>
-            <view class="info-cell"><text class="info-label">性别</text><text class="info-value">{{
-              display(basicInfo.gender) }} </text></view>
-            <view class="info-cell"><text class="info-label">年龄</text><text class="info-value">{{ basicInfo.age || '--'
-                }}</text></view>
 
-            <view class="info-cell"><text class="info-label">联系方式</text><text class="info-value">{{
-              display(basicInfo.phone) }}</text></view>
-            <view class="info-cell"><text class="info-label">住院号/就诊号</text><text class="info-value">{{
-              display(basicInfo.hospitalNo) }}</text></view>
+        <view class="section-card">
+          <view class="section-head" @click="togglePanel('info')">
+            <!-- <view class="section-icon blue"><u-icon name="account" color="#2563eb" size="20"></u-icon></view> -->
+            <view class="section-heading">
+              <text class="section-title">1. 基本信息</text>
+              <text class="section-subtitle">身份档案 / 诊疗信息</text>
+            </view>
+            <view class="chevron" :class="{ collapsed: !panels.info }"></view>
+          </view>
+          <view v-if="panels.info" class="section-body">
+            <view class="block-title">患者身份档案</view>
+            <view class="info-grid">
+              <view class="info-cell"><text class="info-label">患者姓名</text><text class="info-value">{{
+                display(basicInfo.name) }}</text></view>
+              <view class="info-cell"><text class="info-label">性别</text><text class="info-value">{{
+                display(basicInfo.gender) }} </text></view>
+              <view class="info-cell"><text class="info-label">年龄</text><text class="info-value">{{ basicInfo.age ||
+                  '--'
+                  }}</text></view>
 
-            <!-- <view class="info-cell"><text class="info-label">住院号/就诊号</text><text class="info-value strong">--</text></view> -->
-            <view class="info-cell"><text class="info-label">就诊医院</text><text class="info-value">{{
-              display(basicInfo.hospitalName) }}</text></view>
-            <!-- <view class="info-cell"><text class="info-label">就诊科室</text><text class="info-value">{{ display(basicInfo.departmentName) }}</text></view>
+              <view class="info-cell"><text class="info-label">联系方式</text><text class="info-value">{{
+                display(basicInfo.phone) }}</text></view>
+              <view class="info-cell"><text class="info-label">住院号/就诊号</text><text class="info-value">{{
+                display(basicInfo.hospitalNo) }}</text></view>
+
+              <!-- <view class="info-cell"><text class="info-label">住院号/就诊号</text><text class="info-value strong">--</text></view> -->
+              <view class="info-cell"><text class="info-label">就诊医院</text><text class="info-value">{{
+                display(basicInfo.hospitalName) }}</text></view>
+              <!-- <view class="info-cell"><text class="info-label">就诊科室</text><text class="info-value">{{ display(basicInfo.departmentName) }}</text></view>
             <view class="info-cell"><text class="info-label">主诊医生</text><text class="info-value">{{ display(basicInfo.doctorName) }}</text></view>
              -->
-          </view>
-          <view class="block-title">诊断与手术明细</view>
-          <view class="diagnosis-box  margin-bottom-1 ">
-            <view class="diagnosis-row"><text class="info-label">主要诊断</text><text class="diagnosis-text">{{
-              display(basicInfo.mainDiagnosis) }}</text></view>
-            <!-- <view v-if="!isBlank(basicInfo.diseaseIntro)" class="diagnosis-row"><text class="info-label">病情简介</text><text class="diagnosis-text">{{ basicInfo.diseaseIntro }}</text></view> -->
-          </view>
-          <view class="info-grid">
-            <view class="info-cell"><text class="info-label">手术类型</text><text class="info-value">{{
-              display(basicInfo.surgeryType) }}</text></view>
-            <view class="info-cell"><text class="info-label">手术日期</text><text class="info-value">{{
-              formatDate(basicInfo.surgeryDate) }}</text></view>
-            <view class="info-cell" style="width: 100%;    display: flex;justify-content: space-between;"><text
-                class="info-label">主诊医生</text><text class="info-value">{{ display(basicInfo.doctorName) }}</text></view>
-            <!-- <view class="info-cell"><text class="info-label">基础体重</text><text class="info-value">{{ basicInfo.weightKg ? formatNumber(basicInfo.weightKg, 1) + ' kg' : '--' }}</text></view> -->
-          </view>
-          <view class="block-title">病史与健康信息</view>
-          <view class="history-list">
-            <view v-for="item in historyItems" :key="item.label" class="history-item">
-              <text class="history-label">{{ item.label }}</text>
-              <text class="history-value">{{ item.value }}</text>
+            </view>
+            <view class="block-title">诊断与手术明细</view>
+            <view class="diagnosis-box  margin-bottom-1 ">
+              <view class="diagnosis-row"><text class="info-label">主要诊断</text><text class="diagnosis-text">{{
+                display(basicInfo.mainDiagnosis) }}</text></view>
+              <!-- <view v-if="!isBlank(basicInfo.diseaseIntro)" class="diagnosis-row"><text class="info-label">病情简介</text><text class="diagnosis-text">{{ basicInfo.diseaseIntro }}</text></view> -->
+            </view>
+            <view class="info-grid">
+              <view class="info-cell"><text class="info-label">手术类型</text><text class="info-value">{{
+                display(basicInfo.surgeryType) }}</text></view>
+              <view class="info-cell"><text class="info-label">手术日期</text><text class="info-value">{{
+                formatDate(basicInfo.surgeryDate) }}</text></view>
+              <view class="info-cell" style="width: 100%;    display: flex;justify-content: space-between;"><text
+                  class="info-label">主诊医生</text><text class="info-value">{{ display(basicInfo.doctorName) }}</text>
+              </view>
+              <!-- <view class="info-cell"><text class="info-label">基础体重</text><text class="info-value">{{ basicInfo.weightKg ? formatNumber(basicInfo.weightKg, 1) + ' kg' : '--' }}</text></view> -->
+            </view>
+            <view class="block-title">病史与健康信息</view>
+            <view class="history-list">
+              <view v-for="item in historyItems" :key="item.label" class="history-item">
+                <text class="history-label">{{ item.label }}</text>
+                <text class="history-value">{{ item.value }}</text>
+              </view>
             </view>
           </view>
         </view>
-      </view>
 
-      <view class="section-card">
-        <view class="section-head" @click="togglePanel('attachments')">
-          <view class="section-icon indigo"><u-icon name="folder" color="#4f46e5" size="20"></u-icon></view>
-          <view class="section-heading">
-            <text class="section-title">2. 附件资料库</text>
-            <text class="section-subtitle">检查 / 影像 / 病理 / 随访记录</text>
-          </view>
-          <view class="head-badge">{{ attachments.length }}</view>
-          <view class="chevron" :class="{ collapsed: !panels.attachments }"></view>
-        </view>
-        <view v-if="panels.attachments" class="section-body">
-          <scroll-view class="filter-scroll" scroll-x :show-scrollbar="false">
-            <view class="filter-row">
-              <view v-for="item in attachmentFilters" :key="item.value" class="filter-pill"
-                :class="{ active: fileTab === item.value }" @click="fileTab = item.value">{{ item.label }}</view>
+        <view class="section-card">
+          <view class="section-head" @click="togglePanel('attachments')">
+            <!-- <view class="section-icon indigo"><u-icon name="folder" color="#4f46e5" size="20"></u-icon></view> -->
+            <view class="section-heading">
+              <text class="section-title">2. 附件资料库</text>
+              <text class="section-subtitle">检查 / 影像 / 病理 / 随访记录</text>
             </view>
-          </scroll-view>
-          <view v-if="filteredAttachments.length" class="file-list">
-            <view v-for="(file, index) in filteredAttachments" :key="file.id || index" class="file-item">
-              <view class="file-icon" :class="attachmentKind(file)"><u-icon :name="attachmentIcon(file)"
-                  :color="attachmentColor(file)" size="20"></u-icon></view>
-              <view class="file-info">
-                <text class="file-name">{{ fileDisplayName(file) }}</text>
-                <text class="file-desc">{{ attachmentCategoryText(file) }} · {{ formatFileSize(file.fileSize) }} · {{
-                  formatDateTime(file.uploadTime) }}</text>
-                <text class="file-uploader">{{ uploaderRoleText(file.uploaderRole) }}{{ file.uploader ? ' · ' +
-                  file.uploader : '' }}</text>
-              </view>
-              <view class="file-actions">
-                <view class="file-action" @click.stop="viewFile(file)"><u-icon name="eye" color="#2563eb"
-                    size="17"></u-icon></view>
-                <view class="file-action" @click.stop="downloadFile(file)"><u-icon name="download" color="#475467"
-                    size="17"></u-icon></view>
-              </view>
-            </view>
+            <view class="head-badge">{{ attachments.length }}</view>
+            <view class="chevron" :class="{ collapsed: !panels.attachments }"></view>
           </view>
-          <view v-else class="empty-box">暂无该类型附件</view>
-        </view>
-      </view>
-
-      <view class="section-card">
-        <view class="section-head" @click="togglePanel('diet')">
-          <view class="section-icon orange"><u-icon name="grid" color="#ea580c" size="20"></u-icon></view>
-          <view class="section-heading"><text class="section-title">3. 饮食分析</text><text class="section-subtitle">最近记录 /
-              7 天营养趋势</text></view>
-          <view class="chevron" :class="{ collapsed: !panels.diet }"></view>
-        </view>
-        <view v-if="panels.diet" class="section-body">
-          <view class="latest-box orange-bg">
-            <view class="latest-top"><text class="latest-label">最近一次记录</text><text class="latest-date">{{
-              formatDate(pointDate(dietLatest)) }}</text></view>
-            <text class="latest-content">{{ dietFoodText }}</text>
-            <view class="metric-mini-grid">
-              <view v-for="metric in dietCards" :key="metric.key" class="metric-mini">
-                <text class="mini-value" :style="{ color: metric.color }">{{ metric.display }}</text>
-                <text class="mini-label">{{ metric.label }} {{ metric.unit }}</text>
-              </view>
-            </view>
-          </view>
-          <scroll-view class="filter-scroll small" scroll-x :show-scrollbar="false">
-            <view class="chart-wrapper">
-              <view class="chart-title">7天内饮食变化趋势</view>
+          <view v-if="panels.attachments" class="section-body">
+            <scroll-view class="filter-scroll" scroll-x :show-scrollbar="false">
               <view class="filter-row">
-                <view v-for="metric in dietMetrics" :key="metric.key" class="filter-pill"
-                  :class="{ active: dietMetric === metric.key }" @click="dietMetric = metric.key">{{ metric.label }}
+                <view v-for="item in attachmentFilters" :key="item.value" class="filter-pill"
+                  :class="{ active: fileTab === item.value }" @click="fileTab = item.value">{{ item.label }}</view>
+              </view>
+            </scroll-view>
+            <view v-if="filteredAttachments.length" class="file-list">
+              <view v-for="(file, index) in filteredAttachments" :key="file.id || index" class="file-item">
+                <view class="file-icon" :class="attachmentKind(file)"><u-icon :name="attachmentIcon(file)"
+                    :color="attachmentColor(file)" size="20"></u-icon></view>
+                <view class="file-info">
+                  <text class="file-name">{{ fileDisplayName(file) }}</text>
+                  <text class="file-desc">{{ attachmentCategoryText(file) }} · {{ formatFileSize(file.fileSize) }} · {{
+                    formatDateTime(file.uploadTime) }}</text>
+                  <text class="file-uploader">{{ uploaderRoleText(file.uploaderRole) }}{{ file.uploader ? ' · ' +
+                    file.uploader : '' }}</text>
+                </view>
+                <view class="file-actions">
+                  <view class="file-action" @click.stop="viewFile(file)"><u-icon name="eye" color="#2563eb"
+                      size="17"></u-icon></view>
+                  <view class="file-action" @click.stop="downloadFile(file)"><u-icon name="download" color="#475467"
+                      size="17"></u-icon></view>
                 </view>
               </view>
             </view>
-          </scroll-view>
-          <view v-if="hasChartData(dietChartData)" class="chart-box"><qiun-data-charts type="line"
-              canvas-id="dietTrendChart" :chartData="dietChartData"
-              :opts="chartOptions([activeDietMetric.color], activeDietMetric.unit, false)" /></view>
-          <view v-else class="empty-box">暂无 7 天饮食趋势数据</view>
-        </view>
-      </view>
-      <view class="section-card">
-        <view class="section-head" @click="togglePanel('exercise')">
-          <view class="section-icon green"><u-icon name="heart" color="#16a34a" size="20"></u-icon></view>
-          <view class="section-heading"><text class="section-title">4. 运动分析</text><text class="section-subtitle">运动执行 /
-              RPE 疲劳评分</text></view>
-          <view class="chevron" :class="{ collapsed: !panels.exercise }"></view>
-        </view>
-        <view v-if="panels.exercise" class="section-body">
-          <view class="latest-box green-bg">
-            <view class="latest-top"><text class="latest-label">最近一次运动</text><text class="latest-date">{{
-              formatDate(pointDate(exerciseLatest)) }}</text></view>
-            <view class="exercise-head"><text class="exercise-type">{{ exerciseTypeText }}</text><text
-                class="exercise-duration">{{ exerciseDurationText }}</text></view>
-            <view class="metric-mini-grid three">
-              <view class="metric-mini"><text class="mini-value green-text">{{ metricDisplay(exerciseLatest,
-                exerciseMetrics[0]) }}</text><text class="mini-label">目标 RPE</text></view>
-              <view class="metric-mini"><text class="mini-value blue-text">{{ metricDisplay(exerciseLatest,
-                exerciseMetrics[1]) }}</text><text class="mini-label">实际 RPE</text></view>
-              <view class="metric-mini"><text class="mini-value orange-text">{{ exerciseDurationText }}</text><text
-                  class="mini-label">单次时长</text></view>
-            </view>
+            <view v-else class="empty-box">暂无该类型附件</view>
           </view>
-          <view v-if="hasChartData(exerciseChartData)" class="chart-box tall"><qiun-data-charts type="line"
-              canvas-id="exerciseTrendChart" :chartData="exerciseChartData"
-              :opts="chartOptions(['#16a34a', '#2563eb'], 'RPE', true)" /></view>
-          <view v-else class="empty-box">暂无 7 天运动趋势数据</view>
         </view>
-      </view>
 
-      <view class="section-card">
-        <view class="section-head" @click="togglePanel('weight')">
-          <view class="section-icon violet"><u-icon name="level" color="#7c3aed" size="20"></u-icon></view>
-          <view class="section-heading"><text class="section-title">5. 体重动态</text><text class="section-subtitle">体重恢复 /
-              7 天变化趋势</text></view>
-          <view class="chevron" :class="{ collapsed: !panels.weight }"></view>
-        </view>
-        <view v-if="panels.weight" class="section-body">
-          <view class="latest-box violet-bg">
-            <view class="latest-top"><text class="latest-label">最近记录</text><text class="latest-date">{{ weightDateText
-                }}</text></view>
-            <view class="big-measure"><text class="big-number">{{ weightValueText }}</text><text
-                class="big-unit">kg</text></view>
-            <view class="measure-footer">
-              <text>较上次：{{ weightChangeText }}</text>
-              <!-- <text>BMI：{{ metricDisplay(weightLatest, { aliases: ['bmi'] }, '--', 1) }}</text> -->
-            </view>
+        <view class="section-card">
+          <view class="section-head" @click="togglePanel('diet')">
+            <!-- <view class="section-icon orange"><u-icon name="grid" color="#ea580c" size="20"></u-icon></view> -->
+            <view class="section-heading"><text class="section-title">3. 饮食分析</text><text class="section-subtitle">最近记录
+                /
+                7 天营养趋势</text></view>
+            <view class="chevron" :class="{ collapsed: !panels.diet }"></view>
           </view>
-          <view v-if="hasChartData(weightChartData)" class="chart-box"><qiun-data-charts type="line"
-              canvas-id="weightArchiveChart" :chartData="weightChartData"
-              :opts="chartOptions(['#7c3aed'], 'kg', false)" /></view>
-          <view v-else class="empty-box">暂无 7 天体重趋势数据</view>
-        </view>
-      </view>
-
-      <view class="section-card">
-        <view class="section-head" @click="togglePanel('glucosePressure')">
-          <view class="section-icon red"><u-icon name="heart-fill" color="#dc2626" size="20"></u-icon></view>
-          <view class="section-heading"><text class="section-title">6. 血糖与血压</text><text class="section-subtitle">院外指标监测
-              / 7 天趋势</text></view>
-          <view class="chevron" :class="{ collapsed: !panels.glucosePressure }"></view>
-        </view>
-        <view v-if="panels.glucosePressure" class="section-body">
-          <view class="segmented">
-            <view class="segment-item" :class="{ active: vitalTab === 'glucose' }" @click="vitalTab = 'glucose'">血糖监测
-            </view>
-            <view class="segment-item" :class="{ active: vitalTab === 'pressure' }" @click="vitalTab = 'pressure'">血压监测
-            </view>
-          </view>
-          <view v-if="vitalTab === 'glucose'" class="latest-box red-bg">
-            <view class="latest-top"><text class="latest-label">最近空腹血糖</text><text class="latest-date">{{
-              formatDate(pointDate(glucoseLatest)) }}</text></view>
-            <view class="big-measure"><text class="big-number">{{ metricDisplay(glucoseLatest, glucoseMetric, '--', 1)
-                }}</text><text class="big-unit">mmol/L</text></view>
-            <view class="measure-footer"><text>参考范围：{{ metricText(glucoseLatest, ['range', 'referenceRange',
-              'refRange'], '3.9-6.1 mmol/L') }}</text><text>{{ vitalStatusText(glucoseLatest) }}</text></view>
-          </view>
-          <view v-else class="latest-box red-bg">
-            <view class="latest-top"><text class="latest-label">最近血压记录</text><text class="latest-date">{{
-              formatDate(pointDate(pressureLatest)) }}</text></view>
-            <view class="big-measure"><text class="big-number">{{ pressureValueText }}</text><text
-                class="big-unit">mmHg</text></view>
-            <view class="measure-footer"><text>参考范围：{{ metricText(pressureLatest, ['standard', 'range',
-              'referenceRange', 'refRange'], '< 140/90') }}</text><text>{{ vitalStatusText(pressureLatest) }}</text>
-            </view>
-          </view>
-          <view v-if="hasChartData(vitalChartData)" class="chart-box tall"><qiun-data-charts type="line"
-              canvas-id="vitalTrendChart" :chartData="vitalChartData" :opts="vitalChartOptions" /></view>
-          <view v-else class="empty-box">{{ vitalTab === 'glucose' ? '暂无 7 天血糖趋势数据' : '暂无 7 天血压趋势数据' }}</view>
-        </view>
-      </view>
-      <view v-for="section in labSections" :key="section.key" class="section-card">
-        <view class="section-head" @click="togglePanel(section.key)">
-          <view class="section-icon" :class="section.tone"><u-icon :name="section.icon" :color="section.color"
-              size="20"></u-icon></view>
-          <view class="section-heading">
-            <text class="section-title">{{ section.index }}. {{ section.title }}</text>
-            <text class="section-subtitle">最新指标 / 30 天趋势</text>
-          </view>
-          <view class="chevron" :class="{ collapsed: !panels[section.key] }"></view>
-        </view>
-        <view v-if="panels[section.key]" class="section-body">
-          <view v-if="section.cards.length" class="lab-card-grid">
-            <view v-for="(card, cardIndex) in visibleLabCards(section)" :key="card.name || cardIndex" class="lab-card"
-              :class="labStatusClass(card)">
-              <view class="lab-card-head">
-                <text class="lab-name">{{ display(card.name) }}</text>
-                <text v-if="labStatusText(card)" class="lab-status">{{ labStatusText(card) }}</text>
-              </view>
-              <view class="lab-value-row">
-                <text class="lab-value">{{ display(card.value) }}</text>
-                <text class="lab-unit">{{ display(card.unit, '') }}</text>
-              </view>
-              <text class="lab-range">参考：{{ display(card.refRange || card.referenceRange, '以实验室范围为准') }}</text>
-              <text v-if="labChangeText(card) !== '--'" class="lab-change">
-                较前次：{{ labChangeText(card) }}
-              </text>
-            </view>
-          </view>
-          <view v-else class="empty-box compact">暂无最新检验指标</view>
-
-          <view v-if="section.cards.length > 3" class="expand-more" @click="toggleLabMore(section.key)">
-            {{ expandedLabs[section.key] ? '收起更多指标' : '展开全部 ' + section.cards.length + ' 项' }}
-          </view>
-
-          <view v-if="hasChartData(labChartData(section))" class="chart-box tall">
-            <qiun-data-charts type="line" :canvas-id="section.key + 'Chart'" :chartData="labChartData(section)"
-              :opts="chartOptions(section.chartColors, '', labChartData(section).series.length > 1)" />
-          </view>
-          <view v-else class="empty-box">暂无 30 天趋势数据</view>
-        </view>
-      </view>
-
-      <view class="section-card">
-        <view class="section-head" @click="togglePanel('other')">
-          <view class="section-icon gray"><u-icon name="file-text" color="#475467" size="20"></u-icon></view>
-          <view class="section-heading">
-            <text class="section-title">10. 其他附件查阅</text>
-            <text class="section-subtitle">非医生上传资料 / 只读</text>
-          </view>
-          <view class="head-badge subtle">{{ otherAttachments.length }}</view>
-          <view class="chevron" :class="{ collapsed: !panels.other }"></view>
-        </view>
-        <view v-if="panels.other" class="section-body">
-          <view class="readonly-note">
-            <u-icon name="info-circle" color="#2563eb" size="16"></u-icon>
-            <text>其他附件由患者或陪诊人员同步，医生端仅支持查阅。</text>
-          </view>
-          <view v-if="otherAttachments.length" class="file-list">
-            <view v-for="(file, index) in otherAttachments" :key="file.id || 'other-' + index" class="file-item">
-              <view class="file-icon" :class="attachmentKind(file)"><u-icon :name="attachmentIcon(file)"
-                  :color="attachmentColor(file)" size="20"></u-icon></view>
-              <view class="file-info">
-                <text class="file-name">{{ fileDisplayName(file) }}</text>
-                <text class="file-desc">{{ attachmentCategoryText(file) }} · {{ formatDateTime(file.uploadTime)
-                  }}</text>
-                <text class="file-uploader">{{ uploaderRoleText(file.uploaderRole) }}{{ file.uploader ? ' · ' +
-                  file.uploader : '' }}</text>
-              </view>
-              <view class="file-actions">
-                <view class="file-action" @click.stop="viewFile(file)"><u-icon name="eye" color="#2563eb"
-                    size="17"></u-icon></view>
+          <view v-if="panels.diet" class="section-body">
+            <view class="latest-box orange-bg">
+              <view class="latest-top"><text class="latest-label">最近一次记录</text><text class="latest-date">{{
+                formatDate(pointDate(dietLatest)) }}</text></view>
+              <text class="latest-content">{{ dietFoodText }}</text>
+              <view class="metric-mini-grid">
+                <view v-for="metric in dietCards" :key="metric.key" class="metric-mini">
+                  <text class="mini-value" :style="{ color: metric.color }">{{ metric.display }}</text>
+                  <text class="mini-label">{{ metric.label }} {{ metric.unit }}</text>
+                </view>
               </view>
             </view>
+            <scroll-view class="filter-scroll small" scroll-x :show-scrollbar="false">
+              <view class="chart-wrapper">
+                <view class="chart-title">7天内饮食变化趋势</view>
+                <view class="filter-row">
+                  <view v-for="metric in dietMetrics" :key="metric.key" class="filter-pill"
+                    :class="{ active: dietMetric === metric.key }" @click="dietMetric = metric.key">{{ metric.label }}
+                  </view>
+                </view>
+              </view>
+            </scroll-view>
+            <view v-if="hasChartData(dietChartData)" class="chart-box"><qiun-data-charts type="line"
+                canvas-id="dietTrendChart" :chartData="dietChartData"
+                :opts="chartOptions([activeDietMetric.color], activeDietMetric.unit, false)" /></view>
+            <view v-else class="empty-box">暂无 7 天饮食趋势数据</view>
           </view>
-          <view v-else class="empty-box">暂无其他附件</view>
         </view>
-      </view>
-    </block>
+        <view class="section-card">
+          <view class="section-head" @click="togglePanel('exercise')">
+            <!-- <view class="section-icon green"><u-icon name="heart" color="#16a34a" size="20"></u-icon></view> -->
+            <view class="section-heading"><text class="section-title">4. 运动分析</text><text class="section-subtitle">运动执行
+                /
+                RPE 疲劳评分</text></view>
+            <view class="chevron" :class="{ collapsed: !panels.exercise }"></view>
+          </view>
+          <view v-if="panels.exercise" class="section-body">
+            <view class="latest-box green-bg">
+              <view class="latest-top"><text class="latest-label">最近一次运动</text><text class="latest-date">{{
+                formatDate(pointDate(exerciseLatest)) }}</text></view>
+              <view class="exercise-head"><text class="exercise-type">{{ exerciseTypeText }}</text><text
+                  class="exercise-duration">{{ exerciseDurationText }}</text></view>
+              <view class="metric-mini-grid three">
+                <view class="metric-mini"><text class="mini-value green-text">{{ metricDisplay(exerciseLatest,
+                  exerciseMetrics[0]) }}</text><text class="mini-label">目标 RPE</text></view>
+                <view class="metric-mini"><text class="mini-value blue-text">{{ metricDisplay(exerciseLatest,
+                  exerciseMetrics[1]) }}</text><text class="mini-label">实际 RPE</text></view>
+                <view class="metric-mini"><text class="mini-value orange-text">{{ exerciseDurationText }}</text><text
+                    class="mini-label">单次时长</text></view>
+              </view>
+            </view>
+            <view v-if="hasChartData(exerciseChartData)" class="chart-box tall"><qiun-data-charts type="line"
+                canvas-id="exerciseTrendChart" :chartData="exerciseChartData"
+                :opts="chartOptions(['#16a34a', '#2563eb'], 'RPE', true)" /></view>
+            <view v-else class="empty-box">暂无 7 天运动趋势数据</view>
+          </view>
+        </view>
+
+        <view class="section-card">
+          <view class="section-head" @click="togglePanel('weight')">
+            <!-- <view class="section-icon violet"><u-icon name="level" color="#7c3aed" size="20"></u-icon></view> -->
+            <view class="section-heading"><text class="section-title">5. 体重动态</text><text class="section-subtitle">体重恢复
+                /
+                7 天变化趋势</text></view>
+            <view class="chevron" :class="{ collapsed: !panels.weight }"></view>
+          </view>
+          <view v-if="panels.weight" class="section-body">
+            <view class="latest-box violet-bg">
+              <view class="latest-top"><text class="latest-label">最近记录</text><text class="latest-date">{{ weightDateText
+                  }}</text></view>
+              <view class="space-between">
+                <view class="big-measure"><text class="big-number">{{ weightValueText }}</text><text
+                    class="big-unit">kg</text></view>
+                <view class="measure-footer">
+                  <text>较上次：{{ weightChangeText }}</text>
+                  <!-- <text>BMI：{{ metricDisplay(weightLatest, { aliases: ['bmi'] }, '--', 1) }}</text> -->
+                </view>
+              </view>
+            </view>
+            <view v-if="hasChartData(weightChartData)" class="chart-box"><qiun-data-charts type="line"
+                canvas-id="weightArchiveChart" :chartData="weightChartData"
+                :opts="chartOptions(['#7c3aed'], 'kg', false)" /></view>
+            <view v-else class="empty-box">暂无 7 天体重趋势数据</view>
+          </view>
+        </view>
+
+        <view class="section-card">
+          <view class="section-head" @click="togglePanel('glucosePressure')">
+            <!-- <view class="section-icon red"><u-icon name="heart-fill" color="#dc2626" size="20"></u-icon></view> -->
+            <view class="section-heading"><text class="section-title">6. 血糖与血压</text><text
+                class="section-subtitle">院外指标监测
+                / 7 天趋势</text></view>
+            <view class="chevron" :class="{ collapsed: !panels.glucosePressure }"></view>
+          </view>
+          <view v-if="panels.glucosePressure" class="section-body">
+            <view class="segmented">
+              <view class="segment-item" :class="{ active: vitalTab === 'glucose' }" @click="vitalTab = 'glucose'">血糖监测
+              </view>
+              <view class="segment-item" :class="{ active: vitalTab === 'pressure' }" @click="vitalTab = 'pressure'">
+                血压监测
+              </view>
+            </view>
+            <view v-if="vitalTab === 'glucose'" class="latest-box red-bg">
+              <view class="latest-top"><text class="latest-label">最近空腹血糖</text><text class="latest-date">{{
+                formatDate(pointDate(glucoseLatest)) }}</text></view>
+              <view class="space-between">
+                <view class="big-measure"><text class="big-number">{{ metricDisplay(glucoseLatest, glucoseMetric, '--',
+                  1)
+                    }}</text><text class="big-unit">mmol/L</text></view>
+                <view class="measure-footer"><text>参考范围：{{ metricText(glucoseLatest, ['range', 'referenceRange',
+                  'refRange'], '3.9-6.1 mmol/L') }}</text><text>{{ vitalStatusText(glucoseLatest) }}</text></view>
+              </view>
+
+            </view>
+            <view v-else class="latest-box red-bg">
+              <view class="latest-top"><text class="latest-label">最近血压记录</text><text class="latest-date">{{
+                formatDate(pointDate(pressureLatest)) }}</text></view>
+              <view class="space-between">
+                <view class="big-measure"><text class="big-number">{{ pressureValueText }}</text><text
+                    class="big-unit">mmHg</text></view>
+                <view class="measure-footer"><text>参考范围：{{ metricText(pressureLatest, ['standard', 'range',
+                  'referenceRange', 'refRange'], '< 140/90') }}</text><text>{{ vitalStatusText(pressureLatest)
+                        }}</text>
+                </view>
+              </view>
+            </view>
+            <view v-if="hasChartData(vitalChartData)" class="chart-box tall"><qiun-data-charts type="line"
+                canvas-id="vitalTrendChart" :chartData="vitalChartData" :opts="vitalChartOptions" /></view>
+            <view v-else class="empty-box">{{ vitalTab === 'glucose' ? '暂无 7 天血糖趋势数据' : '暂无 7 天血压趋势数据' }}</view>
+          </view>
+        </view>
+        <view v-for="section in labSections" :key="section.key" class="section-card">
+          <view class="section-head" @click="togglePanel(section.key)">
+            <!-- <view class="section-icon" :class="section.tone"><u-icon :name="section.icon" :color="section.color" size="20"></u-icon></view> -->
+            <view class="section-heading">
+              <text class="section-title">{{ section.index }}. {{ section.title }}</text>
+              <text class="section-subtitle">最新指标 / 30 天趋势</text>
+            </view>
+            <view class="chevron" :class="{ collapsed: !panels[section.key] }"></view>
+          </view>
+          <view v-if="panels[section.key]" class="section-body">
+            <view v-if="section.cards.length" class="lab-card-grid">
+              <view v-for="(card, cardIndex) in visibleLabCards(section)" :key="card.name" class="lab-card"
+                :class="labStatusClass(card)">
+                <view class="lab-card-head">
+                  <text class="lab-name">{{ display(card.name) }}</text>
+                  <text v-if="labStatusText(card)" class="lab-status">{{ labStatusText(card) }}</text>
+                </view>
+                <view class="lab-value-row">
+                  <text class="lab-value">{{ display(card.value) }}</text>
+                  <text class="lab-unit">{{ display(card.unit, '') }}</text>
+                </view>
+                <text class="lab-range">参考：{{ display(card.refRange || card.referenceRange, '以实验室范围为准') }}</text>
+                <text v-if="labChangeText(card) !== '--'" class="lab-change">
+                  较前次：{{ labChangeText(card) }}
+                </text>
+              </view>
+            </view>
+            <view v-else class="empty-box compact">暂无最新检验指标</view>
+
+            <view v-if="section.cards.length > 3" class="expand-more" @click="toggleLabMore(section.key)">
+              {{ expandedLabs[section.key] ? '收起更多指标' : '展开全部 ' + section.cards.length + ' 项' }}
+            </view>
+
+            <view v-if="hasChartData(labChartData(section))" class="chart-box tall">
+              <qiun-data-charts type="line" :canvas-id="section.key + 'Chart'" :chartData="labChartData(section)"
+                :opts="chartOptions(section.chartColors, '', labChartData(section).series.length > 1)" />
+            </view>
+            <view v-else class="empty-box">暂无 30 天趋势数据</view>
+          </view>
+        </view>
+
+        <view class="section-card">
+          <view class="section-head" @click="togglePanel('other')">
+            <!-- <view class="section-icon gray"><u-icon name="file-text" color="#475467" size="20"></u-icon></view> -->
+            <view class="section-heading">
+              <text class="section-title">10. 其他附件查阅</text>
+              <text class="section-subtitle">非医生上传资料 / 只读</text>
+            </view>
+            <view class="head-badge subtle">{{ otherAttachments.length }}</view>
+            <view class="chevron" :class="{ collapsed: !panels.other }"></view>
+          </view>
+          <view v-if="panels.other" class="section-body">
+            <view class="readonly-note">
+              <u-icon name="info-circle" color="#2563eb" size="16"></u-icon>
+              <text>其他附件由患者或陪诊人员同步，医生端仅支持查阅。</text>
+            </view>
+            <view v-if="otherAttachments.length" class="file-list">
+              <view v-for="(file, index) in otherAttachments" :key="file.id || 'other-' + index" class="file-item">
+                <view class="file-icon" :class="attachmentKind(file)"><u-icon :name="attachmentIcon(file)"
+                    :color="attachmentColor(file)" size="20"></u-icon></view>
+                <view class="file-info">
+                  <text class="file-name">{{ fileDisplayName(file) }}</text>
+                  <text class="file-desc">{{ attachmentCategoryText(file) }} · {{ formatDateTime(file.uploadTime)
+                    }}</text>
+                  <text class="file-uploader">{{ uploaderRoleText(file.uploaderRole) }}{{ file.uploader ? ' · ' +
+                    file.uploader : '' }}</text>
+                </view>
+                <view class="file-actions">
+                  <view class="file-action" @click.stop="viewFile(file)"><u-icon name="eye" color="#2563eb"
+                      size="17"></u-icon></view>
+                </view>
+              </view>
+            </view>
+            <view v-else class="empty-box">暂无其他附件</view>
+          </view>
+        </view>
+      </block>
+    </view>
   </view>
 </template>
 
@@ -651,47 +679,47 @@ export default {
         chartData.series && chartData.series.some(series => series.data.some(value => value !== null && value !== undefined))
     },
     chartOptions(colors, unit = '', showLegend = false) {
-  return {
-    color: colors,
-    padding: [14, 18, 4, 4],
-    enableScroll: false,
-    legend: { show: showLegend, position: 'top', float: false, fontSize: 11, lineHeight: 22 },
-    dataLabel: false,
-    dataPointShape: true,
-    xAxis: {
-      disableGrid: true,
-      axisLine: false,
-      fontSize: 10,
-      fontColor: '#98a2b3',
-      lineHeight: 20,
-      boundaryGap: 'justify'
+      return {
+        color: colors,
+        padding: [14, 18, 4, 4],
+        enableScroll: false,
+        legend: { show: showLegend, position: 'top', float: false, fontSize: 11, lineHeight: 22 },
+        dataLabel: false,
+        dataPointShape: true,
+        xAxis: {
+          disableGrid: true,
+          axisLine: false,
+          fontSize: 10,
+          fontColor: '#98a2b3',
+          lineHeight: 20,
+          boundaryGap: 'justify'
+        },
+        yAxis: {
+          disabled: false,
+          disableGrid: false,
+          gridType: 'dash',
+          dashLength: 4,
+          gridColor: '#edf0f5',
+          splitNumber: 3,
+          fontSize: 10,
+          fontColor: '#98a2b3',
+          tofix: 1
+        },
+        extra: {
+          line: {
+            type: 'curve',
+            width: 2,
+            activeType: 'none',
+            fill: true,
+            gradient: [0, 0, 0, 1, [
+              { offset: 0, color: '', a: 0.7 },
+              { offset: 1, color: '', a: 0 }
+            ]]
+          },
+          tooltip: { showCategory: true }
+        }
+      }
     },
-    yAxis: {
-      disabled: false,
-      disableGrid: false,
-      gridType: 'dash',
-      dashLength: 4,
-      gridColor: '#edf0f5',
-      splitNumber: 3,
-      fontSize: 10,
-      fontColor: '#98a2b3',
-      tofix: 1
-    },
-    extra: {
-      line: {
-        type: 'curve',
-        width: 2,
-        activeType: 'none',
-        fill: true,
-        gradient: [0,0,0,1, [
-          { offset:0, color:'', a:0.7 },
-          { offset:1, color:'', a:0 }
-        ]]
-      },
-      tooltip: { showCategory: true }
-    }
-  }
-},
 
     visibleLabCards(section) {
       return this.expandedLabs[section.key] ? section.cards : section.cards.slice(0, 3)
@@ -828,21 +856,63 @@ export default {
         fail: () => uni.showToast({ title: '文件下载失败', icon: 'none' }),
         complete: () => uni.hideLoading()
       })
-    }
+    },
+    // 返回上一页
+    handleBack() {
+      const pages = getCurrentPages()
+      console.log('页面栈长度', pages.length)
+      if (pages.length > 1) {
+        uni.navigateBack({
+          delta: 1
+        })
+      } else {
+        // 栈只有1，不能回退，改成跳首页
+        uni.reLaunch({
+          url: '/pages/index/doctorIndex'
+        })
+      }
+    },
   }
 }
 </script>
 
 <style scoped>
-page {
-  background: #f6f7fb;
+.custom-nav {
+  height: 44px;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  padding: 0 30rpx;
+  background: linear-gradient(180deg, #4080ff 0%, #70b0ff 100%);
+  color: #fff;
+
+}
+
+.nav-back {
+  width: 70rpx;
+}
+
+.nav-title {
+  flex: 1;
+  font-size: 34rpx;
+  color: #fff;
+  font-weight: 500;
+  text-align: center;
 }
 
 .archive-page {
   min-height: 100vh;
-  padding: 24rpx 20rpx calc(40rpx + env(safe-area-inset-bottom));
+  /* padding: 24rpx 20rpx calc(40rpx + env(safe-area-inset-bottom)); */
   box-sizing: border-box;
   background: #f3f6fb;
+}
+
+.archive-content {
+  min-height: 100vh;
+  padding: 20rpx 20rpx calc(40rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background: #f3f6fb;
+  background: linear-gradient(180deg, #70b0ff 0%, #ffffff 5%, #f7f7f7 100%);
 }
 
 .state-card {
@@ -854,8 +924,8 @@ page {
   gap: 18rpx;
   background: #fff;
   border: 1rpx solid #edf1f7;
-  border-radius: 24rpx;
-  box-shadow: 0 18rpx 44rpx rgba(15, 23, 42, 0.08);
+  border-radius: 20rpx;
+  /* box-shadow: 0 18rpx 44rpx rgba(15, 23, 42, 0.08); */
 }
 
 .state-text {
@@ -878,24 +948,28 @@ page {
   align-items: center;
   padding: 30rpx 26rpx;
   margin-bottom: 22rpx;
-  border-radius: 26rpx;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 58%, #0f766e 130%);
-  box-shadow: 0 18rpx 40rpx rgba(37, 99, 235, 0.22);
+  border-radius: 20rpx;
+  background-color: #fff;
+  /* background: linear-gradient(180deg, #dce8fc 0%, #fbfcfe 100%); */
+  /* border: 2px solid #fff; */
+
   box-sizing: border-box;
 }
 
 .patient-avatar {
   width: 92rpx;
   height: 92rpx;
+
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 24rpx;
-  color: #2563eb;
-  font-size: 40rpx;
+  margin-right: 12px;
+  color: #fff;
+  font-size: 20px;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.94);
+  background: #2563eb;
+
 }
 
 .patient-main {
@@ -913,36 +987,36 @@ page {
 .patient-name {
   font-size: 36rpx;
   font-weight: 700;
-  color: #fff;
+  /* color: #fff; */
 }
 
 .patient-tag {
   padding: 3rpx 12rpx;
   border-radius: 999rpx;
   font-size: 21rpx;
-  color: #dbeafe;
-  background: rgba(255, 255, 255, 0.16);
+  color: #909399;
+  background: #9e7e7e29;
 }
 
 .patient-tag.light {
-  color: #fff;
+  /* color: #fff; */
 }
 
 .patient-meta {
   font-size: 24rpx;
   line-height: 1.55;
-  color: rgba(255, 255, 255, 0.9);
+  color: #909399;
 }
 
 .patient-meta.subtle {
-  color: rgba(219, 234, 254, 0.86);
+  /* color: rgba(219, 234, 254, 0.86); */
 }
 
 .section-card {
   margin-bottom: 20rpx;
   overflow: hidden;
   border: 1rpx solid #edf1f7;
-  border-radius: 24rpx;
+  border-radius: 20rpx;
   background: #fff;
   box-shadow: 0 14rpx 36rpx rgba(15, 23, 42, 0.06);
 }
@@ -1099,7 +1173,7 @@ page {
 
 .info-label {
   display: block;
-  margin-bottom: 6rpx;
+  /* margin-bottom: 6rpx; */
   font-size: 22rpx;
   color: #909399;
 }
@@ -1121,32 +1195,32 @@ page {
 .diagnosis-box {
   padding: 20rpx;
   border: 1rpx solid #dbeafe;
-  border-radius: 18rpx;
+  border-radius: 20rpx;
   background: linear-gradient(180deg, #f8fbff 0%, #eff6ff 100%);
 }
 
 .diagnosis-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   padding: 8rpx 0;
 }
 
 .diagnosis-row .info-label {
-  width: 130rpx;
+  /* width: 130rpx; */
   flex-shrink: 0;
 }
 
 .diagnosis-text {
   flex: 1;
   font-size: 26rpx;
-  line-height: 1.55;
+  /* line-height: 1.55; */
   color: #1f2937;
 }
 
 .history-list {
   overflow: hidden;
   border: 1rpx solid #edf1f7;
-  border-radius: 18rpx;
+  border-radius: 20rpx;
   background: #fbfcfe;
 }
 
@@ -1194,10 +1268,10 @@ page {
 }
 
 .filter-pill {
-  padding: 12rpx 24rpx;
+  padding: 6rpx 15rpx;
   border-radius: 999rpx;
-  color: #475467;
-  font-size: 24rpx;
+  color: #9e9e9e;
+  font-size: 20rpx;
   background: #f1f5f9;
   border: 1rpx solid transparent;
   box-sizing: border-box;
@@ -1210,8 +1284,8 @@ page {
 .filter-pill.active {
   color: #fff;
   font-weight: 700;
-  background: #2563eb;
-  box-shadow: 0 8rpx 18rpx rgba(37, 99, 235, 0.2);
+  background: #697aea;
+  /* box-shadow: 0 8rpx 18rpx rgba(37, 99, 235, 0.2); */
 }
 
 .file-list {
@@ -1298,7 +1372,7 @@ page {
 .file-action {
   width: 62rpx;
   height: 62rpx;
-  border-radius: 18rpx;
+  border-radius: 20rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1313,7 +1387,7 @@ page {
 .latest-box {
   padding: 24rpx;
   border: 1rpx solid rgba(148, 163, 184, 0.18);
-  border-radius: 22rpx;
+  border-radius: 20rpx;
   box-sizing: border-box;
   box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.68);
 }
@@ -1356,7 +1430,7 @@ page {
   display: block;
   margin: 16rpx 0 20rpx;
   padding: 16rpx 18rpx;
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   background: rgba(255, 255, 255, 0.72);
   font-size: 25rpx;
   line-height: 1.58;
@@ -1373,7 +1447,7 @@ page {
   min-width: 0;
   padding: 18rpx 8rpx;
   border: 1rpx solid rgba(255, 255, 255, 0.72);
-  border-radius: 18rpx;
+  border-radius: 20rpx;
   text-align: center;
   background: rgba(255, 255, 255, 0.82);
   box-shadow: 0 8rpx 20rpx rgba(15, 23, 42, 0.04);
@@ -1411,7 +1485,7 @@ page {
   gap: 20rpx;
   margin: 18rpx 0;
   padding: 14rpx 16rpx;
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   background: rgba(255, 255, 255, 0.7);
 }
 
@@ -1471,7 +1545,7 @@ page {
   padding: 6rpx;
   margin-bottom: 16rpx;
   border: 1rpx solid #e4e7ec;
-  border-radius: 18rpx;
+  border-radius: 20rpx;
   background: #f1f5f9;
 }
 
@@ -1479,7 +1553,7 @@ page {
   flex: 1;
   padding: 15rpx 0;
   text-align: center;
-  border-radius: 14rpx;
+  border-radius: 10rpx;
   font-size: 25rpx;
   color: #667085;
 }
@@ -1510,7 +1584,7 @@ page {
   margin-top: 14rpx;
   padding: 40rpx 20rpx;
   border: 1rpx dashed #d8dee9;
-  border-radius: 18rpx;
+  border-radius: 20rpx;
   text-align: center;
   font-size: 24rpx;
   color: #98a2b3;
@@ -1529,7 +1603,7 @@ page {
 }
 
 .lab-card {
-  width: 48%;
+  width: 33%;
   min-height: 168rpx;
   padding: 20rpx 18rpx;
   border: 1rpx solid #e6ebf3;
@@ -1581,7 +1655,7 @@ page {
 }
 
 .lab-value {
-  font-size: 40rpx;
+  font-size: 30rpx;
   font-weight: 800;
   color: #101828;
 }
@@ -1617,18 +1691,20 @@ page {
   margin-bottom: 14rpx;
   padding: 18rpx;
   border: 1rpx solid #bfdbfe;
-  border-radius: 18rpx;
+  border-radius: 20rpx;
   font-size: 23rpx;
   line-height: 1.45;
   color: #1d4ed8;
   background: linear-gradient(180deg, #f8fbff 0%, #eff6ff 100%);
 }
-.chart-wrapper{
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
+
+.chart-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-.chart-title{
-font-size: 22rpx;
+
+.chart-title {
+  font-size: 22rpx;
 }
 </style>

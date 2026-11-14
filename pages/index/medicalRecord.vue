@@ -63,7 +63,7 @@
                             <view class="ha-form-item">
                                 <text class="ha-form-label">年龄</text>
                                 <text class="ha-form-value">{{ archivePatient.age ? archivePatient.age + '岁' : '暂无'
-                                }}</text>
+                                    }}</text>
                             </view>
                             <view class="ha-form-item">
                                 <text class="ha-form-label">电话</text>
@@ -111,10 +111,11 @@
                             <view v-if="archiveScans.length === 0" class="ha-empty">暂无病历扫描件</view>
                             <view class="scan-wrap">
                                 <view v-for="scan in archiveScans" :key="scan.url" class="ha-scan-card"
-                                    @click="previewScan(scan)">
+                                    @click="openReportPreview(scan)">
                                     <!-- 缩略图区域 -->
                                     <view class="scan-preview">
-                                        <image v-if="isImageScan(scan.url)" :src="scan.url" mode="aspectFill"></image>
+                                        <image v-if="isImageScan(scan.url)" :src="resolveFileUrl(scan.url)"
+                                            mode="aspectFill"></image>
                                         <view v-else class="file-icon-wrap">
                                             <u-icon name="file-text" color="#15a05a" size="60rpx"></u-icon>
                                         </view>
@@ -129,9 +130,14 @@
 
                     <view v-for="group in archiveGroups" :key="group.key" class="ha-section ha-lab-card">
                         <view class="ha-section-title u-flex space-between">
-                            <view class="u-flex align-center">
-                                <view class="ha-title-mark"></view>
-                                <text>{{ group.index }}、{{ group.title }}</text>
+                            <view  class="flex-start">
+                                <view class="u-flex align-center">
+                                    <view class="ha-title-mark"></view>
+                                    <text>{{ group.index }}、{{ group.title }}</text>
+                                </view>
+                                <view class="ha-record-count">
+                                    <text>已记录{{ group.records.length }} 次</text>
+                                </view>
                             </view>
                             <view class="ha-add-record" @click="openSourcePopup">
                                 <u-icon name="camera-fill" color="#ffffff" size="34rpx"></u-icon>
@@ -140,6 +146,7 @@
                         </view>
 
                         <view class="ha-tabs">
+
                             <view :class="['ha-tab', group.activeTab === 'latest' ? 'is-active' : '']"
                                 @click="setMetricTab(group, 'latest')">最新指标
                                 <view class="ha-line"></view>
@@ -155,21 +162,21 @@
                             <view v-else>
                                 <view v-if="group.latestRecord" class="ha-record-head">
                                     <text class="ha-record-doc">{{ group.latestRecord.sourceDocName || '检验报告' }}</text>
-                                    <text class="show-img">查看原始报告</text>
+                                    <text class="show-img" @click="openRecordReport(group.latestRecord)">查看原始报告</text>
                                 </view>
                                 <view v-for="ind in group.latestIndicators" :key="ind.name" class="ha-metric-row">
                                     <view class="ha-metric-name">
                                         <view class="name-wrapper">
                                             <text class="ha-metric-code">
-                                                {{ ind.label }}
+                                                {{ cleanIndicatorName(ind.label || ind.name) }}
                                             </text>
-                                            <text class="ha-metric-info">
-                                                ({{ ind.name }})
+                                            <text class="ha-metric-info" v-if="indicatorAlias(ind)">
+                                                ({{ indicatorAlias(ind) }})
                                             </text>
                                         </view>
 
                                         <text class="ha-metric-label">参考 {{ ind.referenceRange }} {{ ind.unit || ''
-                                        }}</text>
+                                            }}</text>
                                     </view>
                                     <!-- <view class="ha-metric-range">
                                         <text v-if="ind.referenceRange"></text>
@@ -201,8 +208,8 @@
 
                         <view v-if="group.activeTab === 'trend'" class="ha-trend-wrap">
                             <view v-if="hasTrendData(group)" class="ha-chart-box">
-                                <qiun-data-charts type="line" :opts="archiveChartOpts"
-                                    :chartData="getTrendChartData(group)" />
+                                <qiun-data-charts type="line" :canvasId="'trendChart_' + group.key"
+                                    :opts="archiveChartOpts" :chartData="getTrendChartData(group)" />
                             </view>
                             <view v-else class="ha-empty">暂无可绘制的趋势数据</view>
                             <view class="ha-analysis">
@@ -277,6 +284,35 @@
                 </button>
             </view>
         </u-popup>
+
+        <!-- 原始报告大图预览弹窗（对齐图1） -->
+        <u-popup :show="showReportPopup" mode="center" :round="24" :closeOnClickOverlay="true"
+            @close="closeReportPreview">
+            <view class="report-preview">
+                <view class="rp-header">
+                    <text class="rp-title">{{ reportPreview.title }}</text>
+                    <view class="rp-close" @click="closeReportPreview">
+                        <u-icon name="close" color="#666" size="34rpx"></u-icon>
+                    </view>
+                </view>
+                <view class="rp-body">
+                    <image v-if="reportPreview.isImage && !reportPreview.loadError" class="rp-image"
+                        :src="reportPreview.fullUrl" mode="aspectFit" @click="zoomReportImage"
+                        @error="onReportImageError"></image>
+                    <view v-else class="rp-file">
+                        <u-icon name="file-text" color="#ffffff" size="110rpx"></u-icon>
+                        <view class="rp-file-name">{{ reportPreview.title }}</view>
+                        <view class="rp-file-tip">{{ reportPreview.loadError ? '图片加载失败，可点下方按钮重新打开' : '该文件为文档格式，请下载后查看'
+                            }}</view>
+                        <view class="rp-file-btn" @click="openReportDocument">{{ reportPreview.loadError ? '重新打开' :
+                            '打开文档' }}</view>
+                    </view>
+                </view>
+                <view class="rp-footer">
+                    <view class="rp-done-btn" @click="closeReportPreview">关闭查看</view>
+                </view>
+            </view>
+        </u-popup>
     </view>
 </template>
 
@@ -287,7 +323,8 @@ import {
     postMeMedicalRecordScanApi,
     getMeMedicalRecordScanByTaskIdApi,
     postMeMedicalRecordScanByTaskIdApplyApi,
-    postMeMedicalRecordConfirmApi
+    postMeMedicalRecordConfirmApi,
+    buildFileAccessUrl
 } from '@/api/frontApikit.js'
 
 const IDENTITY_KEYS = ['name', 'phone', 'idCard', 'gender', 'age']
@@ -317,9 +354,19 @@ const FIELD_LABELS = {
 }
 const POLL_INTERVAL = 2000
 const POLL_MAX_TIMES = 90
+const TREND_COLORS = ['#15a05a', '#2f7ed8', '#f5a623', '#e84a4a', '#8e6cd1', '#13b5c7', '#f08c2e', '#5d7092']
+const DEFAULT_CHART_LIMIT = 3
+const EN_ABBR_RE = /[（(][^（）()]*[A-Za-z][^（）()]*[）)]\s*$/
 
 export default {
     name: 'medicalRecord',
+    props: {
+        // 控制哪些指标曲线进入图表（匹配指标英文 name / 中文 label）；留空表示不限制，全部可上图表
+        chartShowKeys: {
+            type: Array,
+            default: () => []
+        }
+    },
     data() {
         return {
             archiveLoading: false,
@@ -333,15 +380,6 @@ export default {
             ],
             archiveExpanded: true,
             archiveGroups: [],
-            archiveChartOpts: {
-                color: ['#15a05a', '#2f7ed8', '#f5a623'],
-                padding: [15, 15, 30, 15],
-                xAxis: { disableGrid: true, axisLine: true, axisTick: false, labelColor: '#909399', labelFontSize: 10 },
-                yAxis: { splitNumber: 4, disableGrid: false, gridColor: '#eeeeee', axisLine: false, axisTick: false, labelColor: '#909399', labelFontSize: 10 },
-                legend: { show: true, position: 'bottom', float: false, fontSize: 10, color: '#333' },
-                line: { width: 2, curve: true, dataPointShape: 'circle', dataPointSize: 4, dataPointShapeHollow: false },
-                dataLabel: false
-            },
             showSourcePopup: false,
             showFieldPopup: false,
             applying: false,
@@ -352,10 +390,46 @@ export default {
             failReason: '',
             fieldList: [],
             pollTimer: null,
-            destroyed: false
+            destroyed: false,
+            showReportPopup: false,
+            reportPreview: { url: '', title: '', isImage: false },
+            previewTimer: null
         }
     },
     computed: {
+        // 趋势折线图配置（对齐 weightControl.vue 的 uCharts 写法，多曲线 + 底部图例，无顶层 tooltip）
+        archiveChartOpts() {
+            return {
+                color: TREND_COLORS,
+                padding: [12, 18, 0, 0],
+                enableScroll: false,
+                legend: { show: true, position: 'bottom', float: false, fontSize: 10, lineHeight: 22 },
+                dataLabel: false,
+                dataPointShape: true,
+                xAxis: {
+                    disableGrid: true,
+                    axisLine: false,
+                    fontSize: 12,
+                    fontColor: '#8f98a8',
+                    lineHeight: 24,
+                    boundaryGap: 'justify'
+                },
+                yAxis: {
+                    disabled: false,
+                    disableGrid: false,
+                    gridType: 'dash',
+                    dashLength: 4,
+                    gridColor: '#edf0f5',
+                    splitNumber: 2,
+                    fontSize: 11,
+                    fontColor: '#98a2b3'
+                },
+                extra: {
+                    line: { type: 'curve', width: 2, activeType: 'none' },
+                    tooltip: { showCategory: true }
+                }
+            }
+        },
         hasCheckedField() {
             return this.fieldList.some(item => item.checked)
         },
@@ -373,13 +447,14 @@ export default {
                 arr.push(this.archiveScans.slice(i, i + 2))
             }
             return arr
-        }
+        },
     },
     created() {
         this.loadArchive()
     },
     beforeDestroy() {
         this.clearTimers()
+        this.clearPreviewTimer()
         this.destroyed = true
     },
     methods: {
@@ -419,10 +494,11 @@ export default {
                     const latestRecord = records[0] || null
                     const latestIndicators = latestRecord ? latestRecord.indicators || [] : []
                     const categories = historyTrend.map(hd => hd.date)
-                    const trends = {}
-                    latestIndicators.forEach(ind => {
-                        trends[ind.label || ind.name] = historyTrend.map(hd => hd[ind.name] ?? null)
-                    })
+                    const trendSeries = latestIndicators.map(ind => ({
+                        name: ind.name,
+                        label: ind.label || ind.name,
+                        data: historyTrend.map(hd => hd[ind.name] ?? null)
+                    }))
                     return {
                         key: item.key,
                         index: item.index,
@@ -433,7 +509,7 @@ export default {
                         latestRecord,
                         latestIndicators,
                         categories,
-                        trends
+                        trendSeries
                     }
                 })
             } catch (error) {
@@ -481,19 +557,46 @@ export default {
             if (qualifier === 'GT') return '>'
             return ''
         },
+        // 剔除指标名称末尾括号里的英文缩写，如「糖类抗原19-9 (CA19-9)」->「糖类抗原19-9」
+        cleanIndicatorName(name) {
+            if (name === null || name === undefined) return ''
+            return String(name).replace(EN_ABBR_RE, '').trim()
+        },
+        // 指标别称：英文缩写（ind.name），与清洗后的中文主名重复则不展示
+        indicatorAlias(ind) {
+            if (!ind || !ind.name) return ''
+            const alias = String(ind.name).trim()
+            const mainName = this.cleanIndicatorName(ind.label || ind.name)
+            if (!alias || alias === mainName) return ''
+            return alias
+        },
+        // 指标是否允许进入图表：chartShowKeys 为空则不限制，否则按英文 name / 中文 label 匹配
+        isIndicatorChartEnabled(ind) {
+            if (!Array.isArray(this.chartShowKeys) || this.chartShowKeys.length === 0) return true
+            const keys = this.chartShowKeys.map(k => String(k))
+            return keys.includes(ind.name) || keys.includes(ind.label) || keys.includes(ind.label || ind.name)
+        },
         hasTrendData(group) {
             if (!group || !Array.isArray(group.categories) || group.categories.length === 0) return false
-            return Object.keys(group.trends || {}).some(key => (group.trends[key] || []).some(v => v !== null && v !== undefined && v !== ''))
+            return this.getChartSeries(group).length > 0
         },
         getTrendChartData(group) {
-            const categories = group.categories || []
-            const colors = ['#15a05a', '#2f7ed8', '#f5a623']
-            const series = Object.keys(group.trends || {}).slice(0, 3).map((key, index) => ({
-                name: key,
-                color: colors[index],
-                data: group.trends[key]
-            })).filter(item => item.data.some(v => v !== null && v !== undefined && v !== ''))
-            return { categories, series }
+            return { categories: (group && group.categories) || [], series: this.getChartSeries(group) }
+        },
+        getChartSeries(group) {
+            const list = (group && Array.isArray(group.trendSeries)) ? group.trendSeries : []
+            const hasKeys = Array.isArray(this.chartShowKeys) && this.chartShowKeys.length > 0
+            const hasValue = item => (item.data || []).some(v => v !== null && v !== undefined && v !== '')
+            const filtered = list
+                .filter(item => this.isIndicatorChartEnabled(item))
+                .filter(hasValue)
+            // 未配置 chartShowKeys 时默认只展示前三个指标曲线；显式配置后严格按配置展示，不截断
+            const limited = hasKeys ? filtered : filtered.slice(0, DEFAULT_CHART_LIMIT)
+            return limited.map((item, index) => ({
+                name: this.cleanIndicatorName(item.label || item.name),
+                color: TREND_COLORS[index % TREND_COLORS.length],
+                data: item.data
+            }))
         },
         // ===== OCR：来源选择弹窗 =====
         openSourcePopup() {
@@ -731,30 +834,91 @@ export default {
         isImageScan(url) {
             return /\.(png|jpe?g|gif|webp|bmp)(\?.*)?$/i.test(String(url || ''))
         },
+        // 相对文件路径补全为可访问的完整 URL（已是 http 则原样返回）
+        resolveFileUrl(url) {
+            return buildFileAccessUrl(url)
+        },
+        // 判断是否为后端生成的无意义哈希文件名（如 53dcdca5a1f245c3ac719121....png）
+        isHashFileName(name) {
+            const base = String(name || '').split('?')[0]
+            const dot = base.lastIndexOf('.')
+            const stem = (dot > 0 ? base.slice(0, dot) : base).replace(/[-_]/g, '')
+            return /^[a-f0-9]{16,}$/i.test(stem)
+        },
         scanTitle(scan) {
-            if (scan && scan.title) return scan.title
+            if (scan && scan.title && !this.isHashFileName(scan.title)) return scan.title
             if (scan && scan.url) {
                 const seg = String(scan.url).split('?')[0].split('/').filter(Boolean).pop() || ''
-                return decodeURIComponent(seg) || '病历扫描件'
+                const decoded = decodeURIComponent(seg)
+                if (decoded && !this.isHashFileName(decoded)) return decoded
             }
-            return '病历扫描件'
+            const time = scan && scan.uploadTime ? this.formatScanTime(scan.uploadTime) : ''
+            return time ? ('病历扫描件 ' + time) : '病历扫描件'
         },
         formatScanTime(time) {
             if (!time) return ''
             return String(time).replace('T', ' ').slice(0, 16)
         },
-        previewScan(scan) {
-            if (!scan || !scan.url) {
+        // 统一入口：扫描卡片 / 查看原始报告 都走居中大图弹窗
+        openReportPreview(file) {
+            if (!file || !file.url) {
                 uni.showToast({ title: '暂无可预览文件', icon: 'none' })
                 return
             }
-            if (this.isImageScan(scan.url)) {
-                uni.previewImage({ urls: [scan.url], current: scan.url })
+            const title = file.title || this.scanTitle(file)
+            this.reportPreview = {
+                url: file.url,
+                fullUrl: this.resolveFileUrl(file.url),
+                title: this.isHashFileName(title) ? this.scanTitle(file) : title,
+                isImage: this.isImageScan(file.url),
+                loadError: false
+            }
+            this.showReportPopup = true
+        },
+        onReportImageError() {
+            this.reportPreview.loadError = true
+        },
+        // 检验记录的原始报告（sourceDocName + sourceDocUrl）
+        openRecordReport(record) {
+            if (!record || !record.sourceDocUrl) {
+                uni.showToast({ title: '暂无可预览文件', icon: 'none' })
                 return
             }
+            const fallback = record.date ? ('检验报告 ' + this.formatScanTime(record.date)) : '检验报告'
+            this.openReportPreview({ url: record.sourceDocUrl, title: record.sourceDocName || fallback })
+        },
+        closeReportPreview() {
+            this.clearPreviewTimer()
+            this.showReportPopup = false
+        },
+        clearPreviewTimer() {
+            if (this.previewTimer) {
+                clearTimeout(this.previewTimer)
+                this.previewTimer = null
+            }
+        },
+        // 弹窗内图片点击全屏缩放：先关闭弹窗，避免 u-popup 层级(zIndex 10075)把系统预览大图挡在后面
+        zoomReportImage() {
+            const url = this.reportPreview.fullUrl
+            if (!url) return
+            this.clearPreviewTimer()
+            this.showReportPopup = false
+            this.previewTimer = setTimeout(() => {
+                this.previewTimer = null
+                uni.previewImage({ urls: [url], current: url })
+            }, 320)
+        },
+        // 非图片文档：下载后调用系统文档预览；图片加载失败时点击则重试加载图片
+        openReportDocument() {
+            if (this.reportPreview.isImage && this.reportPreview.loadError) {
+                this.reportPreview.loadError = false
+                return
+            }
+            const url = this.reportPreview.fullUrl || this.resolveFileUrl(this.reportPreview.url)
+            if (!url) return
             uni.showLoading({ title: '正在打开...', mask: true })
             uni.downloadFile({
-                url: scan.url,
+                url,
                 success: res => {
                     if (res.statusCode === 200 && res.tempFilePath) {
                         uni.openDocument({
@@ -788,12 +952,12 @@ export default {
     padding: 40rpx 0;
     text-align: center;
     font-size: 26rpx;
-    color: #999;
+    color: #909399;
 }
 
 .ha-panel {
     background: #ffffff;
-    border-radius: 22rpx;
+    border-radius: 20rpx;
     box-shadow: 0 8rpx 28rpx rgba(22, 60, 45, 0.06);
 }
 
@@ -970,7 +1134,7 @@ export default {
     align-items: center;
     font-size: 29rpx;
     font-weight: 700;
-    color: #1e3028;
+    color: #222;
     margin-bottom: 20rpx;
 }
 
@@ -1080,10 +1244,16 @@ export default {
     /* 一组宽度 = 单卡宽度，你可以按需调整 */
 }
 
+.scan-wrap {
+    display: flex;
+    gap: 20rpx;
+}
+
 .ha-scan-card {
-    width: 320rpx;
+    width: calc(50% - 48rpx);
     /* 固定卡片宽度，控制一行2个 */
     display: flex;
+    flex-direction: column;
     align-items: center;
     padding: 18rpx;
     border: 1rpx solid #e6eee9;
@@ -1236,12 +1406,62 @@ export default {
     color: #4f6659;
 }
 
+.ha-scan-list {
+    width: 100%;
+}
+
+
+.scan-preview {
+    width: 100%;
+    height: 180rpx;
+    border-radius: 16rpx;
+    background-color: #f5f7f6;
+    overflow: hidden;
+    margin-bottom: 14rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.scan-preview image {
+    width: 100%;
+    height: 100%;
+}
+
+.file-icon-wrap {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.scan-name {
+    font-size: 24rpx;
+    color: #222;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 10rpx;
+    white-space: nowrap;
+    width: 100%;
+}
+
+.scan-time {
+    font-size: 22rpx;
+    color: #909399;
+}
+
+.ha-empty {
+    padding: 30rpx 0;
+    color: #909399;
+    font-size: 26rpx;
+}
+
+
 .ha-add-record {
-    /* position: fixed;
-		right: 28rpx;
-		bottom: 150rpx;
-		z-index: 20; */
     height: 50rpx;
+    min-width: 140rpx;
     padding: 0 26rpx;
     border-radius: 10rpx;
     background: linear-gradient(135deg, #1ab869, #0d944e);
@@ -1317,6 +1537,22 @@ export default {
     margin-bottom: 20rpx;
 }
 
+.ha-record-count {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    padding: 6rpx;
+    border-radius: 10rpx;
+    background: #fdecec;
+    color: #e84a4a;
+    font-size: 20rpx;
+    line-height: 1.35;
+    white-space: nowrap;
+    transform: scale(0.7);
+}
+
 .ha-metric-row {
     display: flex;
     align-items: center;
@@ -1378,14 +1614,15 @@ export default {
 .ha-empty {
     text-align: center;
     padding: 30rpx 0;
-    color: #999;
+    color: #909399;
 }
 
 .ha-trend-wrap {}
 
 .ha-chart-box {
     width: 100%;
-    height: 200rpx;
+    height: 248rpx;
+    margin-top: 18rpx;
 }
 
 .ha-analysis {
@@ -1641,5 +1878,104 @@ export default {
     /* width: 210rpx; */
     /* flex-shrink: 0; */
     flex: 1;
+}
+
+.report-preview {
+    width: 640rpx;
+    background: #ffffff;
+    border-radius: 28rpx;
+    overflow: hidden;
+}
+
+.rp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28rpx 28rpx 24rpx;
+}
+
+.rp-title {
+    flex: 1;
+    min-width: 0;
+    margin-right: 20rpx;
+    font-size: 32rpx;
+    font-weight: 700;
+    color: #1f2d3d;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.rp-close {
+    width: 64rpx;
+    height: 64rpx;
+    border: 1rpx solid #e5e7eb;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.rp-body {
+    padding: 24rpx;
+    background: #1f2a44;
+}
+
+.rp-image {
+    width: 100%;
+    height: 720rpx;
+    border-radius: 18rpx;
+    background: #0f172a;
+}
+
+.rp-file {
+    height: 720rpx;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+}
+
+.rp-file-name {
+    max-width: 100%;
+    margin-top: 24rpx;
+    font-size: 28rpx;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.rp-file-tip {
+    margin-top: 12rpx;
+    font-size: 24rpx;
+    color: #c2c9d6;
+}
+
+.rp-file-btn {
+    margin-top: 32rpx;
+    padding: 16rpx 56rpx;
+    border-radius: 999rpx;
+    background: #2b7fff;
+    font-size: 28rpx;
+    color: #ffffff;
+}
+
+.rp-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 24rpx 28rpx 28rpx;
+}
+
+.rp-done-btn {
+    min-width: 200rpx;
+    padding: 18rpx 40rpx;
+    border-radius: 999rpx;
+    background: #2b7fff;
+    color: #ffffff;
+    font-size: 30rpx;
+    font-weight: 600;
+    text-align: center;
 }
 </style>

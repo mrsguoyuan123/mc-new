@@ -33,8 +33,6 @@
 				<view class="text-white">
 					<view class="white-text1">
 						在线咨询
-
-
 					</view>
 					<view class="white-text2">
 						专属医助服务
@@ -61,9 +59,21 @@
 
 		</view>
 		<medical-record @loaded="onArchiveLoaded"></medical-record>
-		<view class="bg-chart bg-white radius-15 card-top card-border card-border-gray" style="display:block">
-			<view class=" font-bold font-m margin-bottom-1">
+		<view class="" style="display:block">
+			<!-- <view class=" font-bold font-m margin-bottom-1">
 				健康数据速览
+			</view> -->
+			<view class="header-text">
+				<view class="header-icon ">
+					
+						<text class="custom-icon custom-icon-activity icon-bold"
+									style="font-size:40rpx;color:#155DFC;"></text>
+					<view class="header-name font-bold font-m">
+						健康数据速览
+					</view>
+				</view>
+				
+
 			</view>
 			<view class="stat-card-wrap">
 				<view class="card-row">
@@ -71,7 +81,7 @@
 					<view class="stat-card radius-15">
 						<view class="card-head">
 							<view class="icon-box blue">
-								<u-icon name="heart" color="#3677ff" size="30rpx"></u-icon>
+								<u-icon name="heart" color="#18b566" size="30rpx"></u-icon>
 							</view>
 							<view class="card-title">最近营养记录</view>
 						</view>
@@ -88,7 +98,7 @@
 						<view class="card-head">
 							<view class="icon-box pink">
 								<text class="custom-icon custom-icon-trending-down icon-bold"
-									style="font-size:30rpx;color:#f6339a;"></text>
+									style="font-size:30rpx;color:#18b566;"></text>
 
 							</view>
 							<view class="card-title">体重记录</view>
@@ -116,7 +126,7 @@
 						<view class="card-head">
 							<view class="icon-box green">
 								<text class="custom-icon custom-icon-activity icon-bold"
-									style="font-size:30rpx;color:#155DFC;"></text>
+									style="font-size:30rpx;color:#18b566;"></text>
 							</view>
 							<view class="card-title">血压</view>
 						</view>
@@ -133,7 +143,7 @@
 						<view class="card-head">
 							<view class="icon-box green">
 								<text class="custom-icon custom-icon-activity icon-bold"
-									style="font-size:30rpx;color:#155DFC;"></text>
+									style="font-size:30rpx;color:#18b566;"></text>
 							</view>
 							<view class="card-title">血糖</view>
 						</view>
@@ -298,8 +308,7 @@
 
 		</view>
 
-		<view
-			v-if="!escort || !escort.activeBooking">
+		<view v-if="!escort || !escort.activeBooking">
 			<view class="header-text">
 				<view class="header-icon ">
 					<text class="custom-icon custom-icon-user-check icon-bold"
@@ -334,8 +343,9 @@
 							术后康复专项指导 · 居家生活护理 · 24h全天候陪伴
 						</view>
 					</view>
-					<view class="badge-bg  badge-blue-bg">
-						已有 1000+ 患者选择
+					<view class="badge-bg  badge-blue-bg flex-center">
+						<u-icon name="account" color="#155DFC" :bold="true" size="30rpx" class="margin-right-5"></u-icon>
+						1对1驻点·仅需预约时间
 					</view>
 				</view>
 				<view class="">
@@ -364,15 +374,15 @@
 					</view>
 				</view>
 			</view>
-			
+
 			<view class="staff-card radius-15 card-top bg-white card-border card-border-gray "
 				@click="routeTo('caregiverOrder')">
 				<view v-if="escort.activeBooking.caregiverInfo.avatar" class="avatar-wrap">
-  <image class="avatar" :src="escort.activeBooking.caregiverInfo.avatar" mode="aspectFill"></image>
-</view>
-<view v-else class="avatar-wrap avatar-icon">
-  <u-icon name="account" color="#fff" size="40rpx"></u-icon>
-</view>
+					<image class="avatar" :src="escort.activeBooking.caregiverInfo.avatar" mode="aspectFill"></image>
+				</view>
+				<view v-else class="avatar-wrap avatar-icon">
+					<u-icon name="account" color="#fff" size="40rpx"></u-icon>
+				</view>
 				<view class="info-wrap">
 					<view class="font-m font-bold">照护师: {{ escort.activeBooking.caregiverInfo.name }}</view>
 					<view class="time-row">
@@ -405,9 +415,10 @@
 			class="my-article bg-white radius-15 card-border card-border-gray">
 			<view class="u-flex align-center">
 				<view class="img-wrapper">
-					<image class="img-inner"
-						:src="item.coverUrl || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'200\' viewBox=\'0 0 300 200\'%3E%3Crect fill=\'%23f5f5f5\' width=\'300\' height=\'200\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' fill=\'%23999\' font-size=\'18\' text-anchor=\'middle\' dy=\'.3em\'%3E暂无图片%3C/text%3E%3C/svg%3E'"
-						:mode="item.coverUrl ? 'aspectFit' : 'aspectFill'"></image>
+					
+					<image class="img-inner" :src="imgSrc(item.coverUrl)"
+						:mode="item.coverUrl ? 'aspectFit' : 'aspectFill'" @error="onImgError($event, item)">
+					</image>
 				</view>
 
 				<view class="img-text" style="flex: 1; min-width: 0; margin-left:20rpx;">
@@ -418,14 +429,12 @@
 					<view class="font-bold font-s" style="margin: 10rpx 0;">
 						{{ item.title || '-' }}
 					</view>
-					<view class="font-info font-s"
-						style="overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">
+					<view class="font-info font-s article-desc">
 						{{ item.content || '' }}
 					</view>
 				</view>
 			</view>
 		</view>
-
 
 
 		<!-- 告知书弹窗 -->
@@ -488,7 +497,7 @@ import {
 } from '@/api/frontApikit.js'
 
 import myTabbar from '@/components/myTabbar.vue'
-import medicalRecord from '@/components/medicalRecord.vue'
+import medicalRecord from '@/pages/index/medicalRecord.vue'
 
 
 
@@ -502,6 +511,7 @@ export default {
 	},
 	data() {
 		return {
+			defaultSvg: 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'200\' viewBox=\'0 0 300 200\'%3E%3Crect fill=\'%23f5f5f5\' width=\'300\' height=\'200\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' fill=\'%23999\' font-size=\'18\' text-anchor=\'middle\' dy=\'.3em\'%3E暂无图片%3C/text%3E%3C/svg%3E',
 			pendingReply: 0, // 待回复数量
 			doctorMentionCount: 0, // 医生提及数
 			doctorNoteCount: 0, // 医生备注数
@@ -530,7 +540,8 @@ export default {
 			postopDays: {},
 			articles: [],
 			nutrition: {},
-			getMeInformedConsent: {}
+			getMeInformedConsent: {},
+			informedConsentId: ""
 		};
 	},
 
@@ -565,6 +576,17 @@ export default {
 	},
 
 	methods: {
+		imgSrc(url) {
+			return url || this.defaultSvg
+		},
+		onImgError(e, item) {
+			console.log(e)
+			console.log(item)
+
+			console.log('图片加载失败', e.detail.errMsg, item.coverUrl)
+			// 加载失败强制替换为默认svg
+			item.coverUrl = ''
+		},
 		onArchiveLoaded(basic) {
 			this.archivePatient = basic || {}
 		},
@@ -654,7 +676,7 @@ export default {
 				this.escort = data.escort || {}
 				this.monitor = data.monitor || {}
 				this.nutrition = this.monitor.nutrition || {}
-				console.log('nutrition', this.nutrition)
+				console.log('consentPending11111111111111', this.consentPending)
 			} catch (e) {
 				console.log('报错：', e)
 			}
@@ -670,21 +692,22 @@ export default {
 					id: this.id
 				})
 				this.getMeInformedConsent = getMeInformedConsent[0]
-				// console.log('getMeInformedConsent：', this.getMeInformedConsent)
+				console.log('告知书', this.getMeInformedConsent);
+				this.informedConsentId = this.getMeInformedConsent.id
 			} catch (e) {
 				console.log('报错：', e)
 			}
 		},
 		// 确认告知书
 		async MeInformedConsentByIdConfirm() {
-			console.log(this.consentPending.id)
+
 			try {
-				if (!this.consentPending.id) {
+				if (!this.informedConsentId) {
 					console.warn('id为空，跳过请求')
 					return
 				}
 				await postMeInformedConsentByIdConfirmApi({
-					id: this.consentPending.id
+					id: this.informedConsentId
 				})
 				this.showNotice = false
 			} catch (e) {
@@ -961,77 +984,6 @@ export default {
 	margin: 20rpx 0 30rpx;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 .card-top {
 	/* display: block; */
 }
@@ -1094,7 +1046,7 @@ export default {
 
 .sub-title {
 	font-size: 24rpx;
-	color: #666;
+	color: #909399;
 	margin-top: 20rpx;
 }
 
@@ -1106,7 +1058,7 @@ export default {
 	text-align: center;
 	line-height: 56rpx;
 	font-size: 32rpx;
-	color: #666;
+	color: #909399;
 }
 
 .tip-block {
@@ -1155,7 +1107,7 @@ export default {
 
 .section-list {
 	font-size: 26rpx;
-	color: #333;
+	color: #222;
 	line-height: 1.7;
 }
 
@@ -1259,7 +1211,7 @@ export default {
 	align-items: center;
 	margin: 10rpx 0;
 	font-size: 26rpx;
-	color: #666;
+	color: #909399;
 	gap: 6rpx;
 }
 
@@ -1283,10 +1235,10 @@ export default {
 
 .stat-card {
 	flex: 1;
-	background: #fff;
-
+	box-shadow: 0 8rpx 28rpx rgba(22, 60, 45, 0.06);
+	background: linear-gradient(135deg, #ffffff 0%, #f3fbf6 100%);
 	padding: 20rpx;
-	border: 1px solid #dddd;
+	/* border: 1px solid #dddd; */
 
 }
 
@@ -1297,7 +1249,7 @@ export default {
 	margin-bottom: 24rpx;
 }
 
-.icon-box {
+/* .icon-box {
 	width: 64rpx;
 	height: 64rpx;
 	border-radius: 50%;
@@ -1305,9 +1257,9 @@ export default {
 	align-items: center;
 	justify-content: center;
 
-}
+} */
 
-.icon-box.blue {
+/* .icon-box.blue {
 	background: #e8f0ff;
 }
 
@@ -1321,11 +1273,11 @@ export default {
 
 .icon-box.yellow {
 	background: #fff7e6;
-}
+} */
 
 .card-title {
 	font-size: 24rpx;
-	color: #333;
+	color: #180808;
 	font-weight: 500;
 }
 
@@ -1352,21 +1304,22 @@ export default {
 }
 
 .avatar-wrap {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-.avatar {
-  width: 100%;
-  height: 100%;
-}
-.avatar-icon {
-  background-color: #155DFC;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+	width: 80rpx;
+	height: 80rpx;
+	border-radius: 50%;
+	overflow: hidden;
+	flex-shrink: 0;
 }
 
+.avatar {
+	width: 100%;
+	height: 100%;
+}
+
+.avatar-icon {
+	background-color: #155DFC;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
 </style>

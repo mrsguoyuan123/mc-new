@@ -64,20 +64,22 @@
 							<!-- {{ currentActionId }} -->
 							<!-- {{ item.id }} -->
 
-							<view class="item-index" :class="statusTheme(getItemDisplayStatus(item))">{{ item.orderNo }}</view>
+							<view class="item-index" :class="statusTheme(getItemDisplayStatus(item))">{{ item.orderNo }}
+							</view>
 							<view class="item-info">
 								<text class="item-name">{{ item.name }}</text>
 								<text class="item-dose">剂量：{{ item.dosage }}</text>
 							</view>
 							<view class="item-right">
-								<text class="status-tag"
-								:class="statusTheme(getItemDisplayStatus(item))">{{ statusText(getItemDisplayStatus(item), item.completedSets, item.targetSets, true) }}</text>
+								<text class="status-tag" :class="statusTheme(getItemDisplayStatus(item))">{{
+									statusText(getItemDisplayStatus(item), item.completedSets, item.targetSets, true)
+									}}</text>
 								<u-icon name="arrow-right" color="#9aa7ba" size="14"></u-icon>
 							</view>
 						</view>
 					</view>
-					<view class="primary-btn start-btn" :class="{ disabled: actionLoading || completedCount === items.length }"
-						@click="startTraining">
+					<view class="primary-btn start-btn"
+						:class="{ disabled: actionLoading || completedCount === items.length }" @click="startTraining">
 						<u-icon name="play-right" color="#ffffff" size="16"></u-icon>
 						<text>{{ startButtonText }}</text>
 					</view>
@@ -109,8 +111,8 @@
 					<video style="width: 100%; height: 100%;" :src="currentAction.videoUrl" controls
 						show-center-play-btn object-fit="cover"></video>
 				</view>
-				<view v-else-if="mediaTab === 'video' && currentAction" class="video-wrap"
-					:class="coverClass" @click="playVideo">
+				<view v-else-if="mediaTab === 'video' && currentAction" class="video-wrap" :class="coverClass"
+					@click="playVideo">
 				</view>
 				<view v-else-if="mediaTab === 'video'" class="video-wrap video-empty">
 					<u-icon name="photo" color="#b8c2d5" size="34"></u-icon><text>暂无动作视频</text>
@@ -157,17 +159,12 @@
 						<text class="group-progress">组数进度：第 {{ currentGroup }} 组 / 共 {{ currentAction.targetSets }}
 							组</text>
 						<view class="group-dots">
-             
-  <view 
-    v-for="(dot, idx) in groupDots" 
-    :key="idx" 
-    class="group-dot"
-    :class="{
-      finished: dot.finished,
-      active: dot.active
-    }"
-  ></view>
-</view>
+
+							<view v-for="(dot, idx) in groupDots" :key="idx" class="group-dot" :class="{
+								finished: dot.finished,
+								active: dot.active
+							}"></view>
+						</view>
 
 						<view class="big-number-box">
 							<template v-if="mode === 'REPS'">
@@ -175,24 +172,21 @@
 									class="big-unit">次</text>
 							</template>
 							<template v-else>
-								<text
-									class="big-number time-number">{{ formattedTime(currentAction.targetDurationSec) }}</text>
+								<text class="big-number time-number">{{ formattedTime(currentAction.targetDurationSec)
+									}}</text>
 							</template>
 							<text class="number-tip">{{ mode === 'REPS' ? '每组标准动作次数' : timerStatusText }}</text>
 						</view>
 
-						<view 
-  v-if="showGroupButton" 
-  class="primary-btn record-main"
-  :class="{ disabled: !canOperate || (mode === 'REPS' && countPaused) }"
-  @click="completeGroup(false)"
->
-  <text>{{ showGroupButtonText }}</text>
-</view>
+						<view v-if="showGroupButton" class="primary-btn record-main"
+							:class="{ disabled: !canOperate || (mode === 'REPS' && countPaused) }"
+							@click="completeGroup(false)">
+							<text>{{ showGroupButtonText }}</text>
+						</view>
 						<view class="control-row" :class="{ three: mode === 'TIMER' }">
 							<view class="light-btn" :class="{ disabled: !canOperate }" @click="togglePause">
-								<u-icon :name="pauseIconName" size="14"
-									color="#d18a00"></u-icon><text>{{ pauseButtonText }}</text>
+								<u-icon :name="pauseIconName" size="14" color="#d18a00"></u-icon><text>{{
+									pauseButtonText }}</text>
 							</view>
 							<view class="light-btn" :class="{ disabled: !canOperate }" @click="resetTraining">
 								<u-icon name="reload" size="14" color="#61708a"></u-icon><text>重置</text>
@@ -221,13 +215,14 @@
 				<template v-if="currentAction">
 					<view class="status-rows">
 						<view class="status-row">
-							<text class="current-label">当前动作</text><text
-								class="row-value">{{ currentAction.name }}</text>
+							<text class="current-label">当前动作</text><text class="row-value">{{ currentAction.name
+								}}</text>
 						</view>
 						<view class="status-row">
 							<text class="current-label">动作状态</text>
-							<text class="status-tag large"
-								:class="statusTheme(currentDisplayStatus)">{{ statusText(currentDisplayStatus, currentAction.completedSets, currentAction.targetSets, false) }}</text>
+							<text class="status-tag large" :class="statusTheme(currentDisplayStatus)">{{
+								statusText(currentDisplayStatus, currentAction.completedSets, currentAction.targetSets,
+								false) }}</text>
 						</view>
 					</view>
 					<view v-if="currentDisplayStatus === 'COMPLETED'" class="archive-strip">
@@ -384,11 +379,11 @@
 				<view class="week-calendar">
 					<view v-for="day in weeklyStats.dailyRecords" :key="day.dateStr" class="day-col"
 						:class="{ today: day.isToday }">
-						<text class="day-name">{{ day.dayName  }}</text>
+						<text class="day-name">{{ day.dayName }}</text>
 						<view class="day-dot" :class="{ done: day.completed }">
 							<u-icon v-if="day.completed" name="checkmark" color="#ffffff" size="11"></u-icon>
 						</view>
-						<text class="day-date">{{ day.dateStr}}</text>
+						<text class="day-date">{{ day.dateStr }}</text>
 					</view>
 				</view>
 				<view class="week-footer">
@@ -399,10 +394,11 @@
 				</view>
 			</view>
 
-			<view  class="button-wrapper u-flex flex-center font-s" @click="tomyGroup()" >
-			<text class="custom-icon custom-icon-navigation icon-bold" style="color:#155DFC;margin-right: 5px;"></text>
-			同步到我的私人医生团队
-		</view>
+			<view class="button-wrapper u-flex flex-center font-s" @click="tomyGroup()">
+				<text class="custom-icon custom-icon-navigation icon-bold"
+					style="color:#155DFC;margin-right: 5px;"></text>
+				同步到我的私人医生团队
+			</view>
 			<!-- <text class="disclaimer">本测评与训练计划仅为健康筛查及术后康复参考，不构成医疗诊断。模板内容，最终以健康管理团队后台配置为准。</text> -->
 		</view>
 
@@ -422,3176 +418,3179 @@
 				</view>
 			</view>
 		</view>
-        <u-toast ref="uToast"></u-toast>
+		<u-toast ref="uToast"></u-toast>
 
 
 	</view>
 </template>
 
 <script>
-	import {
-		getMeExercisePlanApi as fetchMeExercisePlanApi,
-		postMeExerciseItemsByIdCompleteSetApi as completeExerciseSetApi,
-		postMeExerciseItemsByIdFinishApi as finishExerciseItemApi,
-		postMeExerciseItemsByIdPauseApi as pauseExerciseItemApi,
-		postMeExerciseItemsByIdEvaluationApi as submitExerciseEvaluationApi
-	} from '@/api/frontApikit.js'
+import {
+	getMeExercisePlanApi as fetchMeExercisePlanApi,
+	postMeExerciseItemsByIdCompleteSetApi as completeExerciseSetApi,
+	postMeExerciseItemsByIdFinishApi as finishExerciseItemApi,
+	postMeExerciseItemsByIdPauseApi as pauseExerciseItemApi,
+	postMeExerciseItemsByIdEvaluationApi as submitExerciseEvaluationApi
+} from '@/api/frontApikit.js'
 
-	/**
-	 * 创建训练评估表单默认值
-	 * @returns {Object} 评估表单对象
-	 */
-	function createForm() {
-		return {
-			pain: 0,
-			swelling: '无',
-			fatigue: '无',
-			discomfort: '无',
-			note: ''
-		}
+/**
+ * 创建训练评估表单默认值
+ * @returns {Object} 评估表单对象
+ */
+function createForm() {
+	return {
+		pain: 0,
+		swelling: '无',
+		fatigue: '无',
+		discomfort: '无',
+		note: ''
 	}
-
-	/**
-	 * 空周统计结构
-	 * @returns {Object}
-	 */
-	function createEmptyWeeklyStats() {
-		return {
-			completionRate: 0,
-			completedDays: 0,
-			totalDays: 0,
-			trendText: '',
-			dailyRecords: []
-		}
-	}
-
-	function normalizeDailyRecord(day) {
-		day = day || {}
-		return {
-			dayName: day.dayName || '',
-			dateStr: day.dateStr || '',
-			completed: !!day.completed,
-			isToday: !!day.isToday
-		}
-	}
-
-	function normalizeWeeklyStats(stats) {
-		stats = stats || {}
-		return {
-			completionRate: Number(stats.completionRate || 0),
-			completedDays: Number(stats.completedDays || 0),
-			totalDays: Number(stats.totalDays || 0),
-			trendText: stats.trendText || '',
-			dailyRecords: Array.isArray(stats.dailyRecords) ? stats.dailyRecords.map(normalizeDailyRecord) : []
-		}
-	}
-
-	function createEmptyEvaluation() {
-		return {
-			isAbnormal: false,
-			abnormalReasons: [],
-			itemStatus: ''
-		}
-	}
-
-	function normalizeEvaluationResult(result) {
-		result = result || {}
-		var statusList = ['PENDING', 'NEED_EVAL', 'COMPLETED', 'PAUSED']
-		return {
-			isAbnormal: !!result.isAbnormal,
-			abnormalReasons: Array.isArray(result.abnormalReasons) ? result.abnormalReasons.slice() : [],
-			itemStatus: statusList.indexOf(result.itemStatus) !== -1 ? result.itemStatus : ''
-		}
-	}
-
-	function normalizeExerciseItem(item) {
-		item = item || {}
-		return {
-			id: item.id === undefined || item.id === null ? '' : item.id,
-			createTime: item.createTime || null,
-			updateTime: item.updateTime || null,
-			deleted: item.deleted === undefined ? 0 : item.deleted,
-			planId: item.planId || null,
-			orderNo: Number(item.orderNo || 0),
-			name: item.name || '',
-			dosage: item.dosage || '',
-			mode: item.mode === 'REPS' ? 'REPS' : 'TIMER',
-			targetSets: Number(item.targetSets || 0),
-			targetReps: item.targetReps === null || item.targetReps === undefined ? null : Number(item.targetReps),
-			targetDurationSec: item.targetDurationSec === null || item.targetDurationSec === undefined ? null : Number(item.targetDurationSec),
-			completedSets: Number(item.completedSets || 0),
-			status: ['PENDING', 'NEED_EVAL', 'COMPLETED', 'PAUSED'].indexOf(item.status) !== -1 ? item.status : 'PENDING',
-			completedAt: item.completedAt || null,
-			description: item.description || '',
-			videoUrl: item.videoUrl || null,
-			steps: Array.isArray(item.steps) ? item.steps : [],
-			evaluation: item.evaluation ? normalizeEvaluationResult(item.evaluation) : createEmptyEvaluation()
-		}
-	}
-
-	function normalizeExercisePlan(plan) {
-		if (!plan) return null
-		return {
-			planId: plan.planId || '',
-			surgeryType: plan.surgeryType || '',
-			generateTime: plan.generateTime || '',
-			items: Array.isArray(plan.items) ? plan.items.map(normalizeExerciseItem) : [],
-			weeklyStats: normalizeWeeklyStats(plan.weeklyStats)
-		}
-	}
-
-	export default {
-		data() {
-			return {
-				generateTime: '',
-				items: [],
-				planId: '',
-				surgeryType: '',
-				weeklyStats: createEmptyWeeklyStats(),
-				toolbarCollapsed: false,
-				activeScenario: 'default',
-
-				scenarios: [{
-						key: 'default',
-						name: '默认流程'
-					},
-					{
-						key: 'noPlan',
-						name: '状态1：无运动方案'
-					},
-					{
-						key: 'allDone',
-						name: '状态2：今日已完成'
-					},
-					{
-						key: 'pendingEvaluation',
-						name: '状态3：评估未完成'
-					},
-					{
-						key: 'abnormal',
-						name: '状态4：异常评估'
-					}
-				],
-				hasPlan: true,
-				currentActionId: '',
-				currentGroup: 1,
-				mode: 'TIMER',
-				countPaused: false,
-				running: false,
-				remainingSeconds: 0,
-				timer: null,
-				actionLoading: false,
-				mediaTab: 'video',
-				assessmentExpanded: true,
-				warningVisible: false,
-				activeTab: 'health',
-				form: createForm(),
-				swellingOptions: ['无', '轻微', '明显'],
-				fatigueOptions: ['无', '轻松', '一般', '很累'],
-				discomfortOptions: ['无', '有，想告诉医护'],
-				toast: {
-					visible: false,
-					text: '已暂存，您可以稍后返回今日方案继续填写',
-					type: 'info',
-					icon: 'info-circle'
-				},
-				toastTimer: null,
-
-			}
-		},
-		computed: {
-			datePillText: function() {
-				return this.generateTime ? '今日方案 · ' + this.formatDate(this.generateTime, 'MM月DD日') : '今日方案'
-			},
-			isCurrentItem: function() {
-				var self = this
-				return function(item) {
-					return !!item && String(item.id) === String(self.currentActionId)
-				}
-			},
-			startButtonText: function() {
-				if (this.actionLoading) return '加载中...'
-				return this.completedCount === this.items.length ? '今日运动已完成' : '开始今日运动'
-			},
-			coverClass: function() {
-				if (!this.currentAction) return ''
-				var name = this.currentAction.name || ''
-				if (name.indexOf('呼吸') !== -1) return 'cover-breath'
-				if (name.indexOf('步') !== -1) return 'cover-walk'
-				return 'cover-rehab'
-			},
-			uiDiagramSteps: function() {
-				if (this.currentAction && this.currentAction.steps && this.currentAction.steps.length) {
-					return this.currentAction.steps
-				}
-				return [{
-					title: '准备姿势',
-					desc: '坐稳或站稳，双肩放松，保持自然呼吸，确认周围环境安全。'
-				}, {
-					title: '按剂量完成',
-					desc: this.currentAction ? this.currentAction.dosage : '跟随组数与次数节奏训练。'
-				}, {
-					title: '结束观察',
-					desc: '训练后静息片刻，记录疼痛、肿胀、疲劳及其他不适情况。'
-				}]
-			},
-			showGroupButtonText: function() {
-				if (!this.currentAction) return '完成这一组'
-				return this.currentGroup >= this.currentAction.targetSets ? '完成本项运动' : '完成这一组'
-			},
-			/**
-			 * 获取当前选中动作
-			 * @returns {Object|null} 当前动作对象
-			 */
-			currentAction: function() {
-				for (var i = 0; i < this.items.length; i += 1) {
-					if (String(this.items[i].id) === String(this.currentActionId)) {
-						return this.items[i]
-					}
-				}
-				return null
-			},
-			currentEvaluationStatus: function() {
-				return this.currentAction && this.currentAction.evaluation ?
-					this.currentAction.evaluation.itemStatus : ''
-			},
-			currentDisplayStatus: function() {
-				return this.getItemDisplayStatus(this.currentAction)
-			},
-			/**
-			 * 统计已完成动作数量
-			 * @returns {Number} 已完成数量
-			 */
-			completedCount: function() {
-				return this.items.filter((function(item) {
-					return this.getItemDisplayStatus(item) === 'COMPLETED'
-				}).bind(this)).length
-			},
-			/**
-			 * 整体完成百分比
-			 * @returns {Number} 百分比
-			 */
-			progressPercent: function() {
-				if (!this.items.length) {
-					return 0
-				}
-				return Math.round(this.completedCount / this.items.length * 100)
-			},
-			/**
-			 * 所有动作合计分钟数
-			 * @returns {Number} 总分钟
-			 */
-			totalMinutes: function() {
-				var totalSec = 0
-				this.items.forEach(function(item) {
-					totalSec += (item.targetDurationSec || 0) * (item.targetSets || 0)
-				}, 0)
-				return Math.round(totalSec / 60)
-			},
-			/**
-			 * 组点点数组，用于渲染组标识
-			 * @returns {Array<Object>} 组数据
-			 */
-			groupDots: function() {
-				var total = this.currentAction ? this.currentAction.targetSets : 0
-				var arr = []
-				for (var i = 1; i <= total; i++) {
-					arr.push({
-						finished: i < this.currentGroup,
-						active: i === this.currentGroup
-					})
-				}
-				return arr
-			},
-			/**
-			 * 是否允许操作当前动作
-			 * @returns {Boolean}
-			 */
-			canOperate: function() {
-				return !!this.currentAction &&
-					this.currentAction.status === 'PENDING'
-			},
-			/**
-			 * 是否展示下一组按钮
-			 * @returns {Boolean}
-			 */
-			showGroupButton: function() {
-				if (!this.currentAction || !this.canOperate) {
-					return false
-				}
-				return this.currentAction.targetSets > 0 && this.currentGroup <= this.currentAction.targetSets
-			},
-			stepTitle: function(step) {
-				return (step && (step.title || step.name)) || ''
-			},
-			stepDesc: function(step) {
-				return (step && (step.desc || step.description)) || ''
-			},
-
-
-
-			/**
-			 * 计时器状态文字
-			 * @returns {String}
-			 */
-			timerStatusText: function() {
-				if (!this.currentAction) {
-					return '暂无训练动作'
-				}
-				if (this.currentDisplayStatus === 'PAUSED') {
-					return '训练已暂停'
-				}
-				if (this.currentDisplayStatus === 'COMPLETED') {
-					return '本项训练已完成'
-				}
-				if (this.running) {
-					return '正在平缓计时中...'
-				}
-				return this.mode === 'TIMER' ? '点击开始进行平缓计时' : '计数训练准备中'
-			},
-			/**
-			 * 暂停/开始按钮文字
-			 * @returns {String}
-			 */
-			pauseButtonText: function() {
-				if (this.mode === 'REPS') {
-					return this.countPaused ? '继续' : '暂停'
-				}
-				return this.running ? '暂停' : '开始'
-			},
-			/**
-			 * 暂停图标名称
-			 * @returns {String}
-			 */
-			pauseIconName: function() {
-				if (this.mode === 'REPS') {
-					return this.countPaused ? 'play-right' : 'pause'
-				}
-				return this.running ? 'pause' : 'play-right'
-			},
-			/**
-			 * 是否存在异常评估指标
-			 * @returns {Boolean}
-			 */
-			hasAbnormal: function() {
-				if (this.currentAction && this.currentAction.evaluation && this.currentAction.evaluation.itemStatus) {
-					return !!this.currentAction.evaluation.isAbnormal ||
-						this.currentAction.evaluation.itemStatus === 'PAUSED' ||
-						this.currentAction.status === 'PAUSED'
-				}
-				return Number(this.form.pain) >= 6 ||
-					this.form.swelling === '明显' ||
-					this.form.fatigue === '很累' ||
-					this.form.discomfort === '有，想告诉医护'
-			},
-			/**
-			 * 获取异常原因文本
-			 * @returns {String}
-			 */
-			abnormalReasons: function() {
-				if (this.currentAction && this.currentAction.evaluation && this.currentAction.evaluation.itemStatus) {
-					var serverReasons = Array.isArray(this.currentAction.evaluation.abnormalReasons) ?
-						this.currentAction.evaluation.abnormalReasons : []
-					if (!serverReasons.length && this.currentDisplayStatus === 'PAUSED') {
-						serverReasons = ['医护团队建议暂停训练']
-					}
-					return serverReasons.length ? serverReasons.join('、') : '暂无异常指标'
-				}
-				var reasons = []
-				if (Number(this.form.pain) >= 6) reasons.push('疼痛程度≥6分')
-				if (this.form.swelling === '明显') reasons.push('患处明显肿胀')
-				if (this.form.fatigue === '很累') reasons.push('训练后很累')
-				if (this.form.discomfort === '有，想告诉医护') reasons.push('其他不适情况选择“有，想告诉医护”')
-				return reasons.length ? reasons.join('、') : '暂无异常指标'
-			},
-			/**
-			 * 完成标题
-			 * @returns {String}
-			 */
-			completionTitle: function() {
-				return this.currentDisplayStatus === 'COMPLETED' ? '本项运动已完成' : '完成本项运动'
-			},
-			/**
-			 * 周完成百分比
-			 * @returns {Number}
-			 */
-			weekPercent: function() {
-				if (!this.weeklyStats) return 0
-				return Number(this.weeklyStats.completionRate || 0)
-			},
-			/**
-			 * 环形进度背景样式
-			 * @returns {String}
-			 */
-			ringBackground: function() {
-				var deg = this.weekPercent * 3.6
-				return 'conic-gradient(#1677ff 0deg, #1677ff ' + deg + 'deg, #dce5f4 ' + deg + 'deg, #dce5f4 360deg)'
-			}
-		},
-		beforeDestroy: function() {
-			this.clearTimer()
-			clearTimeout(this.toastTimer)
-		},
-		created() {
-			this.getMeExercisePlanApi()
-		},
-		methods: {
-								      tomyGroup(params) {
-
-			const name = "运动管理";
-			
-			const that = this;
-			const data = '已完成运动评估'
-            if( data == '已完成运动评估'){
-const data = {
-  name: "运动管理",
-  type: "card",
-  description: "今日运动方案已记录并完成评估，动作心率与体感反应平稳，数据已同步至健康管理团队。"
 }
-// ========== 方案一新逻辑 start ==========
-const cardKey = 'health_card_' + Date.now()
-getApp().globalData[cardKey] = data
-const routeUrl = `/pages/index/consultation?cardKey=${cardKey}`
+
+/**
+ * 空周统计结构
+ * @returns {Object}
+ */
+function createEmptyWeeklyStats() {
+	return {
+		completionRate: 0,
+		completedDays: 0,
+		totalDays: 0,
+		trendText: '',
+		dailyRecords: []
+	}
+}
+
+function normalizeDailyRecord(day) {
+	day = day || {}
+	return {
+		dayName: day.dayName || '',
+		dateStr: day.dateStr || '',
+		completed: !!day.completed,
+		isToday: !!day.isToday
+	}
+}
+
+function normalizeWeeklyStats(stats) {
+	stats = stats || {}
+	return {
+		completionRate: Number(stats.completionRate || 0),
+		completedDays: Number(stats.completedDays || 0),
+		totalDays: Number(stats.totalDays || 0),
+		trendText: stats.trendText || '',
+		dailyRecords: Array.isArray(stats.dailyRecords) ? stats.dailyRecords.map(normalizeDailyRecord) : []
+	}
+}
+
+function createEmptyEvaluation() {
+	return {
+		isAbnormal: false,
+		abnormalReasons: [],
+		itemStatus: ''
+	}
+}
+
+function normalizeEvaluationResult(result) {
+	result = result || {}
+	var statusList = ['PENDING', 'NEED_EVAL', 'COMPLETED', 'PAUSED']
+	return {
+		isAbnormal: !!result.isAbnormal,
+		abnormalReasons: Array.isArray(result.abnormalReasons) ? result.abnormalReasons.slice() : [],
+		itemStatus: statusList.indexOf(result.itemStatus) !== -1 ? result.itemStatus : ''
+	}
+}
+
+function normalizeExerciseItem(item) {
+	item = item || {}
+	return {
+		id: item.id === undefined || item.id === null ? '' : item.id,
+		createTime: item.createTime || null,
+		updateTime: item.updateTime || null,
+		deleted: item.deleted === undefined ? 0 : item.deleted,
+		planId: item.planId || null,
+		orderNo: Number(item.orderNo || 0),
+		name: item.name || '',
+		dosage: item.dosage || '',
+		mode: item.mode === 'REPS' ? 'REPS' : 'TIMER',
+		targetSets: Number(item.targetSets || 0),
+		targetReps: item.targetReps === null || item.targetReps === undefined ? null : Number(item.targetReps),
+		targetDurationSec: item.targetDurationSec === null || item.targetDurationSec === undefined ? null : Number(item.targetDurationSec),
+		completedSets: Number(item.completedSets || 0),
+		status: ['PENDING', 'NEED_EVAL', 'COMPLETED', 'PAUSED'].indexOf(item.status) !== -1 ? item.status : 'PENDING',
+		completedAt: item.completedAt || null,
+		description: item.description || '',
+		videoUrl: item.videoUrl || null,
+		steps: Array.isArray(item.steps) ? item.steps : [],
+		evaluation: item.evaluation ? normalizeEvaluationResult(item.evaluation) : createEmptyEvaluation()
+	}
+}
+
+function normalizeExercisePlan(plan) {
+	if (!plan) return null
+	return {
+		planId: plan.planId || '',
+		surgeryType: plan.surgeryType || '',
+		generateTime: plan.generateTime || '',
+		items: Array.isArray(plan.items) ? plan.items.map(normalizeExerciseItem) : [],
+		weeklyStats: normalizeWeeklyStats(plan.weeklyStats)
+	}
+}
+
+export default {
+	data() {
+		return {
+			generateTime: '',
+			items: [],
+			planId: '',
+			surgeryType: '',
+			weeklyStats: createEmptyWeeklyStats(),
+			toolbarCollapsed: false,
+			activeScenario: 'default',
+
+			scenarios: [{
+				key: 'default',
+				name: '默认流程'
+			},
+			{
+				key: 'noPlan',
+				name: '状态1：无运动方案'
+			},
+			{
+				key: 'allDone',
+				name: '状态2：今日已完成'
+			},
+			{
+				key: 'pendingEvaluation',
+				name: '状态3：评估未完成'
+			},
+			{
+				key: 'abnormal',
+				name: '状态4：异常评估'
+			}
+			],
+			hasPlan: true,
+			currentActionId: '',
+			currentGroup: 1,
+			mode: 'TIMER',
+			countPaused: false,
+			running: false,
+			remainingSeconds: 0,
+			timer: null,
+			actionLoading: false,
+			mediaTab: 'video',
+			assessmentExpanded: true,
+			warningVisible: false,
+			activeTab: 'health',
+			form: createForm(),
+			swellingOptions: ['无', '轻微', '明显'],
+			fatigueOptions: ['无', '轻松', '一般', '很累'],
+			discomfortOptions: ['无', '有，想告诉医护'],
+			toast: {
+				visible: false,
+				text: '已暂存，您可以稍后返回今日方案继续填写',
+				type: 'info',
+				icon: 'info-circle'
+			},
+			toastTimer: null,
+
+		}
+	},
+	computed: {
+		datePillText: function () {
+			return this.generateTime ? '今日方案 · ' + this.formatDate(this.generateTime, 'MM月DD日') : '今日方案'
+		},
+		isCurrentItem: function () {
+			var self = this
+			return function (item) {
+				return !!item && String(item.id) === String(self.currentActionId)
+			}
+		},
+		startButtonText: function () {
+			if (this.actionLoading) return '加载中...'
+			return this.completedCount === this.items.length ? '今日运动已完成' : '开始今日运动'
+		},
+		coverClass: function () {
+			if (!this.currentAction) return ''
+			var name = this.currentAction.name || ''
+			if (name.indexOf('呼吸') !== -1) return 'cover-breath'
+			if (name.indexOf('步') !== -1) return 'cover-walk'
+			return 'cover-rehab'
+		},
+		uiDiagramSteps: function () {
+			if (this.currentAction && this.currentAction.steps && this.currentAction.steps.length) {
+				return this.currentAction.steps
+			}
+			return [{
+				title: '准备姿势',
+				desc: '坐稳或站稳，双肩放松，保持自然呼吸，确认周围环境安全。'
+			}, {
+				title: '按剂量完成',
+				desc: this.currentAction ? this.currentAction.dosage : '跟随组数与次数节奏训练。'
+			}, {
+				title: '结束观察',
+				desc: '训练后静息片刻，记录疼痛、肿胀、疲劳及其他不适情况。'
+			}]
+		},
+		showGroupButtonText: function () {
+			if (!this.currentAction) return '完成这一组'
+			return this.currentGroup >= this.currentAction.targetSets ? '完成本项运动' : '完成这一组'
+		},
+		/**
+		 * 获取当前选中动作
+		 * @returns {Object|null} 当前动作对象
+		 */
+		currentAction: function () {
+			for (var i = 0; i < this.items.length; i += 1) {
+				if (String(this.items[i].id) === String(this.currentActionId)) {
+					return this.items[i]
+				}
+			}
+			return null
+		},
+		currentEvaluationStatus: function () {
+			return this.currentAction && this.currentAction.evaluation ?
+				this.currentAction.evaluation.itemStatus : ''
+		},
+		currentDisplayStatus: function () {
+			return this.getItemDisplayStatus(this.currentAction)
+		},
+		/**
+		 * 统计已完成动作数量
+		 * @returns {Number} 已完成数量
+		 */
+		completedCount: function () {
+			return this.items.filter((function (item) {
+				return this.getItemDisplayStatus(item) === 'COMPLETED'
+			}).bind(this)).length
+		},
+		/**
+		 * 整体完成百分比
+		 * @returns {Number} 百分比
+		 */
+		progressPercent: function () {
+			if (!this.items.length) {
+				return 0
+			}
+			return Math.round(this.completedCount / this.items.length * 100)
+		},
+		/**
+		 * 所有动作合计分钟数
+		 * @returns {Number} 总分钟
+		 */
+		totalMinutes: function () {
+			var totalSec = 0
+			this.items.forEach(function (item) {
+				totalSec += (item.targetDurationSec || 0) * (item.targetSets || 0)
+			}, 0)
+			return Math.round(totalSec / 60)
+		},
+		/**
+		 * 组点点数组，用于渲染组标识
+		 * @returns {Array<Object>} 组数据
+		 */
+		groupDots: function () {
+			var total = this.currentAction ? this.currentAction.targetSets : 0
+			var arr = []
+			for (var i = 1; i <= total; i++) {
+				arr.push({
+					finished: i < this.currentGroup,
+					active: i === this.currentGroup
+				})
+			}
+			return arr
+		},
+		/**
+		 * 是否允许操作当前动作
+		 * @returns {Boolean}
+		 */
+		canOperate: function () {
+			return !!this.currentAction &&
+				this.currentAction.status === 'PENDING'
+		},
+		/**
+		 * 是否展示下一组按钮
+		 * @returns {Boolean}
+		 */
+		showGroupButton: function () {
+			if (!this.currentAction || !this.canOperate) {
+				return false
+			}
+			return this.currentAction.targetSets > 0 && this.currentGroup <= this.currentAction.targetSets
+		},
+		stepTitle: function (step) {
+			return (step && (step.title || step.name)) || ''
+		},
+		stepDesc: function (step) {
+			return (step && (step.desc || step.description)) || ''
+		},
+
+
+
+		/**
+		 * 计时器状态文字
+		 * @returns {String}
+		 */
+		timerStatusText: function () {
+			if (!this.currentAction) {
+				return '暂无训练动作'
+			}
+			if (this.currentDisplayStatus === 'PAUSED') {
+				return '训练已暂停'
+			}
+			if (this.currentDisplayStatus === 'COMPLETED') {
+				return '本项训练已完成'
+			}
+			if (this.running) {
+				return '正在平缓计时中...'
+			}
+			return this.mode === 'TIMER' ? '点击开始进行平缓计时' : '计数训练准备中'
+		},
+		/**
+		 * 暂停/开始按钮文字
+		 * @returns {String}
+		 */
+		pauseButtonText: function () {
+			if (this.mode === 'REPS') {
+				return this.countPaused ? '继续' : '暂停'
+			}
+			return this.running ? '暂停' : '开始'
+		},
+		/**
+		 * 暂停图标名称
+		 * @returns {String}
+		 */
+		pauseIconName: function () {
+			if (this.mode === 'REPS') {
+				return this.countPaused ? 'play-right' : 'pause'
+			}
+			return this.running ? 'pause' : 'play-right'
+		},
+		/**
+		 * 是否存在异常评估指标
+		 * @returns {Boolean}
+		 */
+		hasAbnormal: function () {
+			if (this.currentAction && this.currentAction.evaluation && this.currentAction.evaluation.itemStatus) {
+				return !!this.currentAction.evaluation.isAbnormal ||
+					this.currentAction.evaluation.itemStatus === 'PAUSED' ||
+					this.currentAction.status === 'PAUSED'
+			}
+			return Number(this.form.pain) >= 6 ||
+				this.form.swelling === '明显' ||
+				this.form.fatigue === '很累' ||
+				this.form.discomfort === '有，想告诉医护'
+		},
+		/**
+		 * 获取异常原因文本
+		 * @returns {String}
+		 */
+		abnormalReasons: function () {
+			if (this.currentAction && this.currentAction.evaluation && this.currentAction.evaluation.itemStatus) {
+				var serverReasons = Array.isArray(this.currentAction.evaluation.abnormalReasons) ?
+					this.currentAction.evaluation.abnormalReasons : []
+				if (!serverReasons.length && this.currentDisplayStatus === 'PAUSED') {
+					serverReasons = ['医护团队建议暂停训练']
+				}
+				return serverReasons.length ? serverReasons.join('、') : '暂无异常指标'
+			}
+			var reasons = []
+			if (Number(this.form.pain) >= 6) reasons.push('疼痛程度≥6分')
+			if (this.form.swelling === '明显') reasons.push('患处明显肿胀')
+			if (this.form.fatigue === '很累') reasons.push('训练后很累')
+			if (this.form.discomfort === '有，想告诉医护') reasons.push('其他不适情况选择“有，想告诉医护”')
+			return reasons.length ? reasons.join('、') : '暂无异常指标'
+		},
+		/**
+		 * 完成标题
+		 * @returns {String}
+		 */
+		completionTitle: function () {
+			return this.currentDisplayStatus === 'COMPLETED' ? '本项运动已完成' : '完成本项运动'
+		},
+		/**
+		 * 周完成百分比
+		 * @returns {Number}
+		 */
+		weekPercent: function () {
+			if (!this.weeklyStats) return 0
+			return Number(this.weeklyStats.completionRate || 0)
+		},
+		/**
+		 * 环形进度背景样式
+		 * @returns {String}
+		 */
+		ringBackground: function () {
+			var deg = this.weekPercent * 3.6
+			return 'conic-gradient(#1677ff 0deg, #1677ff ' + deg + 'deg, #dce5f4 ' + deg + 'deg, #dce5f4 360deg)'
+		}
+	},
+	beforeDestroy: function () {
+		this.clearTimer()
+		clearTimeout(this.toastTimer)
+	},
+	created() {
+		this.getMeExercisePlanApi()
+	},
+	methods: {
+		tomyGroup() {
+			const that = this
+			// 判断：有没有当前动作、并且当前动作已经完成评估
+			const action = this.currentAction
+			if (!action || this.getItemDisplayStatus(action) !== 'COMPLETED') {
+				this.$refs.uToast.show({
+					title: '',
+					position: 'top',
+					message: '请先完成运动评估',
+					type: 'error'
+				})
+				return
+			}
+			// 组装运动卡片数据，传给聊天页
+			const cardData = {
+				name: "运动管理",
+				type: "card",
+				planId: this.planId,
+				surgeryType: this.surgeryType,
+				completedCount: this.completedCount,
+				totalCount: this.items.length,
+				weeklyCompletionRate: this.weeklyStats.completionRate,
+				description: `今日运动方案已记录并完成评估，动作心率与体感反应平稳，数据已同步至健康管理团队。`
+			}
+			const cardKey = 'health_card_' + Date.now()
+			getApp().globalData[cardKey] = cardData
+			const routeUrl = `/pages/index/consultation?cardKey=${cardKey}`
 			this.$refs.uToast.show({
 				title: '',
 				position: 'top',
-				message: `${name}数据已加密发送至我的私人医生团队,已生成健康卡片同步至聊天窗口`,
-				// 如果不传此type参数，默认为default，也可以手动写上 type: 'default'
+				message: `运动管理数据已加密发送至我的私人医生团队,已生成健康卡片同步至聊天窗口`,
 				type: 'success',
-				// 如果不需要图标，请设置为false
 				icon: 'checkmark-circle',
 				complete() {
-					uni.navigateTo({
-						url: routeUrl
-					})
-				},
+					uni.navigateTo({ url: routeUrl })
+				}
 			})
-            }else{
-                this.$refs.uToast.show({
-				title: '',
-				position: 'top',
-				message: `请先完成运动评估`,
-				// 如果不传此type参数，默认为default，也可以手动写上 type: 'default'
-				type: 'error',					
-			})
-            }
-		
 		},
-			      showToast(params) {
+
+
+		showToast(params) {
 
 			const name = "运动管理";
-			
+
 			const that = this;
-            if(this.analysis){
-                const data = {
-				
-				name: '运动管理',
-                type:'card'
+			if (this.analysis) {
+				const data = {
+
+					name: '运动管理',
+					type: 'card'
+				}
+
+				let routeUrl = "/pages/index/consultation" + `?data=` + encodeURIComponent(JSON.stringify(data))
+				this.$refs.uToast.show({
+					title: '',
+					position: 'top',
+					message: `${name}数据已加密发送至我的私人医生团队,已生成健康卡片同步至聊天窗口`,
+					// 如果不传此type参数，默认为default，也可以手动写上 type: 'default'
+					type: 'success',
+					// 如果不需要图标，请设置为false
+					icon: 'checkmark-circle',
+					complete() {
+						uni.navigateTo({
+							url: routeUrl
+						})
+					},
+				})
+			} else {
+				this.$refs.uToast.show({
+					title: '',
+					position: 'top',
+					message: `请先完成运动评估`,
+					type: 'error',
+				})
 			}
 
-			let routeUrl = "/pages/index/consultation" + `?data=` + encodeURIComponent(JSON.stringify(data))
-            this.$refs.uToast.show({
-				title: '',
-				position: 'top',
-				message: `${name}数据已加密发送至我的私人医生团队,已生成健康卡片同步至聊天窗口`,
-				// 如果不传此type参数，默认为default，也可以手动写上 type: 'default'
-				type: 'success',
-				// 如果不需要图标，请设置为false
-				icon: 'checkmark-circle',
-				complete() {
-					uni.navigateTo({
-						url: routeUrl
-					})
-				},
-			})
-            }else{
-                this.$refs.uToast.show({
-				title: '',
-				position: 'top',
-				message: `请先完成运动评估`,	
-				type: 'error',					
-			})
-            }
-		
 		},
-			/**
-			 * 格式化秒数为 00:00
-			 * @param {number} targetDurationSec 总秒数
-			 * @returns {string}
-			 */
-			formattedTime(targetDurationSec) {
-				const seconds = Math.max(0, targetDurationSec)
-				const minutes = Math.min(99, Math.floor(seconds / 60))
-				const rest = seconds % 60
-				const m = minutes < 10 ? '0' + minutes : minutes
-				const s = rest < 10 ? '0' + rest : rest
-				return m + ':' + s
-			},
+		/**
+		 * 格式化秒数为 00:00
+		 * @param {number} targetDurationSec 总秒数
+		 * @returns {string}
+		 */
+		formattedTime(targetDurationSec) {
+			const seconds = Math.max(0, targetDurationSec)
+			const minutes = Math.min(99, Math.floor(seconds / 60))
+			const rest = seconds % 60
+			const m = minutes < 10 ? '0' + minutes : minutes
+			const s = rest < 10 ? '0' + rest : rest
+			return m + ':' + s
+		},
 
-			/**
-			 * 日期格式化
-			 * @param {String|Date} input 日期
-			 * @param {String} pattern 格式模板 YYYY MM DD HH mm ss
-			 * @returns {String} 格式化后的日期字符串
-			 */
-			formatDate(input, pattern) {
-				if (!input) return ''
-				let date
-				if (input instanceof Date) {
-					date = input
-				} else {
-					// 优先兼容 2026-10-24T07:36:29 这种iso字符串
-					date = new Date(input)
-					// 解析失败再走替换横杠兜底
-					if (isNaN(date.getTime())) {
-						date = new Date(String(input).replace(/-/g, '/'))
-					}
+		/**
+		 * 日期格式化
+		 * @param {String|Date} input 日期
+		 * @param {String} pattern 格式模板 YYYY MM DD HH mm ss
+		 * @returns {String} 格式化后的日期字符串
+		 */
+		formatDate(input, pattern) {
+			if (!input) return ''
+			let date
+			if (input instanceof Date) {
+				date = input
+			} else {
+				// 优先兼容 2026-10-24T07:36:29 这种iso字符串
+				date = new Date(input)
+				// 解析失败再走替换横杠兜底
+				if (isNaN(date.getTime())) {
+					date = new Date(String(input).replace(/-/g, '/'))
 				}
-				if (!this.isValidDate(date)) return ''
+			}
+			if (!this.isValidDate(date)) return ''
 
-				const year = date.getFullYear()
-				const month = date.getMonth() + 1
-				const day = date.getDate()
-				const hours = date.getHours()
-				const minutes = date.getMinutes()
-				const seconds = date.getSeconds()
-				const pad = num => String(num).padStart(2, '0')
+			const year = date.getFullYear()
+			const month = date.getMonth() + 1
+			const day = date.getDate()
+			const hours = date.getHours()
+			const minutes = date.getMinutes()
+			const seconds = date.getSeconds()
+			const pad = num => String(num).padStart(2, '0')
 
-				return pattern
-					.replace('YYYY', year)
-					.replace('MM', pad(month))
-					.replace('DD', pad(day))
-					.replace('HH', pad(hours))
-					.replace('mm', pad(minutes))
-					.replace('ss', pad(seconds))
-			},
-			/**
-			 * 判断是否为有效日期对象
-			 * @param {Date} date
-			 * @returns {Boolean}
-			 */
-			isValidDate(date) {
-				return date instanceof Date && !Number.isNaN(date.getTime())
-			},
-			/**
-			 * 获取我的运动康复方案（动作+本周统计）
-			 */
-			async getMeExercisePlanApi() {
-				this.actionLoading = true
-				try {
-					this.applyExercisePlan(normalizeExercisePlan(await fetchMeExercisePlanApi()))
-				} catch (e) {
-					this.applyExercisePlan(this.createMockExercisePlan())
-					console.log('运动方案接口异常：', e)
-				} finally {
-					this.actionLoading = false
-				}
-			},
-			/**
-			 * 应用运动康复方案
-			 */
-			applyExercisePlan: function(plan) {
-				plan = normalizeExercisePlan(plan)
-				if (!plan || !plan.planId || !plan.items.length) {
-					this.hasPlan = false
-					this.planId = ''
-					this.surgeryType = ''
-					this.generateTime = ''
-					this.items = []
-					this.weeklyStats = createEmptyWeeklyStats()
-					this.currentActionId = ''
-					this.currentGroup = 1
-					this.mode = 'TIMER'
-					this.running = false
-					this.countPaused = false
-					this.remainingSeconds = 0
-					this.clearTimer()
-					return
-				}
-				this.hasPlan = true
-				this.planId = plan.planId
-				this.surgeryType = plan.surgeryType
-				this.generateTime = plan.generateTime
-				this.items = plan.items
-				this.weeklyStats = plan.weeklyStats
-				var current = this.findItemById(this.currentActionId) || this.items[0] || null
-				if (current) {
-					this.selectAction(current)
-				} else {
-					this.currentActionId = ''
-					this.currentGroup = 1
-					this.mode = 'TIMER'
-					this.running = false
-					this.countPaused = false
-				}
-			},
-			findItemById: function(id) {
-				for (var i = 0; i < this.items.length; i += 1) {
-					if (String(this.items[i].id) === String(id)) return this.items[i]
-				}
-			},
-			getItemEvaluationStatus: function(item) {
-				return item && item.evaluation ? item.evaluation.itemStatus : ''
-			},
-			getItemDisplayStatus: function(item) {
-				if (!item) return 'PENDING'
-				return this.getItemEvaluationStatus(item) || item.status || 'PENDING'
-			},
-			applyEvaluationResult: function(result, action) {
-				var evaluation = normalizeEvaluationResult(result)
-				if (!evaluation.itemStatus || !action) return false
-				var target = this.findItemById(action.id) || action
-				this.$set(target, 'evaluation', evaluation)
-				return true
-			},
-			mergeExerciseItem: function(result) {
-				var item = normalizeExerciseItem(this.extractExerciseItem(result))
-				if (!item || item.id === undefined || item.id === null || item.id === '') return null
-				for (var i = 0; i < this.items.length; i += 1) {
-					if (String(this.items[i].id) === String(item.id)) {
-						this.$set(this.items, i, item)
-						if (String(this.currentActionId) === String(item.id)) {
-							this.mode = item.mode
-							this.currentGroup = item.status === 'COMPLETED' ? item.targetSets :
-								Math.max(1, Math.min(item.completedSets + 1, item.targetSets || 1))
-							this.remainingSeconds = item.mode === 'TIMER' && item.status === 'PENDING' ?
-								(item.targetDurationSec || 0) : 0
-						}
-						return item
-					}
-				}
-				return null
-			},
-			extractExerciseItem: function(result) {
-				if (!result) return null
-				if (result.id || result.mode || result.targetSets !== undefined) return result
-				return result.item || result.data || null
-			},
-			completeSetRequest: async function(item) {
-				return await completeExerciseSetApi({ id: item.id })
-			},
-			/**
-			 * 提前结束当前动作，进入待评估
-			 */
-			finishItemRequest: async function(item) {
-				return await finishExerciseItemApi({ id: item.id })
-			},
-			/**
-			 * 暂停动作（异常暂停，不可自动恢复）
-			 */
-			pauseItemRequest: async function(item) {
-				return await pauseExerciseItemApi({ id: item.id })
-			},
-			/**
-			 * 提交训练后评估表单，异常则标记暂停
-			 */
-			submitEvaluationRequest: async function(item, data) {
-				return await submitExerciseEvaluationApi(Object.assign({ id: item.id }, data))
-			},
-			/**
-			 * 折叠/展开工具栏
-			 */
-			toggleToolbar: function() {
-				this.toolbarCollapsed = !this.toolbarCollapsed
-			},
-			/**
-			 * 弹出toast提示
-			 * @param {String} text 提示文案
-			 * @param {String} [type] 类型 success / warning / danger / info
-			 */
-			showToast: function(text, type) {
-				var self = this
-				var icon = 'info-circle'
-				if (type === 'success') {
-					icon = 'checkmark-circle-fill'
-				} else if (type === 'warning' || type === 'danger') {
-					icon = 'error-circle-fill'
-				}
-				this.toast = {
-					visible: true,
-					text: text,
-					type: type || 'info',
-					icon: icon
-				}
-				clearTimeout(this.toastTimer)
-				this.toastTimer = setTimeout(function() {
-					self.toast.visible = false
-				}, 2800)
-			},
-			/**
-			 * 状态转中文文本
-			 * @param {String} status 状态标识
-			 * @param {Boolean} short 是否简短版本
-			 * @returns {String}
-			 */
-			statusText: function(status, completedSets, targetSets, short) {
-				if (status === 'PENDING' && completedSets > 0 && completedSets < targetSets) {
-					return '进行中 ' + completedSets + '/' + targetSets + '组'
-				}
-				const map = {
-					COMPLETED: '已完成',
-					NEED_EVAL: short === false ? '待填写评估（未完全结项）' : '待评估',
-					PENDING: '待开始',
-					PAUSED: '已暂停'
-				}
-				return map[status] || '待完成'
-			},
-			/**
-			 * 状态主题标识
-			 * @param {String} status
-			 * @returns {String} theme key
-			 */
-			statusTheme: function(status) {
-				const map = {
-					COMPLETED: 'done',
-					NEED_EVAL: 'evaluate',
-					PENDING: 'progress',
-					PAUSED: 'paused'
-				}
-				return map[status] || 'pending'
-			},
-			/**
-			 * 选中指定训练动作
-			 * @param {Object} item 动作对象
-			 */
-			selectAction: function(item) {
-				if (!this.hasPlan || !item) return
-				var displayStatus = this.getItemDisplayStatus(item)
-				this.currentActionId = item.id
-				this.mode = item.mode
-				if (displayStatus === 'COMPLETED') {
-					this.currentGroup = item.targetSets || 1
-				} else {
-					this.currentGroup = 1
-					this.currentGroup = Math.max(1, Math.min(item.completedSets + 1, item.targetSets || 1))
-				}
-				if (item.mode === 'TIMER') {
-					this.remainingSeconds = displayStatus === 'COMPLETED' ? 0 : (item.targetDurationSec || 0)
-				} else {
-					this.remainingSeconds = 0
-				}
+			return pattern
+				.replace('YYYY', year)
+				.replace('MM', pad(month))
+				.replace('DD', pad(day))
+				.replace('HH', pad(hours))
+				.replace('mm', pad(minutes))
+				.replace('ss', pad(seconds))
+		},
+		/**
+		 * 判断是否为有效日期对象
+		 * @param {Date} date
+		 * @returns {Boolean}
+		 */
+		isValidDate(date) {
+			return date instanceof Date && !Number.isNaN(date.getTime())
+		},
+		/**
+		 * 获取我的运动康复方案（动作+本周统计）
+		 */
+		async getMeExercisePlanApi() {
+			this.actionLoading = true
+			try {
+				this.applyExercisePlan(normalizeExercisePlan(await fetchMeExercisePlanApi()))
+			} catch (e) {
+				this.applyExercisePlan(this.createMockExercisePlan())
+				console.log('运动方案接口异常：', e)
+			} finally {
+				this.actionLoading = false
+			}
+		},
+		/**
+		 * 应用运动康复方案
+		 */
+		applyExercisePlan: function (plan) {
+			plan = normalizeExercisePlan(plan)
+			if (!plan || !plan.planId || !plan.items.length) {
+				this.hasPlan = false
+				this.planId = ''
+				this.surgeryType = ''
+				this.generateTime = ''
+				this.items = []
+				this.weeklyStats = createEmptyWeeklyStats()
+				this.currentActionId = ''
+				this.currentGroup = 1
+				this.mode = 'TIMER'
 				this.running = false
 				this.countPaused = false
-				this.clearTimer()
-				this.form = createForm()
-				this.warningVisible = false
-				this.assessmentExpanded = displayStatus === 'NEED_EVAL' || displayStatus === 'PAUSED'
-			},
-			/**
-			 * 查找第一个匹配状态的动作
-			 * @param {Array<String>} statusList 状态数组
-			 * @returns {Object|null}
-			 */
-			findFirst: function(statusList) {
-				for (var i = 0; i < this.items.length; i += 1) {
-					if (statusList.indexOf(this.getItemDisplayStatus(this.items[i])) !== -1) {
-						return this.items[i]
-					}
-				}
-				return null
-			},
-			/**
-			 * 开始当前选中的训练动作
-			 */
-			startTraining: function() {
-				if (!this.hasPlan) {
-					this.showToast('今日暂无运动方案，等待健康管理团队后台配置。', 'info')
-					return
-				}
-				if (!this.items.length) {
-					this.showToast('暂无可开始的训练动作。', 'warning')
-					return
-				}
-				var target = this.currentAction
-				if (!target) {
-					target = this.items[0]
-					this.selectAction(target)
-				}
-				var status = this.getItemDisplayStatus(target)
-				if (status === 'COMPLETED') {
-					this.showToast('该动作已完成，请选择其他训练动作。', 'warning')
-					return
-				}
-				if (status === 'PAUSED') {
-					this.showToast('该动作已暂停，请先联系健康管理团队确认。', 'warning')
-					this.openEvaluation()
-					return
-				}
-				if (status === 'NEED_EVAL') {
-					this.showToast('该动作待填写训练后评估。', 'warning')
-					this.openEvaluation()
-					return
-				}
-				if (status !== 'PENDING') {
-					this.showToast('当前动作暂不能开始训练。', 'warning')
-					return
-				}
-				this.currentActionId = target.id
-				if (target.mode === 'TIMER') {
-					this.remainingSeconds = target.targetDurationSec || 0
-					this.startTimer()
-				} else {
-					this.countPaused = false
-				}
-				this.showToast('训练已开始，请按动作说明平缓完成。', 'info')
-			},
-			/**
-			 * 切换训练模式 TIMER / REPS
-			 * @param {String} nextMode
-			 */
-			switchMode: function(nextMode) {
-				if (!this.currentAction) return
-				this.showToast('训练模式由后台动作配置决定，当前动作为' + (this.currentAction.mode === 'TIMER' ? '计时模式' : '次数模式') + '。', 'info')
-			},
-			/**
-			 * 启动倒计时定时器
-			 */
-			startTimer: function() {
-				var self = this
-				if (this.mode !== 'TIMER' || this.remainingSeconds <= 0) {
-					this.running = false
-					return
-				}
-				this.clearTimer()
-				this.running = true
-				this.timer = setInterval(function() {
-					self.remainingSeconds = Math.max(0, self.remainingSeconds - 1)
-					if (self.remainingSeconds <= 0) {
-						self.pauseTimer()
-						if (self.currentAction) self.completeGroup(true)
-					}
-				}, 1000)
-			},
-			/**
-			 * 暂停定时器
-			 */
-			pauseTimer: function() {
-				this.running = false
-				this.clearTimer()
-			},
-			/**
-			 * 清除定时器
-			 */
-			clearTimer: function() {
-				if (this.timer) {
-					clearInterval(this.timer)
-					this.timer = null
-				}
-			},
-			/**
-			 * 切换暂停/继续
-			 */
-			togglePause: function() {
-				if (!this.canOperate) {
-					this.showToast('当前状态不可调整训练计时。', 'warning')
-					return
-				}
-				if (this.mode === 'TIMER') {
-					if (this.running) {
-						this.pauseTimer()
-						this.showToast('训练计时已暂停。', 'info')
-					} else {
-						this.startTimer()
-						this.showToast('训练计时继续。', 'info')
-					}
-				} else {
-					this.countPaused = !this.countPaused
-					this.showToast(this.countPaused ? '计数训练已暂停。' : '计数训练继续。', 'info')
-				}
-			},
-			/**
-			 * 重置当前训练组
-			 */
-			resetTraining: function() {
-				if (!this.canOperate) {
-					this.showToast('当前状态不可重置。', 'warning')
-					return
-				}
-				var duration = this.currentAction.mode === 'TIMER' ? (this.currentAction.targetDurationSec || 0) : 0
-				this.remainingSeconds = duration
-				this.currentGroup = Math.max(1, Math.min(this.currentAction.completedSets + 1, this.currentAction.targetSets || 1))
-				this.countPaused = false
-				this.pauseTimer()
-				this.showToast('本组训练记录已重置。', 'info')
-			},
-			/**
-			 * 完成当前一组
-			 */
-			completeGroup: async function(autoFromTimer) {
-				if (this.actionLoading) return
-				if (!this.canOperate) {
-					this.showToast('请先恢复训练后再完成本组。', 'warning')
-					return
-				}
-				if (this.mode === 'REPS' && this.countPaused) {
-					this.showToast('训练已暂停，请点击继续后再完成本组。', 'warning')
-					return
-				}
-				var action = this.currentAction
-				var finishedGroup = this.currentGroup
-				this.actionLoading = true
-				try {
-					var result = await this.completeSetRequest(action)
-					var updated = this.mergeExerciseItem(result)
-					if (!updated) {
-						this.showToast('完成单组返回数据异常，请稍后重试。', 'warning')
-						return
-					}
-					action = updated
-					if (action.completedSets < action.targetSets) {
-						this.currentGroup = Math.min(action.completedSets + 1, action.targetSets)
-						if (this.mode === 'TIMER') {
-							this.remainingSeconds = action.targetDurationSec || 0
-							if (autoFromTimer) {
-								this.startTimer()
-							}
-						}
-						this.showToast('第 ' + finishedGroup + ' 组已完成，请继续下一组。', 'success')
-					} else {
-						this.markPendingEvaluation(action)
-					}
-				} catch (e) {
-					console.log('完成单组失败：', e)
-				} finally {
-					this.actionLoading = false
-				}
-			},
-
-			/**
-			 * 标记当前动作待评估，展开评估表单
-			 */
-			markPendingEvaluation: function(item) {
-				item = item || this.currentAction
-				if (!item) return
-				this.pauseTimer()
-				this.currentActionId = item.id
-				item.status = 'NEED_EVAL'
-				this.currentGroup = item.targetSets
 				this.remainingSeconds = 0
-				this.mode = item.mode
-				this.assessmentExpanded = true
-				this.showToast('本项运动已完成训练，请填写训练后评估。', 'info')
-				this.$nextTick(function() {
-					uni.pageScrollTo({
-						selector: '#assessmentCard',
-						duration: 260
-					})
-				})
-			},
-			/**
-			 * 直接完成当前动作
-			 */
-			completeCurrentAction: async function() {
-				if (this.actionLoading) return
-				if (!this.canOperate) {
-					this.showToast('当前动作无需再次完成。', 'warning')
+				this.clearTimer()
+				return
+			}
+			this.hasPlan = true
+			this.planId = plan.planId
+			this.surgeryType = plan.surgeryType
+			this.generateTime = plan.generateTime
+			this.items = plan.items
+			this.weeklyStats = plan.weeklyStats
+			var current = this.findItemById(this.currentActionId) || this.items[0] || null
+			if (current) {
+				this.selectAction(current)
+			} else {
+				this.currentActionId = ''
+				this.currentGroup = 1
+				this.mode = 'TIMER'
+				this.running = false
+				this.countPaused = false
+			}
+		},
+		findItemById: function (id) {
+			for (var i = 0; i < this.items.length; i += 1) {
+				if (String(this.items[i].id) === String(id)) return this.items[i]
+			}
+		},
+		getItemEvaluationStatus: function (item) {
+			return item && item.evaluation ? item.evaluation.itemStatus : ''
+		},
+		getItemDisplayStatus: function (item) {
+			if (!item) return 'PENDING'
+			return this.getItemEvaluationStatus(item) || item.status || 'PENDING'
+		},
+		applyEvaluationResult: function (result, action) {
+			var evaluation = normalizeEvaluationResult(result)
+			if (!evaluation.itemStatus || !action) return false
+			var target = this.findItemById(action.id) || action
+			this.$set(target, 'evaluation', evaluation)
+			return true
+		},
+		mergeExerciseItem: function (result) {
+			var item = normalizeExerciseItem(this.extractExerciseItem(result))
+			if (!item || item.id === undefined || item.id === null || item.id === '') return null
+			for (var i = 0; i < this.items.length; i += 1) {
+				if (String(this.items[i].id) === String(item.id)) {
+					this.$set(this.items, i, item)
+					if (String(this.currentActionId) === String(item.id)) {
+						this.mode = item.mode
+						this.currentGroup = item.status === 'COMPLETED' ? item.targetSets :
+							Math.max(1, Math.min(item.completedSets + 1, item.targetSets || 1))
+						this.remainingSeconds = item.mode === 'TIMER' && item.status === 'PENDING' ?
+							(item.targetDurationSec || 0) : 0
+					}
+					return item
+				}
+			}
+			return null
+		},
+		extractExerciseItem: function (result) {
+			if (!result) return null
+			if (result.id || result.mode || result.targetSets !== undefined) return result
+			return result.item || result.data || null
+		},
+		completeSetRequest: async function (item) {
+			return await completeExerciseSetApi({ id: item.id })
+		},
+		/**
+		 * 提前结束当前动作，进入待评估
+		 */
+		finishItemRequest: async function (item) {
+			return await finishExerciseItemApi({ id: item.id })
+		},
+		/**
+		 * 暂停动作（异常暂停，不可自动恢复）
+		 */
+		pauseItemRequest: async function (item) {
+			return await pauseExerciseItemApi({ id: item.id })
+		},
+		/**
+		 * 提交训练后评估表单，异常则标记暂停
+		 */
+		submitEvaluationRequest: async function (item, data) {
+			return await submitExerciseEvaluationApi(Object.assign({ id: item.id }, data))
+		},
+		/**
+		 * 折叠/展开工具栏
+		 */
+		toggleToolbar: function () {
+			this.toolbarCollapsed = !this.toolbarCollapsed
+		},
+		/**
+		 * 弹出toast提示
+		 * @param {String} text 提示文案
+		 * @param {String} [type] 类型 success / warning / danger / info
+		 */
+		showToast: function (text, type) {
+			var self = this
+			var icon = 'info-circle'
+			if (type === 'success') {
+				icon = 'checkmark-circle-fill'
+			} else if (type === 'warning' || type === 'danger') {
+				icon = 'error-circle-fill'
+			}
+			this.toast = {
+				visible: true,
+				text: text,
+				type: type || 'info',
+				icon: icon
+			}
+			clearTimeout(this.toastTimer)
+			this.toastTimer = setTimeout(function () {
+				self.toast.visible = false
+			}, 2800)
+		},
+		/**
+		 * 状态转中文文本
+		 * @param {String} status 状态标识
+		 * @param {Boolean} short 是否简短版本
+		 * @returns {String}
+		 */
+		statusText: function (status, completedSets, targetSets, short) {
+			if (status === 'PENDING' && completedSets > 0 && completedSets < targetSets) {
+				return '进行中 ' + completedSets + '/' + targetSets + '组'
+			}
+			const map = {
+				COMPLETED: '已完成',
+				NEED_EVAL: short === false ? '待填写评估（未完全结项）' : '待评估',
+				PENDING: '待开始',
+				PAUSED: '已暂停'
+			}
+			return map[status] || '待完成'
+		},
+		/**
+		 * 状态主题标识
+		 * @param {String} status
+		 * @returns {String} theme key
+		 */
+		statusTheme: function (status) {
+			const map = {
+				COMPLETED: 'done',
+				NEED_EVAL: 'evaluate',
+				PENDING: 'progress',
+				PAUSED: 'paused'
+			}
+			return map[status] || 'pending'
+		},
+		/**
+		 * 选中指定训练动作
+		 * @param {Object} item 动作对象
+		 */
+		selectAction: function (item) {
+			if (!this.hasPlan || !item) return
+			var displayStatus = this.getItemDisplayStatus(item)
+			this.currentActionId = item.id
+			this.mode = item.mode
+			if (displayStatus === 'COMPLETED') {
+				this.currentGroup = item.targetSets || 1
+			} else {
+				this.currentGroup = 1
+				this.currentGroup = Math.max(1, Math.min(item.completedSets + 1, item.targetSets || 1))
+			}
+			if (item.mode === 'TIMER') {
+				this.remainingSeconds = displayStatus === 'COMPLETED' ? 0 : (item.targetDurationSec || 0)
+			} else {
+				this.remainingSeconds = 0
+			}
+			this.running = false
+			this.countPaused = false
+			this.clearTimer()
+			this.form = createForm()
+			this.warningVisible = false
+			this.assessmentExpanded = displayStatus === 'NEED_EVAL' || displayStatus === 'PAUSED'
+		},
+		/**
+		 * 查找第一个匹配状态的动作
+		 * @param {Array<String>} statusList 状态数组
+		 * @returns {Object|null}
+		 */
+		findFirst: function (statusList) {
+			for (var i = 0; i < this.items.length; i += 1) {
+				if (statusList.indexOf(this.getItemDisplayStatus(this.items[i])) !== -1) {
+					return this.items[i]
+				}
+			}
+			return null
+		},
+		/**
+		 * 开始当前选中的训练动作
+		 */
+		startTraining: function () {
+			if (!this.hasPlan) {
+				this.showToast('今日暂无运动方案，等待健康管理团队后台配置。', 'info')
+				return
+			}
+			if (!this.items.length) {
+				this.showToast('暂无可开始的训练动作。', 'warning')
+				return
+			}
+			var target = this.currentAction
+			if (!target) {
+				target = this.items[0]
+				this.selectAction(target)
+			}
+			var status = this.getItemDisplayStatus(target)
+			if (status === 'COMPLETED') {
+				this.showToast('该动作已完成，请选择其他训练动作。', 'warning')
+				return
+			}
+			if (status === 'PAUSED') {
+				this.showToast('该动作已暂停，请先联系健康管理团队确认。', 'warning')
+				this.openEvaluation()
+				return
+			}
+			if (status === 'NEED_EVAL') {
+				this.showToast('该动作待填写训练后评估。', 'warning')
+				this.openEvaluation()
+				return
+			}
+			if (status !== 'PENDING') {
+				this.showToast('当前动作暂不能开始训练。', 'warning')
+				return
+			}
+			this.currentActionId = target.id
+			if (target.mode === 'TIMER') {
+				this.remainingSeconds = target.targetDurationSec || 0
+				this.startTimer()
+			} else {
+				this.countPaused = false
+			}
+			this.showToast('训练已开始，请按动作说明平缓完成。', 'info')
+		},
+		/**
+		 * 切换训练模式 TIMER / REPS
+		 * @param {String} nextMode
+		 */
+		switchMode: function (nextMode) {
+			if (!this.currentAction) return
+			this.showToast('训练模式由后台动作配置决定，当前动作为' + (this.currentAction.mode === 'TIMER' ? '计时模式' : '次数模式') + '。', 'info')
+		},
+		/**
+		 * 启动倒计时定时器
+		 */
+		startTimer: function () {
+			var self = this
+			if (this.mode !== 'TIMER' || this.remainingSeconds <= 0) {
+				this.running = false
+				return
+			}
+			this.clearTimer()
+			this.running = true
+			this.timer = setInterval(function () {
+				self.remainingSeconds = Math.max(0, self.remainingSeconds - 1)
+				if (self.remainingSeconds <= 0) {
+					self.pauseTimer()
+					if (self.currentAction) self.completeGroup(true)
+				}
+			}, 1000)
+		},
+		/**
+		 * 暂停定时器
+		 */
+		pauseTimer: function () {
+			this.running = false
+			this.clearTimer()
+		},
+		/**
+		 * 清除定时器
+		 */
+		clearTimer: function () {
+			if (this.timer) {
+				clearInterval(this.timer)
+				this.timer = null
+			}
+		},
+		/**
+		 * 切换暂停/继续
+		 */
+		togglePause: function () {
+			if (!this.canOperate) {
+				this.showToast('当前状态不可调整训练计时。', 'warning')
+				return
+			}
+			if (this.mode === 'TIMER') {
+				if (this.running) {
+					this.pauseTimer()
+					this.showToast('训练计时已暂停。', 'info')
+				} else {
+					this.startTimer()
+					this.showToast('训练计时继续。', 'info')
+				}
+			} else {
+				this.countPaused = !this.countPaused
+				this.showToast(this.countPaused ? '计数训练已暂停。' : '计数训练继续。', 'info')
+			}
+		},
+		/**
+		 * 重置当前训练组
+		 */
+		resetTraining: function () {
+			if (!this.canOperate) {
+				this.showToast('当前状态不可重置。', 'warning')
+				return
+			}
+			var duration = this.currentAction.mode === 'TIMER' ? (this.currentAction.targetDurationSec || 0) : 0
+			this.remainingSeconds = duration
+			this.currentGroup = Math.max(1, Math.min(this.currentAction.completedSets + 1, this.currentAction.targetSets || 1))
+			this.countPaused = false
+			this.pauseTimer()
+			this.showToast('本组训练记录已重置。', 'info')
+		},
+		/**
+		 * 完成当前一组
+		 */
+		completeGroup: async function (autoFromTimer) {
+			if (this.actionLoading) return
+			if (!this.canOperate) {
+				this.showToast('请先恢复训练后再完成本组。', 'warning')
+				return
+			}
+			if (this.mode === 'REPS' && this.countPaused) {
+				this.showToast('训练已暂停，请点击继续后再完成本组。', 'warning')
+				return
+			}
+			var action = this.currentAction
+			var finishedGroup = this.currentGroup
+			this.actionLoading = true
+			try {
+				var result = await this.completeSetRequest(action)
+				var updated = this.mergeExerciseItem(result)
+				if (!updated) {
+					this.showToast('完成单组返回数据异常，请稍后重试。', 'warning')
 					return
 				}
-				var action = this.currentAction
-				this.actionLoading = true
-				try {
-					var result = await this.finishItemRequest(action)
-					var updated = this.mergeExerciseItem(result)
-					if (!updated) {
-						this.showToast('结束动作返回数据异常，请稍后重试。', 'warning')
-						return
+				action = updated
+				if (action.completedSets < action.targetSets) {
+					this.currentGroup = Math.min(action.completedSets + 1, action.targetSets)
+					if (this.mode === 'TIMER') {
+						this.remainingSeconds = action.targetDurationSec || 0
+						if (autoFromTimer) {
+							this.startTimer()
+						}
 					}
-					action = updated
+					this.showToast('第 ' + finishedGroup + ' 组已完成，请继续下一组。', 'success')
+				} else {
 					this.markPendingEvaluation(action)
-				} catch (e) {
-					console.log('结束动作失败：', e)
-				} finally {
-					this.actionLoading = false
 				}
-			},
-			/**
-			 * 身体不适，主动停止训练
-			 */
-			stopBecauseUnwell: async function() {
-				if (this.actionLoading) return
-				if (!this.currentAction) return
-				var action = this.currentAction
-				var previousStatus = action.status
-				var previousCompletedSets = action.completedSets
-				var previousCompletedAt = action.completedAt
-				this.pauseTimer()
-				this.countPaused = true
-				this.actionLoading = true
-				action.status = 'PAUSED'
-				try {
-					var result = await this.pauseItemRequest(action)
-					var updated = this.mergeExerciseItem(result)
-					if (!updated) {
-						this.showToast('暂停动作返回数据异常，请稍后重试。', 'warning')
-						action.status = previousStatus
-						action.completedSets = previousCompletedSets
-						action.completedAt = previousCompletedAt
-						this.countPaused = false
-						return
-					}
-					action = updated
-				} catch (e) {
+			} catch (e) {
+				console.log('完成单组失败：', e)
+			} finally {
+				this.actionLoading = false
+			}
+		},
+
+		/**
+		 * 标记当前动作待评估，展开评估表单
+		 */
+		markPendingEvaluation: function (item) {
+			item = item || this.currentAction
+			if (!item) return
+			this.pauseTimer()
+			this.currentActionId = item.id
+			item.status = 'NEED_EVAL'
+			this.currentGroup = item.targetSets
+			this.remainingSeconds = 0
+			this.mode = item.mode
+			this.assessmentExpanded = true
+			this.showToast('本项运动已完成训练，请填写训练后评估。', 'info')
+			this.$nextTick(function () {
+				uni.pageScrollTo({
+					selector: '#assessmentCard',
+					duration: 260
+				})
+			})
+		},
+		/**
+		 * 直接完成当前动作
+		 */
+		completeCurrentAction: async function () {
+			if (this.actionLoading) return
+			if (!this.canOperate) {
+				this.showToast('当前动作无需再次完成。', 'warning')
+				return
+			}
+			var action = this.currentAction
+			this.actionLoading = true
+			try {
+				var result = await this.finishItemRequest(action)
+				var updated = this.mergeExerciseItem(result)
+				if (!updated) {
+					this.showToast('结束动作返回数据异常，请稍后重试。', 'warning')
+					return
+				}
+				action = updated
+				this.markPendingEvaluation(action)
+			} catch (e) {
+				console.log('结束动作失败：', e)
+			} finally {
+				this.actionLoading = false
+			}
+		},
+		/**
+		 * 身体不适，主动停止训练
+		 */
+		stopBecauseUnwell: async function () {
+			if (this.actionLoading) return
+			if (!this.currentAction) return
+			var action = this.currentAction
+			var previousStatus = action.status
+			var previousCompletedSets = action.completedSets
+			var previousCompletedAt = action.completedAt
+			this.pauseTimer()
+			this.countPaused = true
+			this.actionLoading = true
+			action.status = 'PAUSED'
+			try {
+				var result = await this.pauseItemRequest(action)
+				var updated = this.mergeExerciseItem(result)
+				if (!updated) {
+					this.showToast('暂停动作返回数据异常，请稍后重试。', 'warning')
 					action.status = previousStatus
 					action.completedSets = previousCompletedSets
 					action.completedAt = previousCompletedAt
 					this.countPaused = false
-					console.log('暂停动作失败：', e)
 					return
-				} finally {
-					this.actionLoading = false
 				}
+				action = updated
+			} catch (e) {
+				action.status = previousStatus
+				action.completedSets = previousCompletedSets
+				action.completedAt = previousCompletedAt
+				this.countPaused = false
+				console.log('暂停动作失败：', e)
+				return
+			} finally {
+				this.actionLoading = false
+			}
+			this.form.discomfort = '有，想告诉医护'
+			this.warningVisible = true
+			this.assessmentExpanded = true
+			this.showToast('已记录身体不适，训练已暂停。', 'warning')
+		},
+		/**
+		 * 打开评估面板并滚动到评估区域
+		 */
+		openEvaluation: function () {
+			this.assessmentExpanded = true
+			setTimeout(function () {
+				uni.pageScrollTo({
+					selector: '#assessmentCard',
+					duration: 300
+				})
+			}, 80)
+		},
+		/**
+		 * 疼痛滑块input事件
+		 * @param {Object} event
+		 */
+		onPainChanging: function (event) {
+			this.form.pain = event.detail.value
+		},
+		/**
+		 * 疼痛滑块change事件
+		 * @param {Object} event
+		 */
+		onPainChange: function (event) {
+			this.form.pain = event.detail.value
+			if (Number(this.form.pain) >= 6) {
+				this.warningVisible = true
+			}
+		},
+		/**
+		 * 单选选项赋值
+		 * @param {String} field 表单字段名
+		 * @param {String} value 选中值
+		 */
+		chooseOption: function (field, value) {
+			this.form[field] = value
+			if (field === 'discomfort' && value === '有，想告诉医护') {
+				this.warningVisible = true
+				this.assessmentExpanded = true
+			}
+			if ((field === 'swelling' && value === '明显') || (field === 'fatigue' && value === '很累')) {
+				this.warningVisible = true
+				this.assessmentExpanded = true
+			}
+		},
+		/**
+		 * 校验评估表单
+		 * @returns {Boolean}
+		 */
+		validateForm: function () {
+			if (this.form.pain === '' || this.form.pain === null || this.form.pain === undefined) {
+				this.showToast('请先滑动选择现在的疼痛程度。', 'warning')
+				return false
+			}
+			if (!this.form.swelling) {
+				this.showToast('请选择患处肿胀情况。', 'warning')
+				return false
+			}
+			if (!this.form.fatigue) {
+				this.showToast('请选择训练后的疲劳程度。', 'warning')
+				return false
+			}
+			if (!this.form.discomfort) {
+				this.showToast('请选择其他不适情况。', 'warning')
+				return false
+			}
+			return true
+		},
+		/**
+		 * 暂存评估草稿
+		 */
+		saveDraft: function () {
+			this.warningVisible = false
+			this.showToast('已暂存，您可以稍后返回今日方案继续填写', 'info')
+			uni.pageScrollTo({
+				scrollTop: 0,
+				duration: 260
+			})
+		},
+		/**
+		 * 保存评估结果
+		 */
+		saveEvaluation: async function () {
+			if (this.actionLoading) return
+			if (!this.currentAction) {
+				this.showToast('暂无可保存评估的训练动作。', 'warning')
+				return
+			}
+			if (!this.validateForm()) return
+			var action = this.currentAction
+			this.actionLoading = true
+			try {
+				var result = await this.submitEvaluationRequest(action, this.buildEvaluationPayload())
+				var serverApplied = this.applyEvaluationResult(result, action)
+				if (!serverApplied) {
+					this.showToast('评估结果返回数据异常，请稍后重试。', 'warning')
+					return
+				}
+				action = this.findItemById(action.id) || action
+				var evaluation = action.evaluation
+				var abnormal = !!evaluation.isAbnormal || evaluation.itemStatus === 'PAUSED'
+				if (evaluation.itemStatus === 'NEED_EVAL' && !abnormal) {
+					this.pauseTimer()
+					this.remainingSeconds = 0
+					this.assessmentExpanded = true
+					this.showToast('请继续完善训练后评估后再提交。', 'warning')
+					return
+				}
+				this.pauseTimer()
+				if (abnormal) {
+					this.remainingSeconds = 0
+					this.warningVisible = true
+					this.assessmentExpanded = true
+					this.showToast('评估存在异常指标，建议暂停训练并联系医护。', 'warning')
+					return
+				}
+				this.remainingSeconds = 0
+				this.warningVisible = false
+				this.assessmentExpanded = false
+				if (evaluation.itemStatus === 'COMPLETED') {
+					this.refreshWeeklyStatsLocally()
+				}
+				var pending = this.findFirst(['PENDING', 'NEED_EVAL'])
+				if (pending) {
+					this.selectAction(pending)
+				} else {
+					var first = this.items[0]
+					if (first) this.selectAction(first)
+				}
+				if (this.completedCount !== this.items.length) {
+					this.showToast('训练后评估已归档保存！数据已加密同步至健康管理团队', 'success')
+				} else {
+					this.showToast('今日运动已全部完成，训练记录已归档。', 'success')
+				}
+			} catch (e) {
+				console.log('保存训练评估失败：', e)
+			} finally {
+				this.actionLoading = false
+			}
+		},
+		buildEvaluationPayload: function () {
+			return {
+				answers: {
+					pain: Number(this.form.pain),
+					swelling: this.form.swelling,
+					fatigue: this.form.fatigue,
+					discomfort: this.form.discomfort
+				},
+				notes: this.form.note
+			}
+		},
+		refreshWeeklyStatsLocally: function () {
+			var stats = this.weeklyStats || createEmptyWeeklyStats()
+			var today = null
+			stats.dailyRecords.forEach(function (day) {
+				if (day.isToday) today = day
+			})
+			if (today && !today.completed) {
+				if (this.completedCount === this.items.length) {
+					today.completed = true
+					stats.completedDays += 1
+				}
+			}
+			stats.completionRate = stats.totalDays ? Math.round(stats.completedDays / stats.totalDays * 100) : 0
+		},
+		/**
+		 * 获取当前 ISO 时间
+		 * @returns {String}
+		 */
+		nowIsoTime: function () {
+			var date = new Date()
+			var pad = function (num) { return String(num).padStart(2, '0') }
+			return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) +
+				'T' + pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds())
+		},
+		/**
+		 * 拨打健康团队电话
+		 */
+		contactTeam: function () {
+			var phone = '4008209988'
+			uni.makePhoneCall({
+				phoneNumber: phone,
+				fail: function () {
+					uni.showModal({
+						title: '联系健康管理团队',
+						content: '电话：400-820-9988，也可以在会话中直接咨询。',
+						showCancel: false,
+						confirmText: '我知道了'
+					})
+				}
+			})
+		},
+		/**
+		 * 播放康复演示视频
+		 */
+		playVideo: function () {
+			this.showToast('视频播放为演示状态，正式环境接入健康管理团队上传素材。', 'info')
+		},
+		/**
+		 * 打开临床康复指引弹窗
+		 */
+		openClinicalGuide: function () {
+			uni.showModal({
+				title: '临床康复指引',
+				content: '请按健康管理团队配置的剂量、角度和节奏训练，出现疼痛加重、明显肿胀或头晕心慌时立即停止。',
+				showCancel: false,
+				confirmText: '我知道了'
+			})
+		},
+		/**
+		 * 同步给医护个案师
+		 */
+		syncAdvisor: function () {
+			this.showToast('已为您连接责任医护与个案管理师，运动记录已加密同步。', 'success')
+		},
+		/**
+		 * 切换底部tab
+		 * @param {Object} tab
+		 */
+		changeTab: function (tab) {
+			this.activeTab = tab.key
+			if (tab.key !== 'health') {
+				this.showToast('当前为康复运动原型，底部导航仅作状态展示。', 'info')
+			}
+		},
+		/**
+		 * 切换分类tab
+		 * @param {Object} tab
+		 */
+		changeCategory: function (tab) {
+			if (tab.key !== 'sport') {
+				this.showToast('当前演示页面为运动管理，' + tab.name + '模块由对应页面承载。', 'info')
+			}
+		},
+		/**
+		 * 本地预览 mock 数据，字段与接口保持一致
+		 */
+		createMockExercisePlan: function () {
+			return normalizeExercisePlan({
+				planId: '2113897402377822209',
+				surgeryType: '胃恶性肿瘤术后',
+				generateTime: '2026-10-24T15:36:30',
+				items: [{
+					id: '2113897402398793729',
+					createTime: '2026-10-24T15:36:30',
+					updateTime: '2026-10-24T15:36:30',
+					deleted: 0,
+					planId: '2113897402377822209',
+					orderNo: 1,
+					name: '室内步行',
+					dosage: '5分钟 × 2组',
+					mode: 'TIMER',
+					targetSets: 2,
+					targetReps: null,
+					targetDurationSec: 300,
+					completedSets: 0,
+					status: 'PENDING',
+					completedAt: null,
+					description: '匀速慢走，微微出汗即可，如感疲劳立即停止',
+					videoUrl: null,
+					steps: []
+				}, {
+					id: '2113897402415570945',
+					createTime: '2026-10-24T15:36:30',
+					updateTime: '2026-10-24T15:36:30',
+					deleted: 0,
+					planId: '2113897402377822209',
+					orderNo: 2,
+					name: '腹式呼吸',
+					dosage: '60秒 × 2组',
+					mode: 'TIMER',
+					targetSets: 2,
+					targetReps: null,
+					targetDurationSec: 60,
+					completedSets: 0,
+					status: 'PENDING',
+					completedAt: null,
+					description: '鼻吸气鼓腹、口呼气收腹，节奏放慢',
+					videoUrl: null,
+					steps: []
+				}, {
+					id: '2113897402423959554',
+					createTime: '2026-10-24T15:36:30',
+					updateTime: '2026-10-24T15:36:30',
+					deleted: 0,
+					planId: '2113897402377822209',
+					orderNo: 3,
+					name: '仰卧抬腿',
+					dosage: '10次 × 2组',
+					mode: 'REPS',
+					targetSets: 2,
+					targetReps: 10,
+					targetDurationSec: null,
+					completedSets: 0,
+					status: 'PENDING',
+					completedAt: null,
+					description: '双腿缓慢抬起至 30° 后缓慢放下，腰部贴地',
+					videoUrl: null,
+					steps: []
+				}, {
+					id: '2113897402444931074',
+					createTime: '2026-10-24T15:36:30',
+					updateTime: '2026-10-24T15:36:30',
+					deleted: 0,
+					planId: '2113897402377822209',
+					orderNo: 4,
+					name: '全身拉伸',
+					dosage: '5分钟 × 1组',
+					mode: 'TIMER',
+					targetSets: 1,
+					targetReps: null,
+					targetDurationSec: 300,
+					completedSets: 0,
+					status: 'PENDING',
+					completedAt: null,
+					description: '颈肩背腿依次缓慢拉伸，每个部位 20-30 秒',
+					videoUrl: null,
+					steps: []
+				}],
+				weeklyStats: {
+					completionRate: 0,
+					completedDays: 0,
+					totalDays: 2,
+					trendText: '与上周持平',
+					dailyRecords: [{
+						dayName: '周一',
+						dateStr: '10-26',
+						completed: false,
+						isToday: false
+					}, {
+						dayName: '周二',
+						dateStr: '10-27',
+						completed: false,
+						isToday: true
+					}, {
+						dayName: '周三',
+						dateStr: '10-28',
+						completed: false,
+						isToday: false
+					}, {
+						dayName: '周四',
+						dateStr: '10-29',
+						completed: false,
+						isToday: false
+					}, {
+						dayName: '周五',
+						dateStr: '10-30',
+						completed: false,
+						isToday: false
+					}, {
+						dayName: '周六',
+						dateStr: '10-31',
+						completed: false,
+						isToday: false
+					}, {
+						dayName: '周日',
+						dateStr: '11-01',
+						completed: false,
+						isToday: false
+					}]
+				}
+			})
+		},
+		/**
+		 * 切换场景（调试预览用）
+		 * @param {String} key 场景key
+		 */
+		applyScenario: function (key) {
+			var plan
+			this.activeScenario = key
+			this.clearTimer()
+			this.warningVisible = false
+			this.assessmentExpanded = false
+			this.form = createForm()
+			this.mediaTab = 'video'
+
+			if (key === 'noPlan') {
+				this.hasPlan = false
+				this.planId = ''
+				this.surgeryType = ''
+				this.generateTime = ''
+				this.items = []
+				this.weeklyStats = createEmptyWeeklyStats()
+				this.currentActionId = ''
+				this.currentGroup = 1
+				this.remainingSeconds = 0
+				this.running = false
+				this.countPaused = false
+				this.assessmentExpanded = false
+				this.showToast('当前状态：今日暂无运动方案。', 'info')
+				return
+			}
+
+			this.hasPlan = true
+			plan = JSON.parse(JSON.stringify(this.createMockExercisePlan()))
+
+			if (key === 'default') {
+				this.applyExercisePlan(plan)
+				this.showToast('已切换到默认流程。', 'info')
+			}
+
+			if (key === 'allDone') {
+				plan.items.forEach(function (item, index) {
+					item.status = 'COMPLETED'
+					item.completedSets = item.targetSets
+					item.completedAt = item.updateTime
+				})
+				plan.weeklyStats.completionRate = 100
+				plan.weeklyStats.completedDays = plan.weeklyStats.totalDays
+				plan.weeklyStats.trendText = '较上周 +1 次'
+				plan.weeklyStats.dailyRecords.forEach(function (day, index) {
+					day.completed = index < plan.weeklyStats.totalDays
+				})
+				this.applyExercisePlan(plan)
+				this.assessmentExpanded = false
+				this.showToast('今日方案已全部完成，评估已归档。', 'success')
+			}
+
+			if (key === 'pendingEvaluation') {
+				var evalItem = plan.items[1]
+				evalItem.status = 'NEED_EVAL'
+				evalItem.completedSets = evalItem.targetSets
+				this.applyExercisePlan(plan)
+				this.selectAction(evalItem)
+				this.assessmentExpanded = true
+				this.showToast('训练已完成，训练后评估尚未填写。', 'info')
+			}
+
+			if (key === 'abnormal') {
+				var pausedItem = plan.items[1]
+				pausedItem.status = 'PAUSED'
+				pausedItem.completedAt = null
+				this.applyExercisePlan(plan)
+				this.selectAction(pausedItem)
+				this.form.pain = 7
+				this.form.swelling = '无'
+				this.form.fatigue = '一般'
 				this.form.discomfort = '有，想告诉医护'
 				this.warningVisible = true
 				this.assessmentExpanded = true
-				this.showToast('已记录身体不适，训练已暂停。', 'warning')
-			},
-			/**
-			 * 打开评估面板并滚动到评估区域
-			 */
-			openEvaluation: function() {
-				this.assessmentExpanded = true
-				setTimeout(function() {
-					uni.pageScrollTo({
-						selector: '#assessmentCard',
-						duration: 300
-					})
-				}, 80)
-			},
-			/**
-			 * 疼痛滑块input事件
-			 * @param {Object} event
-			 */
-			onPainChanging: function(event) {
-				this.form.pain = event.detail.value
-			},
-			/**
-			 * 疼痛滑块change事件
-			 * @param {Object} event
-			 */
-			onPainChange: function(event) {
-				this.form.pain = event.detail.value
-				if (Number(this.form.pain) >= 6) {
-					this.warningVisible = true
-				}
-			},
-			/**
-			 * 单选选项赋值
-			 * @param {String} field 表单字段名
-			 * @param {String} value 选中值
-			 */
-			chooseOption: function(field, value) {
-				this.form[field] = value
-				if (field === 'discomfort' && value === '有，想告诉医护') {
-					this.warningVisible = true
-					this.assessmentExpanded = true
-				}
-				if ((field === 'swelling' && value === '明显') || (field === 'fatigue' && value === '很累')) {
-					this.warningVisible = true
-					this.assessmentExpanded = true
-				}
-			},
-			/**
-			 * 校验评估表单
-			 * @returns {Boolean}
-			 */
-			validateForm: function() {
-				if (this.form.pain === '' || this.form.pain === null || this.form.pain === undefined) {
-					this.showToast('请先滑动选择现在的疼痛程度。', 'warning')
-					return false
-				}
-				if (!this.form.swelling) {
-					this.showToast('请选择患处肿胀情况。', 'warning')
-					return false
-				}
-				if (!this.form.fatigue) {
-					this.showToast('请选择训练后的疲劳程度。', 'warning')
-					return false
-				}
-				if (!this.form.discomfort) {
-					this.showToast('请选择其他不适情况。', 'warning')
-					return false
-				}
-				return true
-			},
-			/**
-			 * 暂存评估草稿
-			 */
-			saveDraft: function() {
-				this.warningVisible = false
-				this.showToast('已暂存，您可以稍后返回今日方案继续填写', 'info')
-				uni.pageScrollTo({
-					scrollTop: 0,
-					duration: 260
-				})
-			},
-			/**
-			 * 保存评估结果
-			 */
-			saveEvaluation: async function() {
-				if (this.actionLoading) return
-				if (!this.currentAction) {
-					this.showToast('暂无可保存评估的训练动作。', 'warning')
-					return
-				}
-				if (!this.validateForm()) return
-				var action = this.currentAction
-				this.actionLoading = true
-				try {
-					var result = await this.submitEvaluationRequest(action, this.buildEvaluationPayload())
-					var serverApplied = this.applyEvaluationResult(result, action)
-					if (!serverApplied) {
-						this.showToast('评估结果返回数据异常，请稍后重试。', 'warning')
-						return
-					}
-					action = this.findItemById(action.id) || action
-					var evaluation = action.evaluation
-					var abnormal = !!evaluation.isAbnormal || evaluation.itemStatus === 'PAUSED'
-					if (evaluation.itemStatus === 'NEED_EVAL' && !abnormal) {
-						this.pauseTimer()
-						this.remainingSeconds = 0
-						this.assessmentExpanded = true
-						this.showToast('请继续完善训练后评估后再提交。', 'warning')
-						return
-					}
-					this.pauseTimer()
-					if (abnormal) {
-						this.remainingSeconds = 0
-						this.warningVisible = true
-						this.assessmentExpanded = true
-						this.showToast('评估存在异常指标，建议暂停训练并联系医护。', 'warning')
-						return
-					}
-					this.remainingSeconds = 0
-					this.warningVisible = false
-					this.assessmentExpanded = false
-					if (evaluation.itemStatus === 'COMPLETED') {
-						this.refreshWeeklyStatsLocally()
-					}
-					var pending = this.findFirst(['PENDING', 'NEED_EVAL'])
-					if (pending) {
-						this.selectAction(pending)
-					} else {
-						var first = this.items[0]
-						if (first) this.selectAction(first)
-					}
-					if (this.completedCount !== this.items.length) {
-						this.showToast('训练后评估已归档保存！数据已加密同步至健康管理团队', 'success')
-					} else {
-						this.showToast('今日运动已全部完成，训练记录已归档。', 'success')
-					}
-				} catch (e) {
-					console.log('保存训练评估失败：', e)
-				} finally {
-					this.actionLoading = false
-				}
-			},
-			buildEvaluationPayload: function() {
-				return {
-					answers: {
-						pain: Number(this.form.pain),
-						swelling: this.form.swelling,
-						fatigue: this.form.fatigue,
-						discomfort: this.form.discomfort
-					},
-					notes: this.form.note
-				}
-			},
-			refreshWeeklyStatsLocally: function() {
-				var stats = this.weeklyStats || createEmptyWeeklyStats()
-				var today = null
-				stats.dailyRecords.forEach(function(day) {
-					if (day.isToday) today = day
-				})
-				if (today && !today.completed) {
-					if (this.completedCount === this.items.length) {
-						today.completed = true
-						stats.completedDays += 1
-					}
-				}
-				stats.completionRate = stats.totalDays ? Math.round(stats.completedDays / stats.totalDays * 100) : 0
-			},
-			/**
-			 * 获取当前 ISO 时间
-			 * @returns {String}
-			 */
-			nowIsoTime: function() {
-				var date = new Date()
-				var pad = function(num) { return String(num).padStart(2, '0') }
-				return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) +
-					'T' + pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds())
-			},
-			/**
-			 * 拨打健康团队电话
-			 */
-			contactTeam: function() {
-				var phone = '4008209988'
-				uni.makePhoneCall({
-					phoneNumber: phone,
-					fail: function() {
-						uni.showModal({
-							title: '联系健康管理团队',
-							content: '电话：400-820-9988，也可以在会话中直接咨询。',
-							showCancel: false,
-							confirmText: '我知道了'
-						})
-					}
-				})
-			},
-			/**
-			 * 播放康复演示视频
-			 */
-			playVideo: function() {
-				this.showToast('视频播放为演示状态，正式环境接入健康管理团队上传素材。', 'info')
-			},
-			/**
-			 * 打开临床康复指引弹窗
-			 */
-			openClinicalGuide: function() {
-				uni.showModal({
-					title: '临床康复指引',
-					content: '请按健康管理团队配置的剂量、角度和节奏训练，出现疼痛加重、明显肿胀或头晕心慌时立即停止。',
-					showCancel: false,
-					confirmText: '我知道了'
-				})
-			},
-			/**
-			 * 同步给医护个案师
-			 */
-			syncAdvisor: function() {
-				this.showToast('已为您连接责任医护与个案管理师，运动记录已加密同步。', 'success')
-			},
-			/**
-			 * 切换底部tab
-			 * @param {Object} tab
-			 */
-			changeTab: function(tab) {
-				this.activeTab = tab.key
-				if (tab.key !== 'health') {
-					this.showToast('当前为康复运动原型，底部导航仅作状态展示。', 'info')
-				}
-			},
-			/**
-			 * 切换分类tab
-			 * @param {Object} tab
-			 */
-			changeCategory: function(tab) {
-				if (tab.key !== 'sport') {
-					this.showToast('当前演示页面为运动管理，' + tab.name + '模块由对应页面承载。', 'info')
-				}
-			},
-			/**
-			 * 本地预览 mock 数据，字段与接口保持一致
-			 */
-			createMockExercisePlan: function() {
-				return normalizeExercisePlan({
-					planId: '2113897402377822209',
-					surgeryType: '胃恶性肿瘤术后',
-					generateTime: '2026-10-24T15:36:30',
-					items: [{
-						id: '2113897402398793729',
-						createTime: '2026-10-24T15:36:30',
-						updateTime: '2026-10-24T15:36:30',
-						deleted: 0,
-						planId: '2113897402377822209',
-						orderNo: 1,
-						name: '室内步行',
-						dosage: '5分钟 × 2组',
-						mode: 'TIMER',
-						targetSets: 2,
-						targetReps: null,
-						targetDurationSec: 300,
-						completedSets: 0,
-						status: 'PENDING',
-						completedAt: null,
-						description: '匀速慢走，微微出汗即可，如感疲劳立即停止',
-						videoUrl: null,
-						steps: []
-					}, {
-						id: '2113897402415570945',
-						createTime: '2026-10-24T15:36:30',
-						updateTime: '2026-10-24T15:36:30',
-						deleted: 0,
-						planId: '2113897402377822209',
-						orderNo: 2,
-						name: '腹式呼吸',
-						dosage: '60秒 × 2组',
-						mode: 'TIMER',
-						targetSets: 2,
-						targetReps: null,
-						targetDurationSec: 60,
-						completedSets: 0,
-						status: 'PENDING',
-						completedAt: null,
-						description: '鼻吸气鼓腹、口呼气收腹，节奏放慢',
-						videoUrl: null,
-						steps: []
-					}, {
-						id: '2113897402423959554',
-						createTime: '2026-10-24T15:36:30',
-						updateTime: '2026-10-24T15:36:30',
-						deleted: 0,
-						planId: '2113897402377822209',
-						orderNo: 3,
-						name: '仰卧抬腿',
-						dosage: '10次 × 2组',
-						mode: 'REPS',
-						targetSets: 2,
-						targetReps: 10,
-						targetDurationSec: null,
-						completedSets: 0,
-						status: 'PENDING',
-						completedAt: null,
-						description: '双腿缓慢抬起至 30° 后缓慢放下，腰部贴地',
-						videoUrl: null,
-						steps: []
-					}, {
-						id: '2113897402444931074',
-						createTime: '2026-10-24T15:36:30',
-						updateTime: '2026-10-24T15:36:30',
-						deleted: 0,
-						planId: '2113897402377822209',
-						orderNo: 4,
-						name: '全身拉伸',
-						dosage: '5分钟 × 1组',
-						mode: 'TIMER',
-						targetSets: 1,
-						targetReps: null,
-						targetDurationSec: 300,
-						completedSets: 0,
-						status: 'PENDING',
-						completedAt: null,
-						description: '颈肩背腿依次缓慢拉伸，每个部位 20-30 秒',
-						videoUrl: null,
-						steps: []
-					}],
-					weeklyStats: {
-						completionRate: 0,
-						completedDays: 0,
-						totalDays: 2,
-						trendText: '与上周持平',
-						dailyRecords: [{
-							dayName: '周一',
-							dateStr: '10-26',
-							completed: false,
-							isToday: false
-						}, {
-							dayName: '周二',
-							dateStr: '10-27',
-							completed: false,
-							isToday: true
-						}, {
-							dayName: '周三',
-							dateStr: '10-28',
-							completed: false,
-							isToday: false
-						}, {
-							dayName: '周四',
-							dateStr: '10-29',
-							completed: false,
-							isToday: false
-						}, {
-							dayName: '周五',
-							dateStr: '10-30',
-							completed: false,
-							isToday: false
-						}, {
-							dayName: '周六',
-							dateStr: '10-31',
-							completed: false,
-							isToday: false
-						}, {
-							dayName: '周日',
-							dateStr: '11-01',
-							completed: false,
-							isToday: false
-						}]
-					}
-				})
-			},
-			/**
-			 * 切换场景（调试预览用）
-			 * @param {String} key 场景key
-			 */
-			applyScenario: function(key) {
-				var plan
-				this.activeScenario = key
-				this.clearTimer()
-				this.warningVisible = false
-				this.assessmentExpanded = false
-				this.form = createForm()
-				this.mediaTab = 'video'
-
-				if (key === 'noPlan') {
-					this.hasPlan = false
-					this.planId = ''
-					this.surgeryType = ''
-					this.generateTime = ''
-					this.items = []
-					this.weeklyStats = createEmptyWeeklyStats()
-					this.currentActionId = ''
-					this.currentGroup = 1
-					this.remainingSeconds = 0
-					this.running = false
-					this.countPaused = false
-					this.assessmentExpanded = false
-					this.showToast('当前状态：今日暂无运动方案。', 'info')
-					return
-				}
-
-				this.hasPlan = true
-				plan = JSON.parse(JSON.stringify(this.createMockExercisePlan()))
-
-				if (key === 'default') {
-					this.applyExercisePlan(plan)
-					this.showToast('已切换到默认流程。', 'info')
-				}
-
-				if (key === 'allDone') {
-					plan.items.forEach(function(item, index) {
-						item.status = 'COMPLETED'
-						item.completedSets = item.targetSets
-						item.completedAt = item.updateTime
-					})
-					plan.weeklyStats.completionRate = 100
-					plan.weeklyStats.completedDays = plan.weeklyStats.totalDays
-					plan.weeklyStats.trendText = '较上周 +1 次'
-					plan.weeklyStats.dailyRecords.forEach(function(day, index) {
-						day.completed = index < plan.weeklyStats.totalDays
-					})
-					this.applyExercisePlan(plan)
-					this.assessmentExpanded = false
-					this.showToast('今日方案已全部完成，评估已归档。', 'success')
-				}
-
-				if (key === 'pendingEvaluation') {
-					var evalItem = plan.items[1]
-					evalItem.status = 'NEED_EVAL'
-					evalItem.completedSets = evalItem.targetSets
-					this.applyExercisePlan(plan)
-					this.selectAction(evalItem)
-					this.assessmentExpanded = true
-					this.showToast('训练已完成，训练后评估尚未填写。', 'info')
-				}
-
-				if (key === 'abnormal') {
-					var pausedItem = plan.items[1]
-					pausedItem.status = 'PAUSED'
-					pausedItem.completedAt = null
-					this.applyExercisePlan(plan)
-					this.selectAction(pausedItem)
-					this.form.pain = 7
-					this.form.swelling = '无'
-					this.form.fatigue = '一般'
-					this.form.discomfort = '有，想告诉医护'
-					this.warningVisible = true
-					this.assessmentExpanded = true
-					this.showToast('评估异常，训练已暂停，请联系健康管理团队。', 'warning')
-				}
+				this.showToast('评估异常，训练已暂停，请联系健康管理团队。', 'warning')
 			}
 		}
 	}
+}
 </script>
 
 <style scoped>
-	.video-block {
-		margin: 30rpx 0;
-	}
+.video-block {
+	margin: 30rpx 0;
+}
 
-	.video-title {
-		font-size: 30rpx;
-		font-weight: bold;
-		margin-bottom: 20rpx;
-	}
+.video-title {
+	font-size: 30rpx;
+	font-weight: bold;
+	margin-bottom: 20rpx;
+}
 
-	.video-player {
-		width: 100%;
-		height: 420rpx;
-		border-radius: 16rpx;
-	}
+.video-player {
+	width: 100%;
+	height: 420rpx;
+	border-radius: 16rpx;
+}
 
-	/* web-view 默认会占满宽度，设置高度 */
-	web-view {
-		height: 420rpx;
-		border-radius: 16rpx;
-	}
+/* web-view 默认会占满宽度，设置高度 */
+web-view {
+	height: 420rpx;
+	border-radius: 16rpx;
+}
 
-	.video-tip {
-		margin-top: 16rpx;
-		font-size: 26rpx;
-		color: #666;
-		line-height: 1.6;
-	}
+.video-tip {
+	margin-top: 16rpx;
+	font-size: 26rpx;
+	color: #666;
+	line-height: 1.6;
+}
 
-	.rehab-page {
-		/* min-height: 100vh;
+.rehab-page {
+	/* min-height: 100vh;
   background: #f4f7fb; */
-		color: #1f2d3d;
-		font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
-		box-sizing: border-box;
-	}
-
-	.rehab-page view,
-	.rehab-page text,
-	.rehab-page image,
-	.rehab-page scroll-view,
-	.rehab-page slider,
-	.rehab-page textarea {
-		box-sizing: border-box;
-	}
-
-	.debug-tool {
-		padding: 20rpx;
-		border-radius: 10px;
-		background: linear-gradient(135deg, #101a31 0%, #14294d 100%);
-		box-shadow: 0 10rpx 28rpx rgba(20, 34, 64, 0.22);
-	}
-
-	.debug-tool.collapsed {
-		width: 260rpx;
-		padding-bottom: 14rpx;
-	}
-
-	.tool-head {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		min-height: 38rpx;
-	}
-
-	.tool-title {
-		display: flex;
-		align-items: center;
-	}
-
-	.tool-shield {
-		width: 26rpx;
-		height: 26rpx;
-		margin-right: 8rpx;
-		border-radius: 50%;
-		background: #1677ff;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.tool-title-text {
-		color: #ffffff;
-		font-size: 21rpx;
-		font-weight: 700;
-	}
-
-	.tool-action {
-		display: flex;
-		align-items: center;
-		color: #aebedb;
-		font-size: 18rpx;
-	}
-
-	.tool-action text {
-		margin-right: 4rpx;
-	}
-
-	.tool-scroll {
-		width: 100%;
-		margin-top: 14rpx;
-		white-space: nowrap;
-	}
-
-	.tool-chips {
-		display: flex;
-		align-items: center;
-		min-width: max-content;
-	}
-
-	.tool-chip {
-		flex: 0 0 auto;
-		margin-right: 12rpx;
-		padding: 10rpx 18rpx;
-		border: 1rpx solid rgba(156, 176, 216, 0.28);
-		border-radius: 22rpx;
-		color: #cad7ee;
-		background: rgba(255, 255, 255, 0.06);
-		font-size: 19rpx;
-		line-height: 1;
-	}
-
-	.tool-chip.active {
-		color: #ffffff;
-		border-color: #1677ff;
-		background: #1677ff;
-		font-weight: 700;
-	}
-
-	.category-tabs {
-		position: fixed;
-		top: 98rpx;
-		left: 0;
-		right: 0;
-		z-index: 90;
-		height: 78rpx;
-		background: #f4f7fb;
-		white-space: nowrap;
-	}
-
-	.category-tabs.collapsed {
-		top: 64rpx;
-	}
-
-	.category-track {
-		display: inline-flex;
-		align-items: center;
-		height: 78rpx;
-		padding: 0 24rpx;
-	}
-
-	.category-tab {
-		flex: 0 0 auto;
-		margin-right: 16rpx;
-		padding: 12rpx 24rpx;
-		border-radius: 28rpx;
-		background: #ffffff;
-		color: #66748b;
-		font-size: 22rpx;
-		font-weight: 700;
-		border: 1rpx solid #e3e9f2;
-	}
-
-	.category-tab.active {
-		color: #ffffff;
-		background: #1677ff;
-		border-color: #1677ff;
-		box-shadow: 0 8rpx 18rpx rgba(22, 119, 255, 0.22);
-	}
-
-	.top-toast {
-		position: fixed;
-		top: 190rpx;
-		left: 50%;
-		z-index: 120;
-		width: 670rpx;
-		min-height: 72rpx;
-		padding: 16rpx 20rpx;
-		transform: translateX(-50%);
-		border: 1rpx solid rgba(22, 119, 255, 0.18);
-		border-radius: 16rpx;
-		background: #eef5ff;
-		box-shadow: 0 10rpx 30rpx rgba(22, 119, 255, 0.18);
-		display: flex;
-		align-items: center;
-	}
-
-	.top-toast.success {
-		background: #eafaf1;
-		border-color: rgba(22, 163, 95, 0.22);
-		box-shadow: 0 10rpx 30rpx rgba(22, 163, 95, 0.16);
-	}
-
-	.top-toast.warning,
-	.top-toast.danger {
-		background: #fff8e8;
-		border-color: rgba(231, 143, 0, 0.28);
-		box-shadow: 0 10rpx 30rpx rgba(231, 143, 0, 0.16);
-	}
-
-	.toast-icon {
-		width: 32rpx;
-		height: 32rpx;
-		margin-right: 12rpx;
-		border-radius: 50%;
-		background: #1677ff;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex: 0 0 auto;
-	}
-
-	.top-toast.success .toast-icon {
-		background: #16a35f;
-	}
-
-	.top-toast.warning .toast-icon,
-	.top-toast.danger .toast-icon {
-		background: #f08a00;
-	}
-
-	.toast-text {
-		color: #27466e;
-		font-size: 22rpx;
-		line-height: 1.45;
-		font-weight: 600;
-	}
-
-	.page-body {
-		/* padding: 198rpx 24rpx 150rpx; */
-	}
-
-	.page-body.tool-mini {
-		padding-top: 160rpx;
-	}
-
-	.section-heading {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		margin: 4rpx 4rpx 16rpx;
-	}
-
-	.heading-left {
-		display: flex;
-		align-items: center;
-	}
-
-	.heading-bar {
-		width: 8rpx;
-		height: 28rpx;
-		margin-right: 12rpx;
-		border-radius: 8rpx;
-		background: #1677ff;
-	}
-
-	.heading-title {
-		color: #1f2d3d;
-		font-size: 28rpx;
-		font-weight: 800;
-	}
-
-	.date-pill {
-		padding: 9rpx 16rpx;
-		border-radius: 22rpx;
-		color: #1677ff;
-		background: #edf3ff;
-		font-size: 20rpx;
-		font-weight: 700;
-	}
-
-	.card {
-		margin-bottom: 20rpx;
-		padding: 28rpx 24rpx;
-		border-radius: 24rpx;
-		background: #ffffff;
-		box-shadow: 0 8rpx 28rpx rgba(33, 51, 83, 0.06);
-		border: 1rpx solid rgba(226, 232, 242, 0.88);
-	}
-
-	.card-head {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-
-	.card-head.align-start {
-		align-items: flex-start;
-	}
-
-	.card-title {
-		color: #182338;
-		font-size: 30rpx;
-		font-weight: 800;
-		line-height: 1.35;
-	}
-
-	.card-subtitle {
-		display: block;
-		margin-top: 8rpx;
-		color: #8b97aa;
-		font-size: 21rpx;
-		line-height: 1.4;
-	}
-
-	.small-tabs {
-		display: flex;
-		align-items: center;
-		padding: 4rpx;
-		border-radius: 22rpx;
-		background: #f1f4f9;
-	}
-
-	.small-tabs view {
-		min-width: 78rpx;
-		padding: 10rpx 18rpx;
-		border-radius: 18rpx;
-		color: #7c889c;
-		font-size: 20rpx;
-		font-weight: 700;
-		text-align: center;
-	}
-
-	.small-tabs view.active {
-		color: #ffffff;
-		background: #1677ff;
-		box-shadow: 0 6rpx 14rpx rgba(22, 119, 255, 0.22);
-	}
-
-	.primary-btn {
-		min-height: 76rpx;
-		border-radius: 18rpx;
-		background: linear-gradient(135deg, #1677ff 0%, #0e6bd6 100%);
-		color: #ffffff;
-		font-size: 26rpx;
-		font-weight: 800;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		box-shadow: 0 10rpx 22rpx rgba(22, 119, 255, 0.22);
-	}
-
-	.primary-btn.disabled {
-		background: #b8c8e7;
-		box-shadow: none;
-		color: rgba(255, 255, 255, 0.88);
-	}
-
-	.primary-btn text {
-		margin-left: 8rpx;
-	}
-
-	.plan-top {
-		display: flex;
-		align-items: flex-start;
-		justify-content: space-between;
-	}
-
-	.plan-title-row {
-		display: flex;
-		align-items: center;
-	}
-
-	.today-badge {
-		margin-left: 12rpx;
-		padding: 6rpx 14rpx;
-		border-radius: 18rpx;
-		background: #e9f1ff;
-		color: #1677ff;
-		font-size: 18rpx;
-		font-weight: 700;
-	}
-
-	.summary-pill {
-		padding: 10rpx 16rpx;
-		border-radius: 24rpx;
-		color: #8b97aa;
-		background: #f5f7fb;
-		font-size: 20rpx;
-		font-weight: 700;
-		white-space: nowrap;
-	}
-
-	.progress-box {
-		margin-top: 24rpx;
-		padding: 18rpx 20rpx;
-		border-radius: 18rpx;
-		background: #f8fafd;
-	}
-
-	.progress-label {
-		display: flex;
-		align-items: center;
-		color: #657187;
-		font-size: 22rpx;
-		font-weight: 600;
-	}
-
-	.progress-dot {
-		width: 12rpx;
-		height: 12rpx;
-		margin-right: 10rpx;
-		border-radius: 50%;
-		background: #1677ff;
-	}
-
-	.progress-track {
-		height: 12rpx;
-		margin-top: 14rpx;
-		border-radius: 10rpx;
-		background: #dfe4ee;
-		overflow: hidden;
-	}
-
-	.progress-inner {
-		height: 100%;
-		border-radius: 10rpx;
-		background: linear-gradient(90deg, #1677ff, #4d93ff);
-		transition: width 0.25s ease;
-	}
-
-	.exercise-list {
-		margin-top: 18rpx;
-	}
-
-	.exercise-item {
-		min-height: 98rpx;
-		margin-bottom: 14rpx;
-		padding: 18rpx;
-		border: 2rpx solid transparent;
-		border-radius: 20rpx;
-		background: #f8fafd;
-		display: flex;
-		align-items: center;
-	}
-
-	.exercise-item.active {
-		border-color: #1677ff;
-		background: #eef5ff;
-		box-shadow: inset 5rpx 0 0 #1677ff;
-	}
-
-	.exercise-item.completed {
-		background: #f7faff;
-	}
-
-	.item-index {
-		width: 52rpx;
-		height: 52rpx;
-		margin-right: 16rpx;
-		border-radius: 50%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 21rpx;
-		font-weight: 800;
-		flex: 0 0 auto;
-	}
-
-	.item-index.pending {
-		color: #8b97aa;
-		background: #e5e9f1;
-	}
-
-	.item-index.done {
-		color: #1677ff;
-		background: #dfe9ff;
-	}
-
-	.item-index.evaluate,
-	.item-index.progress {
-		color: #ffffff;
-		background: #1677ff;
-	}
-
-	.item-index.paused {
-		color: #d77b00;
-		background: #fff0d5;
-	}
-
-	.item-info {
-		flex: 1;
-		min-width: 0;
-	}
-
-	.item-name {
-		display: block;
-		color: #202b3f;
-		font-size: 25rpx;
-		font-weight: 800;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.item-dose {
-		display: block;
-		margin-top: 6rpx;
-		color: #8b97aa;
-		font-size: 20rpx;
-	}
-
-	.item-right {
-		display: flex;
-		align-items: center;
-		margin-left: 10rpx;
-	}
-
-	.status-tag {
-		margin-right: 8rpx;
-		padding: 7rpx 12rpx;
-		border-radius: 16rpx;
-		font-size: 18rpx;
-		font-weight: 800;
-		white-space: nowrap;
-	}
-
-	.status-tag.large {
-		padding: 9rpx 16rpx;
-		font-size: 20rpx;
-	}
-
-	.status-tag.pending {
-		color: #9aa5b8;
-		background: #f0f2f6;
-	}
-
-	.status-tag.done {
-		color: #1677ff;
-		background: #e8f0ff;
-	}
-
-	.status-tag.evaluate {
-		color: #c98100;
-		background: #fff5d7;
-	}
-
-	.status-tag.progress {
-		color: #1677ff;
-		background: #e8f0ff;
-	}
-
-	.status-tag.paused {
-		color: #d05a00;
-		background: #fff0dc;
-	}
-
-	.start-btn {
-		margin-top: 20rpx;
-	}
-
-	.empty-plan {
-		padding: 40rpx 20rpx 20rpx;
-		text-align: center;
-	}
-
-	.empty-icon {
-		width: 100rpx;
-		height: 100rpx;
-		margin: 0 auto 20rpx;
-		border-radius: 50%;
-		background: #edf3ff;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.empty-title {
-		display: block;
-		color: #202b3f;
-		font-size: 28rpx;
-		font-weight: 800;
-	}
-
-	.empty-desc {
-		display: block;
-		margin: 14rpx 24rpx 26rpx;
-		color: #8b97aa;
-		font-size: 22rpx;
-		line-height: 1.55;
-	}
-
-	.empty-btn {
-		width: 100%;
-	}
-
-	.media-card .card-head,
-	.record-card .card-head {
-		margin-bottom: 22rpx;
-	}
-
-	.video-wrap {
-		position: relative;
-		height: 320rpx;
-		border-radius: 18rpx;
-		overflow: hidden;
-		background: linear-gradient(135deg, #dff0ff 0%, #8fc4f7 100%);
-	}
-
-	.cover-walk {
-		background: linear-gradient(135deg, #e3f3ff 0%, #6db5f2 58%, #2d86d5 100%);
-	}
-
-	.cover-breath {
-		background: linear-gradient(135deg, #e8f7ff 0%, #9ed8f0 55%, #4aa6d7 100%);
-	}
-
-	.cover-rehab {
-		background: linear-gradient(135deg, #e9f2ff 0%, #9cc4f8 55%, #3e83d8 100%);
-	}
-
-	.video-cover-bg {
-		position: absolute;
-		left: -90rpx;
-		bottom: -120rpx;
-		width: 520rpx;
-		height: 360rpx;
-		border-radius: 50%;
-		background: rgba(255, 255, 255, 0.22);
-	}
-
-	.cover-grid {
-		position: absolute;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		height: 76rpx;
-		background:
-			linear-gradient(rgba(255, 255, 255, 0.18) 2rpx, transparent 2rpx),
-			linear-gradient(90deg, rgba(255, 255, 255, 0.16) 2rpx, transparent 2rpx);
-		background-size: 42rpx 26rpx;
-		opacity: 0.72;
-	}
-
-	.cover-orbit {
-		position: absolute;
-		border: 2rpx solid rgba(255, 255, 255, 0.36);
-		border-radius: 50%;
-	}
-
-	.orbit-one {
-		right: -70rpx;
-		top: -44rpx;
-		width: 210rpx;
-		height: 210rpx;
-	}
-
-	.orbit-two {
-		left: 32rpx;
-		bottom: 48rpx;
-		width: 126rpx;
-		height: 126rpx;
-	}
-
-	.cover-icon {
-		position: absolute;
-		left: 38rpx;
-		bottom: 64rpx;
-		width: 112rpx;
-		height: 112rpx;
-		border-radius: 32rpx;
-		background: rgba(255, 255, 255, 0.22);
-		border: 2rpx solid rgba(255, 255, 255, 0.34);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		backdrop-filter: blur(8rpx);
-	}
-
-	.cover-pulse {
-		position: absolute;
-		right: 34rpx;
-		bottom: 56rpx;
-		display: flex;
-		align-items: flex-end;
-		height: 72rpx;
-	}
-
-	.pulse-bar {
-		width: 10rpx;
-		margin-left: 10rpx;
-		border-radius: 10rpx;
-		background: rgba(255, 255, 255, 0.72);
-	}
-
-	.bar-one {
-		height: 34rpx;
-	}
-
-	.bar-two {
-		height: 58rpx;
-	}
-
-	.bar-three {
-		height: 44rpx;
-	}
-
-	.video-image {
-		width: 100%;
-		height: 100%;
-	}
-
-	.video-label {
-		position: absolute;
-		left: 18rpx;
-		top: 18rpx;
-		padding: 8rpx 14rpx;
-		border-radius: 12rpx;
-		background: rgba(0, 0, 0, 0.42);
-		color: #ffffff;
-		font-size: 19rpx;
-	}
-
-	.play-circle {
-		position: absolute;
-		left: 50%;
-		top: 50%;
-		width: 88rpx;
-		height: 88rpx;
-		transform: translate(-50%, -50%);
-		border-radius: 50%;
-		background: rgba(255, 255, 255, 0.96);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		box-shadow: 0 12rpx 30rpx rgba(0, 0, 0, 0.22);
-	}
-
-	.zoom-icon {
-		position: absolute;
-		right: 18rpx;
-		bottom: 18rpx;
-		width: 42rpx;
-		height: 42rpx;
-		border-radius: 10rpx;
-		background: rgba(0, 0, 0, 0.36);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.video-empty {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: #a8b2c3;
-		font-size: 22rpx;
-	}
-
-	.diagram-panel {
-		border-radius: 18rpx;
-		background: #f6f9ff;
-		padding: 10rpx 18rpx;
-	}
-
-	.diagram-step {
-		display: flex;
-		align-items: flex-start;
-		padding: 18rpx 0;
-		border-bottom: 1rpx solid #e8eef8;
-	}
-
-	.diagram-step:last-child {
-		border-bottom: none;
-	}
-
-	.diagram-no {
-		width: 42rpx;
-		height: 42rpx;
-		margin-right: 14rpx;
-		border-radius: 50%;
-		background: #1677ff;
-		color: #ffffff;
-		font-size: 20rpx;
-		font-weight: 800;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.diagram-title {
-		display: block;
-		color: #202b3f;
-		font-size: 23rpx;
-		font-weight: 800;
-	}
-
-	.diagram-desc {
-		display: block;
-		margin-top: 6rpx;
-		color: #7e8a9e;
-		font-size: 20rpx;
-		line-height: 1.5;
-	}
-
-	.media-name-row {
-		margin-top: 22rpx;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-
-	.media-name {
-		color: #202b3f;
-		font-size: 27rpx;
-		font-weight: 800;
-	}
-
-	.link-text {
-		display: flex;
-		align-items: center;
-		color: #1677ff;
-		font-size: 20rpx;
-		font-weight: 700;
-	}
-
-	.media-desc {
-		display: block;
-		margin-top: 12rpx;
-		color: #6d788c;
-		font-size: 22rpx;
-		line-height: 1.55;
-	}
-
-	.media-footer {
-		margin-top: 22rpx;
-		padding-top: 18rpx;
-		border-top: 1rpx solid #eef1f6;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-
-	.config-text {
-		color: #a2acbc;
-		font-size: 19rpx;
-	}
-
-	.guide-btn {
-		padding: 8rpx 14rpx;
-		border-radius: 14rpx;
-		background: #f4f6fa;
-		color: #8b97aa;
-		font-size: 18rpx;
-	}
-
-	.current-row,
-	.status-row {
-		min-height: 70rpx;
-		padding: 0 22rpx;
-		border-radius: 16rpx;
-		background: #f8fafd;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-
-	.current-label {
-		color: #8994a7;
-		font-size: 22rpx;
-	}
-
-	.current-name,
-	.row-value {
-		color: #202b3f;
-		font-size: 23rpx;
-		font-weight: 800;
-		text-align: right;
-	}
-
-	.record-content {
-		padding-top: 26rpx;
-	}
-
-	.group-progress {
-		display: block;
-		text-align: center;
-		color: #707c91;
-		font-size: 22rpx;
-		font-weight: 700;
-	}
-
-	.group-dots {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		margin: 16rpx 0 8rpx;
-	}
-
-	.group-dot {
-		width: 54rpx;
-		height: 14rpx;
-		margin: 0 8rpx;
-		border-radius: 10rpx;
-		background: #dce2ee;
-	}
-
-	.group-dot.finished,
-	.group-dot.active {
-		background: #1677ff;
-	}
-
-	.big-number-box {
-		padding: 18rpx 0 24rpx;
-		text-align: center;
-	}
-
-	.big-number {
-		color: #17233b;
-		font-size: 86rpx;
-		line-height: 1;
-		font-weight: 300;
-	}
-
-	.time-number {
-		font-size: 76rpx;
-		letter-spacing: 2rpx;
-	}
-
-	.big-unit {
-		color: #8d98aa;
-		font-size: 30rpx;
-		margin-left: 6rpx;
-	}
-
-	.number-tip {
-		display: block;
-		margin-top: 14rpx;
-		color: #9aa5b7;
-		font-size: 21rpx;
-	}
-
-	.record-main {
-		width: 100%;
-	}
-
-	.control-row {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		margin-top: 18rpx;
-	}
-
-	.control-row.three .light-btn {
-		flex: 1;
-		margin-right: 14rpx;
-	}
-
-	.control-row.three .small-primary {
-		flex: 1.25;
-	}
-
-	.light-btn {
-		min-height: 70rpx;
-		padding: 0 24rpx;
-		border-radius: 18rpx;
-		background: #fff8e8;
-		color: #c97800;
-		border: 1rpx solid #f3d99a;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 23rpx;
-		font-weight: 800;
-	}
-
-	.control-row .light-btn+.light-btn {
-		background: #ffffff;
-		color: #61708a;
-		border-color: #dfe4ee;
-	}
-
-	.light-btn.disabled {
-		opacity: 0.55;
-	}
-
-	.light-btn text {
-		margin-left: 8rpx;
-	}
-
-	.small-primary {
-		min-height: 70rpx;
-		border-radius: 18rpx;
-		background: #1677ff;
-		color: #ffffff;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 22rpx;
-		font-weight: 800;
-	}
-
-	.small-primary.disabled {
-		background: #a9bfe8;
-	}
-
-	.finish-btn {
-		width: 100%;
-		margin-top: 18rpx;
-	}
-
-	.danger-tip {
-		margin-top: 22rpx;
-		text-align: center;
-		color: #ef3d52;
-		font-size: 23rpx;
-		font-weight: 800;
-		text-decoration: underline;
-	}
-
-	.record-empty {
-		min-height: 150rpx;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: #9aa7ba;
-		font-size: 22rpx;
-	}
-
-	.record-empty text {
-		margin-left: 10rpx;
-	}
-
-	.progress-pill,
-	.week-pill {
-		padding: 9rpx 16rpx;
-		border-radius: 20rpx;
-		color: #738098;
-		background: #f5f7fb;
-		font-size: 20rpx;
-		font-weight: 700;
-	}
-
-	.status-rows {
-		margin-top: 20rpx;
-		border-radius: 18rpx;
-		overflow: hidden;
-	}
-
-	.status-row {
-		min-height: 76rpx;
-		border-bottom: 1rpx solid #edf0f5;
-		background: #ffffff;
-	}
-
-	.status-row:last-child {
-		border-bottom: none;
-	}
-
-	.archive-strip {
-		margin-top: 20rpx;
-		padding: 18rpx;
-		border-radius: 18rpx;
-		background: #edf4ff;
-		color: #1677ff;
-		display: flex;
-		align-items: center;
-		font-size: 21rpx;
-		font-weight: 700;
-	}
-
-	.archive-strip text {
-		margin-left: 10rpx;
-	}
-
-	.warning-box,
-	.inline-warning {
-		margin-top: 20rpx;
-		padding: 20rpx;
-		border: 1rpx solid #f4d08a;
-		border-radius: 18rpx;
-		background: #fff9e8;
-	}
-
-	.warning-title {
-		display: flex;
-		align-items: flex-start;
-		color: #a95f00;
-		font-size: 22rpx;
-		font-weight: 800;
-		line-height: 1.45;
-	}
-
-	.warning-title text {
-		margin-left: 8rpx;
-	}
-
-	.warning-desc {
-		display: block;
-		margin-top: 10rpx;
-		color: #8f7448;
-		font-size: 20rpx;
-		line-height: 1.55;
-	}
-
-	.orange-btn {
-		min-height: 68rpx;
-		margin-top: 16rpx;
-		border-radius: 18rpx;
-		background: linear-gradient(135deg, #f28a00 0%, #df6f00 100%);
-		color: #ffffff;
-		font-size: 23rpx;
-		font-weight: 800;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		box-shadow: 0 8rpx 20rpx rgba(226, 123, 0, 0.22);
-	}
-
-	.orange-btn text {
-		margin-left: 8rpx;
-	}
-
-	.assessment-entry {
-		width: 100%;
-		margin-top: 20rpx;
-	}
-
-	.finish-empty {
-		min-height: 90rpx;
-	}
-
-	.assessment-title-row {
-		display: flex;
-		align-items: center;
-	}
-
-	.backend-badge {
-		margin-left: 10rpx;
-		padding: 5rpx 12rpx;
-		border-radius: 14rpx;
-		background: #e9f1ff;
-		color: #1677ff;
-		font-size: 17rpx;
-		font-weight: 700;
-	}
-
-	.collapse-btn {
-		display: flex;
-		align-items: center;
-		color: #61708a;
-		font-size: 21rpx;
-	}
-
-	.collapse-btn text {
-		margin-right: 4rpx;
-	}
-
-	.engine-tip {
-		margin-top: 20rpx;
-		padding: 16rpx 18rpx;
-		border-radius: 16rpx;
-		background: #f7faff;
-		display: flex;
-		align-items: flex-start;
-	}
-
-	.engine-tip text {
-		margin-left: 10rpx;
-		color: #68758c;
-		font-size: 19rpx;
-		line-height: 1.5;
-	}
-
-	.form-block {
-		margin-top: 20rpx;
-		padding: 22rpx 20rpx;
-		border-radius: 20rpx;
-		background: #f8fafd;
-	}
-
-	.form-title {
-		display: flex;
-		align-items: center;
-	}
-
-	.form-no {
-		color: #1f2d3d;
-		font-size: 24rpx;
-		font-weight: 800;
-		margin-right: 6rpx;
-	}
-
-	.form-label {
-		color: #202b3f;
-		font-size: 24rpx;
-		font-weight: 800;
-	}
-
-	.required {
-		margin-left: 10rpx;
-		color: #ef3d52;
-		font-size: 18rpx;
-		font-weight: 800;
-	}
-
-	.custom-badge {
-		margin-left: 10rpx;
-		padding: 5rpx 10rpx;
-		border-radius: 12rpx;
-		color: #1677ff;
-		background: #e9f1ff;
-		font-size: 17rpx;
-	}
-
-	.form-desc {
-		display: block;
-		margin: 10rpx 0 18rpx;
-		color: #9aa5b7;
-		font-size: 20rpx;
-		line-height: 1.45;
-	}
-
-	.scale-row {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		color: #8a95a8;
-		font-size: 21rpx;
-	}
-
-	.score-bubble {
-		min-width: 84rpx;
-		padding: 8rpx 16rpx;
-		border-radius: 24rpx;
-		background: #ffffff;
-		color: #1677ff;
-		border: 2rpx solid #9fc0ff;
-		text-align: center;
-		font-size: 23rpx;
-		font-weight: 900;
-	}
-
-	.danger-text {
-		color: #ef5968;
-	}
-
-	.pain-slider {
-		margin: 8rpx 8rpx 0;
-	}
-
-	.threshold-row {
-		text-align: right;
-		color: #9aa5b7;
-		font-size: 19rpx;
-	}
-
-	.option-row {
-		display: flex;
-		justify-content: space-between;
-	}
-
-	.option-btn {
-		flex: 1;
-		min-height: 64rpx;
-		margin: 0 8rpx;
-		border: 1rpx solid #dfe4ee;
-		border-radius: 18rpx;
-		background: #ffffff;
-		color: #59667c;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 22rpx;
-		font-weight: 700;
-	}
-
-	.option-btn:first-child {
-		margin-left: 0;
-	}
-
-	.option-btn:last-child {
-		margin-right: 0;
-	}
-
-	.option-btn.active {
-		border: 2rpx solid #8db2ff;
-		background: #eef5ff;
-		color: #1677ff;
-		font-weight: 900;
-	}
-
-	.textarea-block {
-		margin-top: 20rpx;
-	}
-
-	.textarea-label {
-		display: block;
-		color: #202b3f;
-		font-size: 23rpx;
-		font-weight: 800;
-		margin-bottom: 12rpx;
-	}
-
-	.note-input {
-		width: 100%;
-		height: 130rpx;
-		padding: 18rpx;
-		border-radius: 18rpx;
-		background: #f8fafd;
-		color: #202b3f;
-		font-size: 22rpx;
-		line-height: 1.5;
-	}
-
-	.note-placeholder {
-		color: #aab4c4;
-	}
-
-	.inline-warning {
-		margin-bottom: 20rpx;
-	}
-
-	.assessment-actions {
-		display: flex;
-		align-items: center;
-		margin-top: 20rpx;
-	}
-
-	.ghost-btn {
-		flex: 1;
-		min-height: 76rpx;
-		margin-right: 18rpx;
-		border-radius: 18rpx;
-		border: 1rpx solid #dfe4ee;
-		background: #ffffff;
-		color: #48556c;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 22rpx;
-		font-weight: 800;
-	}
-
-	.save-btn {
-		flex: 1.15;
-	}
-
-	.week-card {
-		padding-bottom: 24rpx;
-	}
-
-	.week-summary {
-		margin-top: 22rpx;
-		padding: 22rpx 18rpx;
-		border-radius: 20rpx;
-		background: #f8fafd;
-		display: flex;
-		align-items: center;
-	}
-
-	.ring {
-		width: 132rpx;
-		height: 132rpx;
-		border-radius: 50%;
-		padding: 12rpx;
-		flex: 0 0 auto;
-	}
-
-	.ring-inner {
-		width: 100%;
-		height: 100%;
-		border-radius: 50%;
-		background: #ffffff;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.ring-percent {
-		color: #1677ff;
-		font-size: 28rpx;
-		font-weight: 900;
-	}
-
-	.week-text {
-		flex: 1;
-		min-width: 0;
-		padding: 0 18rpx;
-	}
-
-	.week-count {
-		display: block;
-		color: #202b3f;
-		font-size: 25rpx;
-		font-weight: 800;
-	}
-
-	.week-compare {
-		display: block;
-		margin-top: 10rpx;
-		color: #16a35f;
-		font-size: 21rpx;
-		font-weight: 700;
-	}
-
-	.trend-line {
-		width: 112rpx;
-		height: 72rpx;
-		position: relative;
-		flex: 0 0 auto;
-	}
-
-	.trend-dot {
-		position: absolute;
-		width: 12rpx;
-		height: 12rpx;
-		border-radius: 50%;
-		background: #9db8f5;
-	}
-
-	.trend-dot.dot-a {
-		left: 8rpx;
-		top: 48rpx;
-	}
-
-	.trend-dot.dot-b {
-		left: 48rpx;
-		top: 30rpx;
-	}
-
-	.trend-dot.dot-c {
-		right: 8rpx;
-		top: 12rpx;
-		background: #1677ff;
-	}
-
-	.week-calendar {
-		margin-top: 22rpx;
-		display: flex;
-		justify-content: space-between;
-	}
-
-	.day-col {
-		width: 13.2%;
-		text-align: center;
-	}
-
-	.day-name {
-		display: block;
-		color: #8b97aa;
-		font-size: 19rpx;
-	}
-
-	.day-dot {
-		width: 42rpx;
-		height: 42rpx;
-		margin: 10rpx auto 8rpx;
-		border-radius: 50%;
-		background: #e8edf6;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.day-dot.done {
-		background: #1677ff;
-	}
-
-	.day-dot.rest {
-		background: #f1f4f9;
-		border: 1rpx dashed #c8d1df;
-	}
-
-	.day-col.today .day-name {
-		color: #1677ff;
-		font-weight: 900;
-	}
-
-	.day-col.today .day-dot {
-		box-shadow: 0 0 0 6rpx rgba(22, 119, 255, 0.12);
-	}
-
-	.day-date {
-		color: #a2acbc;
-		font-size: 17rpx;
-	}
-
-	.week-footer {
-		margin-top: 20rpx;
-		padding-top: 18rpx;
-		border-top: 1rpx solid #eef1f6;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-
-	.week-footer text {
-		flex: 1;
-		color: #9aa5b7;
-		font-size: 19rpx;
-		line-height: 1.45;
-		padding-right: 14rpx;
-	}
-
-	.week-footer .link-text {
-		flex: 0 0 auto;
-	}
-
-	.sync-btn {
-		min-height: 82rpx;
-		margin: 4rpx 0 18rpx;
-		border-radius: 20rpx;
-		border: 2rpx solid #1677ff;
-		background: #edf4ff;
-		color: #1677ff;
-		font-size: 25rpx;
-		font-weight: 900;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.send-symbol {
-		margin-right: 10rpx;
-		font-size: 25rpx;
-	}
-
-	.disclaimer {
-		display: block;
-		padding: 0 14rpx 120rpx;
-		color: #a2acbc;
-		font-size: 18rpx;
-		line-height: 1.6;
-		text-align: center;
-	}
-
-	.modal-mask {
-		position: fixed;
-		left: 0;
-		right: 0;
-		top: 0;
-		bottom: 0;
-		z-index: 130;
-		background: rgba(15, 23, 42, 0.52);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: 48rpx;
-	}
-
-	.warning-modal {
-		width: 100%;
-		padding: 34rpx 28rpx 28rpx;
-		border-radius: 26rpx;
-		background: #ffffff;
-		text-align: center;
-	}
-
-	.modal-icon {
-		width: 92rpx;
-		height: 92rpx;
-		margin: 0 auto 18rpx;
-		border-radius: 50%;
-		background: #fff4dc;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.modal-title {
-		display: block;
-		color: #202b3f;
-		font-size: 30rpx;
-		font-weight: 900;
-	}
-
-	.modal-desc {
-		display: block;
-		margin-top: 14rpx;
-		color: #69758b;
-		font-size: 23rpx;
-		line-height: 1.6;
-	}
-
-	.modal-meta {
-		display: block;
-		margin-top: 12rpx;
-		color: #b16800;
-		font-size: 20rpx;
-		line-height: 1.5;
-	}
-
-	.modal-actions {
-		display: flex;
-		margin-top: 26rpx;
-	}
-
-	.modal-button {
-		flex: 1;
-		min-height: 74rpx;
-		margin-top: 0;
-		margin-right: 0;
-	}
-
-	.modal-actions .ghost-btn {
-		margin-right: 16rpx;
-	}
-
-	.bottom-tabbar {
-		position: fixed;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		z-index: 110;
-		height: 112rpx;
-		padding-bottom: constant(safe-area-inset-bottom);
-		padding-bottom: env(safe-area-inset-bottom);
-		background: rgba(255, 255, 255, 0.98);
-		border-top: 1rpx solid #e6ebf3;
-		display: flex;
-		box-shadow: 0 -8rpx 24rpx rgba(31, 45, 61, 0.06);
-	}
-
-	.tab-item {
-		flex: 1;
-		height: 112rpx;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		color: #9aa5b7;
-		font-size: 19rpx;
-	}
-
-	.tab-item text:last-child {
-		margin-top: 5rpx;
-	}
-
-	.tab-item text.active {
-		color: #1677ff;
-		font-weight: 800;
-	}
-
-	.tab-badge-wrap {
-		position: relative;
-		width: 42rpx;
-		height: 30rpx;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.tab-badge {
-		position: absolute;
-		right: -18rpx;
-		top: -10rpx;
-		min-width: 24rpx;
-		height: 24rpx;
-		padding: 0 6rpx;
-		border-radius: 12rpx;
-		background: #ef4444;
-		color: #ffffff;
-		font-size: 16rpx;
-		line-height: 24rpx;
-		text-align: center;
-	}
-
-	.button-wrapper-blue {
-		flex: 1;
-		background-color: #155DFC;
-		border-radius: 10px;
-		padding: 10px;
-		color: white;
-
-		display: flex;
-		text-align: center;
-		justify-content: center;
-	}
-
-	.button-wrapper-blue .u-icon {
-		margin-right: 10rpx;
-		position: relative;
-		top: 2px;
-	}
-  .group-progress {
-  font-size: 28rpx;
-  color: #333;
-  display: block;
-  text-align: center;
-  margin-bottom: 20rpx;
+	color: #1f2d3d;
+	font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+	box-sizing: border-box;
 }
+
+.rehab-page view,
+.rehab-page text,
+.rehab-page image,
+.rehab-page scroll-view,
+.rehab-page slider,
+.rehab-page textarea {
+	box-sizing: border-box;
+}
+
+.debug-tool {
+	padding: 20rpx;
+	border-radius: 10px;
+	background: linear-gradient(135deg, #101a31 0%, #14294d 100%);
+	box-shadow: 0 10rpx 28rpx rgba(20, 34, 64, 0.22);
+}
+
+.debug-tool.collapsed {
+	width: 260rpx;
+	padding-bottom: 14rpx;
+}
+
+.tool-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	min-height: 38rpx;
+}
+
+.tool-title {
+	display: flex;
+	align-items: center;
+}
+
+.tool-shield {
+	width: 26rpx;
+	height: 26rpx;
+	margin-right: 8rpx;
+	border-radius: 50%;
+	background: #1677ff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.tool-title-text {
+	color: #ffffff;
+	font-size: 21rpx;
+	font-weight: 700;
+}
+
+.tool-action {
+	display: flex;
+	align-items: center;
+	color: #aebedb;
+	font-size: 18rpx;
+}
+
+.tool-action text {
+	margin-right: 4rpx;
+}
+
+.tool-scroll {
+	width: 100%;
+	margin-top: 14rpx;
+	white-space: nowrap;
+}
+
+.tool-chips {
+	display: flex;
+	align-items: center;
+	min-width: max-content;
+}
+
+.tool-chip {
+	flex: 0 0 auto;
+	margin-right: 12rpx;
+	padding: 10rpx 18rpx;
+	border: 1rpx solid rgba(156, 176, 216, 0.28);
+	border-radius: 22rpx;
+	color: #cad7ee;
+	background: rgba(255, 255, 255, 0.06);
+	font-size: 19rpx;
+	line-height: 1;
+}
+
+.tool-chip.active {
+	color: #ffffff;
+	border-color: #1677ff;
+	background: #1677ff;
+	font-weight: 700;
+}
+
+.category-tabs {
+	position: fixed;
+	top: 98rpx;
+	left: 0;
+	right: 0;
+	z-index: 90;
+	height: 78rpx;
+	background: #f4f7fb;
+	white-space: nowrap;
+}
+
+.category-tabs.collapsed {
+	top: 64rpx;
+}
+
+.category-track {
+	display: inline-flex;
+	align-items: center;
+	height: 78rpx;
+	padding: 0 24rpx;
+}
+
+.category-tab {
+	flex: 0 0 auto;
+	margin-right: 16rpx;
+	padding: 12rpx 24rpx;
+	border-radius: 28rpx;
+	background: #ffffff;
+	color: #66748b;
+	font-size: 22rpx;
+	font-weight: 700;
+	border: 1rpx solid #e3e9f2;
+}
+
+.category-tab.active {
+	color: #ffffff;
+	background: #1677ff;
+	border-color: #1677ff;
+	box-shadow: 0 8rpx 18rpx rgba(22, 119, 255, 0.22);
+}
+
+.top-toast {
+	position: fixed;
+	top: 190rpx;
+	left: 50%;
+	z-index: 120;
+	width: 670rpx;
+	min-height: 72rpx;
+	padding: 16rpx 20rpx;
+	transform: translateX(-50%);
+	border: 1rpx solid rgba(22, 119, 255, 0.18);
+	border-radius: 16rpx;
+	background: #eef5ff;
+	box-shadow: 0 10rpx 30rpx rgba(22, 119, 255, 0.18);
+	display: flex;
+	align-items: center;
+}
+
+.top-toast.success {
+	background: #eafaf1;
+	border-color: rgba(22, 163, 95, 0.22);
+	box-shadow: 0 10rpx 30rpx rgba(22, 163, 95, 0.16);
+}
+
+.top-toast.warning,
+.top-toast.danger {
+	background: #fff8e8;
+	border-color: rgba(231, 143, 0, 0.28);
+	box-shadow: 0 10rpx 30rpx rgba(231, 143, 0, 0.16);
+}
+
+.toast-icon {
+	width: 32rpx;
+	height: 32rpx;
+	margin-right: 12rpx;
+	border-radius: 50%;
+	background: #1677ff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+}
+
+.top-toast.success .toast-icon {
+	background: #16a35f;
+}
+
+.top-toast.warning .toast-icon,
+.top-toast.danger .toast-icon {
+	background: #f08a00;
+}
+
+.toast-text {
+	color: #27466e;
+	font-size: 22rpx;
+	line-height: 1.45;
+	font-weight: 600;
+}
+
+.page-body {
+	/* padding: 198rpx 24rpx 150rpx; */
+}
+
+.page-body.tool-mini {
+	padding-top: 160rpx;
+}
+
+.section-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin: 4rpx 4rpx 16rpx;
+}
+
+.heading-left {
+	display: flex;
+	align-items: center;
+}
+
+.heading-bar {
+	width: 8rpx;
+	height: 28rpx;
+	margin-right: 12rpx;
+	border-radius: 8rpx;
+	background: #1677ff;
+}
+
+.heading-title {
+	color: #1f2d3d;
+	font-size: 28rpx;
+	font-weight: 800;
+}
+
+.date-pill {
+	padding: 9rpx 16rpx;
+	border-radius: 22rpx;
+	color: #1677ff;
+	background: #edf3ff;
+	font-size: 20rpx;
+	font-weight: 700;
+}
+
+.card {
+	margin-bottom: 20rpx;
+	padding: 28rpx 24rpx;
+	border-radius: 24rpx;
+	background: #ffffff;
+	box-shadow: 0 8rpx 28rpx rgba(33, 51, 83, 0.06);
+	border: 1rpx solid rgba(226, 232, 242, 0.88);
+}
+
+.card-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.card-head.align-start {
+	align-items: flex-start;
+}
+
+.card-title {
+	color: #182338;
+	font-size: 30rpx;
+	font-weight: 800;
+	line-height: 1.35;
+}
+
+.card-subtitle {
+	display: block;
+	margin-top: 8rpx;
+	color: #8b97aa;
+	font-size: 21rpx;
+	line-height: 1.4;
+}
+
+.small-tabs {
+	display: flex;
+	align-items: center;
+	padding: 4rpx;
+	border-radius: 22rpx;
+	background: #f1f4f9;
+}
+
+.small-tabs view {
+	min-width: 78rpx;
+	padding: 10rpx 18rpx;
+	border-radius: 18rpx;
+	color: #7c889c;
+	font-size: 20rpx;
+	font-weight: 700;
+	text-align: center;
+}
+
+.small-tabs view.active {
+	color: #ffffff;
+	background: #1677ff;
+	box-shadow: 0 6rpx 14rpx rgba(22, 119, 255, 0.22);
+}
+
+.primary-btn {
+	min-height: 76rpx;
+	border-radius: 18rpx;
+	background: linear-gradient(135deg, #1677ff 0%, #0e6bd6 100%);
+	color: #ffffff;
+	font-size: 26rpx;
+	font-weight: 800;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 10rpx 22rpx rgba(22, 119, 255, 0.22);
+}
+
+.primary-btn.disabled {
+	background: #b8c8e7;
+	box-shadow: none;
+	color: rgba(255, 255, 255, 0.88);
+}
+
+.primary-btn text {
+	margin-left: 8rpx;
+}
+
+.plan-top {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+}
+
+.plan-title-row {
+	display: flex;
+	align-items: center;
+}
+
+.today-badge {
+	margin-left: 12rpx;
+	padding: 6rpx 14rpx;
+	border-radius: 18rpx;
+	background: #e9f1ff;
+	color: #1677ff;
+	font-size: 18rpx;
+	font-weight: 700;
+}
+
+.summary-pill {
+	padding: 10rpx 16rpx;
+	border-radius: 24rpx;
+	color: #8b97aa;
+	background: #f5f7fb;
+	font-size: 20rpx;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.progress-box {
+	margin-top: 24rpx;
+	padding: 18rpx 20rpx;
+	border-radius: 18rpx;
+	background: #f8fafd;
+}
+
+.progress-label {
+	display: flex;
+	align-items: center;
+	color: #657187;
+	font-size: 22rpx;
+	font-weight: 600;
+}
+
+.progress-dot {
+	width: 12rpx;
+	height: 12rpx;
+	margin-right: 10rpx;
+	border-radius: 50%;
+	background: #1677ff;
+}
+
+.progress-track {
+	height: 12rpx;
+	margin-top: 14rpx;
+	border-radius: 10rpx;
+	background: #dfe4ee;
+	overflow: hidden;
+}
+
+.progress-inner {
+	height: 100%;
+	border-radius: 10rpx;
+	background: linear-gradient(90deg, #1677ff, #4d93ff);
+	transition: width 0.25s ease;
+}
+
+.exercise-list {
+	margin-top: 18rpx;
+}
+
+.exercise-item {
+	min-height: 98rpx;
+	margin-bottom: 14rpx;
+	padding: 18rpx;
+	border: 2rpx solid transparent;
+	border-radius: 20rpx;
+	background: #f8fafd;
+	display: flex;
+	align-items: center;
+}
+
+.exercise-item.active {
+	border-color: #1677ff;
+	background: #eef5ff;
+	box-shadow: inset 5rpx 0 0 #1677ff;
+}
+
+.exercise-item.completed {
+	background: #f7faff;
+}
+
+.item-index {
+	width: 52rpx;
+	height: 52rpx;
+	margin-right: 16rpx;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 21rpx;
+	font-weight: 800;
+	flex: 0 0 auto;
+}
+
+.item-index.pending {
+	color: #8b97aa;
+	background: #e5e9f1;
+}
+
+.item-index.done {
+	color: #1677ff;
+	background: #dfe9ff;
+}
+
+.item-index.evaluate,
+.item-index.progress {
+	color: #ffffff;
+	background: #1677ff;
+}
+
+.item-index.paused {
+	color: #d77b00;
+	background: #fff0d5;
+}
+
+.item-info {
+	flex: 1;
+	min-width: 0;
+}
+
+.item-name {
+	display: block;
+	color: #202b3f;
+	font-size: 25rpx;
+	font-weight: 800;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.item-dose {
+	display: block;
+	margin-top: 6rpx;
+	color: #8b97aa;
+	font-size: 20rpx;
+}
+
+.item-right {
+	display: flex;
+	align-items: center;
+	margin-left: 10rpx;
+}
+
+.status-tag {
+	margin-right: 8rpx;
+	padding: 7rpx 12rpx;
+	border-radius: 16rpx;
+	font-size: 18rpx;
+	font-weight: 800;
+	white-space: nowrap;
+}
+
+.status-tag.large {
+	padding: 9rpx 16rpx;
+	font-size: 20rpx;
+}
+
+.status-tag.pending {
+	color: #9aa5b8;
+	background: #f0f2f6;
+}
+
+.status-tag.done {
+	color: #1677ff;
+	background: #e8f0ff;
+}
+
+.status-tag.evaluate {
+	color: #c98100;
+	background: #fff5d7;
+}
+
+.status-tag.progress {
+	color: #1677ff;
+	background: #e8f0ff;
+}
+
+.status-tag.paused {
+	color: #d05a00;
+	background: #fff0dc;
+}
+
+.start-btn {
+	margin-top: 20rpx;
+}
+
+.empty-plan {
+	padding: 40rpx 20rpx 20rpx;
+	text-align: center;
+}
+
+.empty-icon {
+	width: 100rpx;
+	height: 100rpx;
+	margin: 0 auto 20rpx;
+	border-radius: 50%;
+	background: #edf3ff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.empty-title {
+	display: block;
+	color: #202b3f;
+	font-size: 28rpx;
+	font-weight: 800;
+}
+
+.empty-desc {
+	display: block;
+	margin: 14rpx 24rpx 26rpx;
+	color: #8b97aa;
+	font-size: 22rpx;
+	line-height: 1.55;
+}
+
+.empty-btn {
+	width: 100%;
+}
+
+.media-card .card-head,
+.record-card .card-head {
+	margin-bottom: 22rpx;
+}
+
+.video-wrap {
+	position: relative;
+	height: 320rpx;
+	border-radius: 18rpx;
+	overflow: hidden;
+	background: linear-gradient(135deg, #dff0ff 0%, #8fc4f7 100%);
+}
+
+.cover-walk {
+	background: linear-gradient(135deg, #e3f3ff 0%, #6db5f2 58%, #2d86d5 100%);
+}
+
+.cover-breath {
+	background: linear-gradient(135deg, #e8f7ff 0%, #9ed8f0 55%, #4aa6d7 100%);
+}
+
+.cover-rehab {
+	background: linear-gradient(135deg, #e9f2ff 0%, #9cc4f8 55%, #3e83d8 100%);
+}
+
+.video-cover-bg {
+	position: absolute;
+	left: -90rpx;
+	bottom: -120rpx;
+	width: 520rpx;
+	height: 360rpx;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.22);
+}
+
+.cover-grid {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 76rpx;
+	background:
+		linear-gradient(rgba(255, 255, 255, 0.18) 2rpx, transparent 2rpx),
+		linear-gradient(90deg, rgba(255, 255, 255, 0.16) 2rpx, transparent 2rpx);
+	background-size: 42rpx 26rpx;
+	opacity: 0.72;
+}
+
+.cover-orbit {
+	position: absolute;
+	border: 2rpx solid rgba(255, 255, 255, 0.36);
+	border-radius: 50%;
+}
+
+.orbit-one {
+	right: -70rpx;
+	top: -44rpx;
+	width: 210rpx;
+	height: 210rpx;
+}
+
+.orbit-two {
+	left: 32rpx;
+	bottom: 48rpx;
+	width: 126rpx;
+	height: 126rpx;
+}
+
+.cover-icon {
+	position: absolute;
+	left: 38rpx;
+	bottom: 64rpx;
+	width: 112rpx;
+	height: 112rpx;
+	border-radius: 32rpx;
+	background: rgba(255, 255, 255, 0.22);
+	border: 2rpx solid rgba(255, 255, 255, 0.34);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	backdrop-filter: blur(8rpx);
+}
+
+.cover-pulse {
+	position: absolute;
+	right: 34rpx;
+	bottom: 56rpx;
+	display: flex;
+	align-items: flex-end;
+	height: 72rpx;
+}
+
+.pulse-bar {
+	width: 10rpx;
+	margin-left: 10rpx;
+	border-radius: 10rpx;
+	background: rgba(255, 255, 255, 0.72);
+}
+
+.bar-one {
+	height: 34rpx;
+}
+
+.bar-two {
+	height: 58rpx;
+}
+
+.bar-three {
+	height: 44rpx;
+}
+
+.video-image {
+	width: 100%;
+	height: 100%;
+}
+
+.video-label {
+	position: absolute;
+	left: 18rpx;
+	top: 18rpx;
+	padding: 8rpx 14rpx;
+	border-radius: 12rpx;
+	background: rgba(0, 0, 0, 0.42);
+	color: #ffffff;
+	font-size: 19rpx;
+}
+
+.play-circle {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 88rpx;
+	height: 88rpx;
+	transform: translate(-50%, -50%);
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.96);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 12rpx 30rpx rgba(0, 0, 0, 0.22);
+}
+
+.zoom-icon {
+	position: absolute;
+	right: 18rpx;
+	bottom: 18rpx;
+	width: 42rpx;
+	height: 42rpx;
+	border-radius: 10rpx;
+	background: rgba(0, 0, 0, 0.36);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.video-empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #a8b2c3;
+	font-size: 22rpx;
+}
+
+.diagram-panel {
+	border-radius: 18rpx;
+	background: #f6f9ff;
+	padding: 10rpx 18rpx;
+}
+
+.diagram-step {
+	display: flex;
+	align-items: flex-start;
+	padding: 18rpx 0;
+	border-bottom: 1rpx solid #e8eef8;
+}
+
+.diagram-step:last-child {
+	border-bottom: none;
+}
+
+.diagram-no {
+	width: 42rpx;
+	height: 42rpx;
+	margin-right: 14rpx;
+	border-radius: 50%;
+	background: #1677ff;
+	color: #ffffff;
+	font-size: 20rpx;
+	font-weight: 800;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.diagram-title {
+	display: block;
+	color: #202b3f;
+	font-size: 23rpx;
+	font-weight: 800;
+}
+
+.diagram-desc {
+	display: block;
+	margin-top: 6rpx;
+	color: #7e8a9e;
+	font-size: 20rpx;
+	line-height: 1.5;
+}
+
+.media-name-row {
+	margin-top: 22rpx;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.media-name {
+	color: #202b3f;
+	font-size: 27rpx;
+	font-weight: 800;
+}
+
+.link-text {
+	display: flex;
+	align-items: center;
+	color: #1677ff;
+	font-size: 20rpx;
+	font-weight: 700;
+}
+
+.media-desc {
+	display: block;
+	margin-top: 12rpx;
+	color: #6d788c;
+	font-size: 22rpx;
+	line-height: 1.55;
+}
+
+.media-footer {
+	margin-top: 22rpx;
+	padding-top: 18rpx;
+	border-top: 1rpx solid #eef1f6;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.config-text {
+	color: #a2acbc;
+	font-size: 19rpx;
+}
+
+.guide-btn {
+	padding: 8rpx 14rpx;
+	border-radius: 14rpx;
+	background: #f4f6fa;
+	color: #8b97aa;
+	font-size: 18rpx;
+}
+
+.current-row,
+.status-row {
+	min-height: 70rpx;
+	padding: 0 22rpx;
+	border-radius: 16rpx;
+	background: #f8fafd;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.current-label {
+	color: #8994a7;
+	font-size: 22rpx;
+}
+
+.current-name,
+.row-value {
+	color: #202b3f;
+	font-size: 23rpx;
+	font-weight: 800;
+	text-align: right;
+}
+
+.record-content {
+	padding-top: 26rpx;
+}
+
+.group-progress {
+	display: block;
+	text-align: center;
+	color: #707c91;
+	font-size: 22rpx;
+	font-weight: 700;
+}
+
 .group-dots {
-  display: flex;
-  justify-content: center;
-  gap: 20rpx;
-  margin-bottom: 32rpx;
-}
-.group-dot {
-  width: 80rpx;
-  height: 16rpx;
-  border-radius: 8rpx;
-  background-color: #e6edf7;
-  &.finished {
-    background-color: #2b78f5;
-  }
-  &.active {
-    background-color: #b4d4ff;
-  }
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin: 16rpx 0 8rpx;
 }
 
+.group-dot {
+	width: 54rpx;
+	height: 14rpx;
+	margin: 0 8rpx;
+	border-radius: 10rpx;
+	background: #dce2ee;
+}
+
+.group-dot.finished,
+.group-dot.active {
+	background: #1677ff;
+}
+
+.big-number-box {
+	padding: 18rpx 0 24rpx;
+	text-align: center;
+}
+
+.big-number {
+	color: #17233b;
+	font-size: 86rpx;
+	line-height: 1;
+	font-weight: 300;
+}
+
+.time-number {
+	font-size: 76rpx;
+	letter-spacing: 2rpx;
+}
+
+.big-unit {
+	color: #8d98aa;
+	font-size: 30rpx;
+	margin-left: 6rpx;
+}
+
+.number-tip {
+	display: block;
+	margin-top: 14rpx;
+	color: #9aa5b7;
+	font-size: 21rpx;
+}
+
+.record-main {
+	width: 100%;
+}
+
+.control-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 18rpx;
+}
+
+.control-row.three .light-btn {
+	flex: 1;
+	margin-right: 14rpx;
+}
+
+.control-row.three .small-primary {
+	flex: 1.25;
+}
+
+.light-btn {
+	min-height: 70rpx;
+	padding: 0 24rpx;
+	border-radius: 18rpx;
+	background: #fff8e8;
+	color: #c97800;
+	border: 1rpx solid #f3d99a;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 23rpx;
+	font-weight: 800;
+}
+
+.control-row .light-btn+.light-btn {
+	background: #ffffff;
+	color: #61708a;
+	border-color: #dfe4ee;
+}
+
+.light-btn.disabled {
+	opacity: 0.55;
+}
+
+.light-btn text {
+	margin-left: 8rpx;
+}
+
+.small-primary {
+	min-height: 70rpx;
+	border-radius: 18rpx;
+	background: #1677ff;
+	color: #ffffff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 22rpx;
+	font-weight: 800;
+}
+
+.small-primary.disabled {
+	background: #a9bfe8;
+}
+
+.finish-btn {
+	width: 100%;
+	margin-top: 18rpx;
+}
+
+.danger-tip {
+	margin-top: 22rpx;
+	text-align: center;
+	color: #ef3d52;
+	font-size: 23rpx;
+	font-weight: 800;
+	text-decoration: underline;
+}
+
+.record-empty {
+	min-height: 150rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #9aa7ba;
+	font-size: 22rpx;
+}
+
+.record-empty text {
+	margin-left: 10rpx;
+}
+
+.progress-pill,
+.week-pill {
+	padding: 9rpx 16rpx;
+	border-radius: 20rpx;
+	color: #738098;
+	background: #f5f7fb;
+	font-size: 20rpx;
+	font-weight: 700;
+}
+
+.status-rows {
+	margin-top: 20rpx;
+	border-radius: 18rpx;
+	overflow: hidden;
+}
+
+.status-row {
+	min-height: 76rpx;
+	border-bottom: 1rpx solid #edf0f5;
+	background: #ffffff;
+}
+
+.status-row:last-child {
+	border-bottom: none;
+}
+
+.archive-strip {
+	margin-top: 20rpx;
+	padding: 18rpx;
+	border-radius: 18rpx;
+	background: #edf4ff;
+	color: #1677ff;
+	display: flex;
+	align-items: center;
+	font-size: 21rpx;
+	font-weight: 700;
+}
+
+.archive-strip text {
+	margin-left: 10rpx;
+}
+
+.warning-box,
+.inline-warning {
+	margin-top: 20rpx;
+	padding: 20rpx;
+	border: 1rpx solid #f4d08a;
+	border-radius: 18rpx;
+	background: #fff9e8;
+}
+
+.warning-title {
+	display: flex;
+	align-items: flex-start;
+	color: #a95f00;
+	font-size: 22rpx;
+	font-weight: 800;
+	line-height: 1.45;
+}
+
+.warning-title text {
+	margin-left: 8rpx;
+}
+
+.warning-desc {
+	display: block;
+	margin-top: 10rpx;
+	color: #8f7448;
+	font-size: 20rpx;
+	line-height: 1.55;
+}
+
+.orange-btn {
+	min-height: 68rpx;
+	margin-top: 16rpx;
+	border-radius: 18rpx;
+	background: linear-gradient(135deg, #f28a00 0%, #df6f00 100%);
+	color: #ffffff;
+	font-size: 23rpx;
+	font-weight: 800;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 8rpx 20rpx rgba(226, 123, 0, 0.22);
+}
+
+.orange-btn text {
+	margin-left: 8rpx;
+}
+
+.assessment-entry {
+	width: 100%;
+	margin-top: 20rpx;
+}
+
+.finish-empty {
+	min-height: 90rpx;
+}
+
+.assessment-title-row {
+	display: flex;
+	align-items: center;
+}
+
+.backend-badge {
+	margin-left: 10rpx;
+	padding: 5rpx 12rpx;
+	border-radius: 14rpx;
+	background: #e9f1ff;
+	color: #1677ff;
+	font-size: 17rpx;
+	font-weight: 700;
+}
+
+.collapse-btn {
+	display: flex;
+	align-items: center;
+	color: #61708a;
+	font-size: 21rpx;
+}
+
+.collapse-btn text {
+	margin-right: 4rpx;
+}
+
+.engine-tip {
+	margin-top: 20rpx;
+	padding: 16rpx 18rpx;
+	border-radius: 16rpx;
+	background: #f7faff;
+	display: flex;
+	align-items: flex-start;
+}
+
+.engine-tip text {
+	margin-left: 10rpx;
+	color: #68758c;
+	font-size: 19rpx;
+	line-height: 1.5;
+}
+
+.form-block {
+	margin-top: 20rpx;
+	padding: 22rpx 20rpx;
+	border-radius: 20rpx;
+	background: #f8fafd;
+}
+
+.form-title {
+	display: flex;
+	align-items: center;
+}
+
+.form-no {
+	color: #1f2d3d;
+	font-size: 24rpx;
+	font-weight: 800;
+	margin-right: 6rpx;
+}
+
+.form-label {
+	color: #202b3f;
+	font-size: 24rpx;
+	font-weight: 800;
+}
+
+.required {
+	margin-left: 10rpx;
+	color: #ef3d52;
+	font-size: 18rpx;
+	font-weight: 800;
+}
+
+.custom-badge {
+	margin-left: 10rpx;
+	padding: 5rpx 10rpx;
+	border-radius: 12rpx;
+	color: #1677ff;
+	background: #e9f1ff;
+	font-size: 17rpx;
+}
+
+.form-desc {
+	display: block;
+	margin: 10rpx 0 18rpx;
+	color: #9aa5b7;
+	font-size: 20rpx;
+	line-height: 1.45;
+}
+
+.scale-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	color: #8a95a8;
+	font-size: 21rpx;
+}
+
+.score-bubble {
+	min-width: 84rpx;
+	padding: 8rpx 16rpx;
+	border-radius: 24rpx;
+	background: #ffffff;
+	color: #1677ff;
+	border: 2rpx solid #9fc0ff;
+	text-align: center;
+	font-size: 23rpx;
+	font-weight: 900;
+}
+
+.danger-text {
+	color: #ef5968;
+}
+
+.pain-slider {
+	margin: 8rpx 8rpx 0;
+}
+
+.threshold-row {
+	text-align: right;
+	color: #9aa5b7;
+	font-size: 19rpx;
+}
+
+.option-row {
+	display: flex;
+	justify-content: space-between;
+}
+
+.option-btn {
+	flex: 1;
+	min-height: 64rpx;
+	margin: 0 8rpx;
+	border: 1rpx solid #dfe4ee;
+	border-radius: 18rpx;
+	background: #ffffff;
+	color: #59667c;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 22rpx;
+	font-weight: 700;
+}
+
+.option-btn:first-child {
+	margin-left: 0;
+}
+
+.option-btn:last-child {
+	margin-right: 0;
+}
+
+.option-btn.active {
+	border: 2rpx solid #8db2ff;
+	background: #eef5ff;
+	color: #1677ff;
+	font-weight: 900;
+}
+
+.textarea-block {
+	margin-top: 20rpx;
+}
+
+.textarea-label {
+	display: block;
+	color: #202b3f;
+	font-size: 23rpx;
+	font-weight: 800;
+	margin-bottom: 12rpx;
+}
+
+.note-input {
+	width: 100%;
+	height: 130rpx;
+	padding: 18rpx;
+	border-radius: 18rpx;
+	background: #f8fafd;
+	color: #202b3f;
+	font-size: 22rpx;
+	line-height: 1.5;
+}
+
+.note-placeholder {
+	color: #aab4c4;
+}
+
+.inline-warning {
+	margin-bottom: 20rpx;
+}
+
+.assessment-actions {
+	display: flex;
+	align-items: center;
+	margin-top: 20rpx;
+}
+
+.ghost-btn {
+	flex: 1;
+	min-height: 76rpx;
+	margin-right: 18rpx;
+	border-radius: 18rpx;
+	border: 1rpx solid #dfe4ee;
+	background: #ffffff;
+	color: #48556c;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 22rpx;
+	font-weight: 800;
+}
+
+.save-btn {
+	flex: 1.15;
+}
+
+.week-card {
+	padding-bottom: 24rpx;
+}
+
+.week-summary {
+	margin-top: 22rpx;
+	padding: 22rpx 18rpx;
+	border-radius: 20rpx;
+	background: #f8fafd;
+	display: flex;
+	align-items: center;
+}
+
+.ring {
+	width: 132rpx;
+	height: 132rpx;
+	border-radius: 50%;
+	padding: 12rpx;
+	flex: 0 0 auto;
+}
+
+.ring-inner {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	background: #ffffff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.ring-percent {
+	color: #1677ff;
+	font-size: 28rpx;
+	font-weight: 900;
+}
+
+.week-text {
+	flex: 1;
+	min-width: 0;
+	padding: 0 18rpx;
+}
+
+.week-count {
+	display: block;
+	color: #202b3f;
+	font-size: 25rpx;
+	font-weight: 800;
+}
+
+.week-compare {
+	display: block;
+	margin-top: 10rpx;
+	color: #16a35f;
+	font-size: 21rpx;
+	font-weight: 700;
+}
+
+.trend-line {
+	width: 112rpx;
+	height: 72rpx;
+	position: relative;
+	flex: 0 0 auto;
+}
+
+.trend-dot {
+	position: absolute;
+	width: 12rpx;
+	height: 12rpx;
+	border-radius: 50%;
+	background: #9db8f5;
+}
+
+.trend-dot.dot-a {
+	left: 8rpx;
+	top: 48rpx;
+}
+
+.trend-dot.dot-b {
+	left: 48rpx;
+	top: 30rpx;
+}
+
+.trend-dot.dot-c {
+	right: 8rpx;
+	top: 12rpx;
+	background: #1677ff;
+}
+
+.week-calendar {
+	margin-top: 22rpx;
+	display: flex;
+	justify-content: space-between;
+}
+
+.day-col {
+	width: 13.2%;
+	text-align: center;
+}
+
+.day-name {
+	display: block;
+	color: #8b97aa;
+	font-size: 19rpx;
+}
+
+.day-dot {
+	width: 42rpx;
+	height: 42rpx;
+	margin: 10rpx auto 8rpx;
+	border-radius: 50%;
+	background: #e8edf6;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.day-dot.done {
+	background: #1677ff;
+}
+
+.day-dot.rest {
+	background: #f1f4f9;
+	border: 1rpx dashed #c8d1df;
+}
+
+.day-col.today .day-name {
+	color: #1677ff;
+	font-weight: 900;
+}
+
+.day-col.today .day-dot {
+	box-shadow: 0 0 0 6rpx rgba(22, 119, 255, 0.12);
+}
+
+.day-date {
+	color: #a2acbc;
+	font-size: 17rpx;
+}
+
+.week-footer {
+	margin-top: 20rpx;
+	padding-top: 18rpx;
+	border-top: 1rpx solid #eef1f6;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.week-footer text {
+	flex: 1;
+	color: #9aa5b7;
+	font-size: 19rpx;
+	line-height: 1.45;
+	padding-right: 14rpx;
+}
+
+.week-footer .link-text {
+	flex: 0 0 auto;
+}
+
+.sync-btn {
+	min-height: 82rpx;
+	margin: 4rpx 0 18rpx;
+	border-radius: 20rpx;
+	border: 2rpx solid #1677ff;
+	background: #edf4ff;
+	color: #1677ff;
+	font-size: 25rpx;
+	font-weight: 900;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.send-symbol {
+	margin-right: 10rpx;
+	font-size: 25rpx;
+}
+
+.disclaimer {
+	display: block;
+	padding: 0 14rpx 120rpx;
+	color: #a2acbc;
+	font-size: 18rpx;
+	line-height: 1.6;
+	text-align: center;
+}
+
+.modal-mask {
+	position: fixed;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	z-index: 130;
+	background: rgba(15, 23, 42, 0.52);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 48rpx;
+}
+
+.warning-modal {
+	width: 100%;
+	padding: 34rpx 28rpx 28rpx;
+	border-radius: 26rpx;
+	background: #ffffff;
+	text-align: center;
+}
+
+.modal-icon {
+	width: 92rpx;
+	height: 92rpx;
+	margin: 0 auto 18rpx;
+	border-radius: 50%;
+	background: #fff4dc;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.modal-title {
+	display: block;
+	color: #202b3f;
+	font-size: 30rpx;
+	font-weight: 900;
+}
+
+.modal-desc {
+	display: block;
+	margin-top: 14rpx;
+	color: #69758b;
+	font-size: 23rpx;
+	line-height: 1.6;
+}
+
+.modal-meta {
+	display: block;
+	margin-top: 12rpx;
+	color: #b16800;
+	font-size: 20rpx;
+	line-height: 1.5;
+}
+
+.modal-actions {
+	display: flex;
+	margin-top: 26rpx;
+}
+
+.modal-button {
+	flex: 1;
+	min-height: 74rpx;
+	margin-top: 0;
+	margin-right: 0;
+}
+
+.modal-actions .ghost-btn {
+	margin-right: 16rpx;
+}
+
+.bottom-tabbar {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 110;
+	height: 112rpx;
+	padding-bottom: constant(safe-area-inset-bottom);
+	padding-bottom: env(safe-area-inset-bottom);
+	background: rgba(255, 255, 255, 0.98);
+	border-top: 1rpx solid #e6ebf3;
+	display: flex;
+	box-shadow: 0 -8rpx 24rpx rgba(31, 45, 61, 0.06);
+}
+
+.tab-item {
+	flex: 1;
+	height: 112rpx;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	color: #9aa5b7;
+	font-size: 19rpx;
+}
+
+.tab-item text:last-child {
+	margin-top: 5rpx;
+}
+
+.tab-item text.active {
+	color: #1677ff;
+	font-weight: 800;
+}
+
+.tab-badge-wrap {
+	position: relative;
+	width: 42rpx;
+	height: 30rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.tab-badge {
+	position: absolute;
+	right: -18rpx;
+	top: -10rpx;
+	min-width: 24rpx;
+	height: 24rpx;
+	padding: 0 6rpx;
+	border-radius: 12rpx;
+	background: #ef4444;
+	color: #ffffff;
+	font-size: 16rpx;
+	line-height: 24rpx;
+	text-align: center;
+}
+
+.button-wrapper-blue {
+	flex: 1;
+	background-color: #155DFC;
+	border-radius: 10px;
+	padding: 10px;
+	color: white;
+
+	display: flex;
+	text-align: center;
+	justify-content: center;
+}
+
+.button-wrapper-blue .u-icon {
+	margin-right: 10rpx;
+	position: relative;
+	top: 2px;
+}
+
+.group-progress {
+	font-size: 28rpx;
+	color: #333;
+	display: block;
+	text-align: center;
+	margin-bottom: 20rpx;
+}
+
+.group-dots {
+	display: flex;
+	justify-content: center;
+	gap: 20rpx;
+	margin-bottom: 32rpx;
+}
+
+.group-dot {
+	width: 80rpx;
+	height: 16rpx;
+	border-radius: 8rpx;
+	background-color: #e6edf7;
+
+	&.finished {
+		background-color: #2b78f5;
+	}
+
+	&.active {
+		background-color: #b4d4ff;
+	}
+}
 </style>

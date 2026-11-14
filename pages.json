@@ -135,7 +135,8 @@
 		{
 			"path": "pages/index/caregiverOrder",
 			"style": {
-			    "navigationBarTitleText": "服务详情",
+			    "navigationStyle": "custom",
+			    "navigationBarTitleText": "陪诊服务详情",
 			    "navigationBarBackgroundColor": "#ffffff"
 			  }
 		},
@@ -196,6 +197,12 @@
 		},
 		{
 			"path": "pages/index/myHealthRecord",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/index/medicalRecord",
 			"style": {
 				"navigationBarTitleText": ""
 			}

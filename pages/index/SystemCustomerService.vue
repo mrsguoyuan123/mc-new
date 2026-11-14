@@ -68,7 +68,8 @@
 <script>
 	import myTabbar from "@/components/myTabbar.vue";
 	import {
-		getMeProfileApi
+		getMeProfileApi,
+		postAuthLogoutApi
 	} from '@/api/frontApikit.js'
 
 	export default {

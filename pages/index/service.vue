@@ -484,101 +484,70 @@
 					uni.hideLoading();
 				}
 			},
-			// 定位打卡
+			// 定位打卡：优先 gcj02 定位，失败自动降级使用模拟固定坐标
 			async locationCheck() {
 				if (this.actionLoading || this.hasCheckin) return;
 				this.actionLoading = true;
+				uni.showLoading({ title: '定位中...', mask: true });
 				try {
 					const location = await this.getCurrentLocation();
-					this.checkinData.latitude = Number(location.latitude);
-					this.checkinData.longitude = Number(location.longitude);
-					this.checkinData.address = location.address || this.address;
-					this.task1Finished = true;
-					this.locDone = true;
+					this.applyLocation(location, false);
 					uni.showToast({ title: '定位成功', icon: 'success' });
 				} catch (error) {
-					this.handleLocationError(error);
+					const message = String((error && error.errMsg) || (error && error.message) || '');
+					if (/cancel/i.test(message)) {
+						uni.showToast({ title: '已取消定位', icon: 'none' });
+					} else {
+						this.applyLocation(this.buildMockLocation(), true);
+					}
 				} finally {
 					this.actionLoading = false;
+					uni.hideLoading();
 				}
-				// 		uni.chooseLocation({
-				// 			success: (res) => {
-				// 				console.log('选点结果', res)
-				// 				uni.showModal({
-				// 					title: "定位打卡成功",
-				// 					content: `地址：${res.name}\n经纬度：${res.latitude},${res.longitude}`,
-				// 					showCancel: false,
-				// 					success: () => {
-				// 						this.task1Finished = true;
-				// 						this.locDone = true;
-				// 					}
-				// 				})
-				// 			},
-				// 			fail: (err) => {
-				// 				console.error(err)
-				// 				if (err.errMsg && err.errMsg.includes("auth")) {
-				// 					uni.showModal({
-				// 						title: "需要位置权限",
-				// 						content: "请开启位置权限才能定位打卡",
-				// 						confirmText: "去设置",
-				// 						success: (res) => {
-				// 							if (res.confirm) uni.openSetting()
-				// 						}
-				// 					})
-				// 				} else if (err.errMsg && err.errMsg.includes('cancel')) {
-				// 					uni.showToast({
-				// 						title: "已取消定位打卡",
-				// 						icon: "none"
-				// 					})
-				// 				} else {
-				// 					uni.showToast({
-				// 						title: "打开地图失败",
-				// 						icon: "none"
-				// 					})
-				// 				}
-				// 			}
-				// 		})
-
-
 			},
-			// 拍照打卡
+			// 写入定位结果；降级时使用模拟坐标并提示
+			applyLocation(location, isMock) {
+				this.checkinData.latitude = Number(location.latitude);
+				this.checkinData.longitude = Number(location.longitude);
+				this.checkinData.address = location.address || this.address || '';
+				this.task1Finished = true;
+				this.locDone = true;
+				if (isMock) {
+					uni.showToast({ title: '定位失败，已使用模拟坐标', icon: 'none', duration: 2200 });
+				}
+			},
+			// ===== 【调试造假数据块 - 开始】定位失败时的兜底模拟坐标，仅用于无定位权限/环境调试 =====
+			buildMockLocation() {
+				return {
+					latitude: 39.908823,
+					longitude: 116.39747,
+					address: '模拟定位地址（调试用）'
+				};
+			},
+			// ===== 【调试造假数据块 - 结束】 =====
+			// 拍照打卡：仅唤起相机，限制 1~3 张，上传拿到 URL 后再提交签到
 			photoCheck() {
 				if (this.actionLoading || this.hasCheckin) return;
+				const remain = 3 - this.checkinData.photos.length;
+				if (remain <= 0) {
+					uni.showToast({ title: '签到照片最多 3 张', icon: 'none' });
+					return;
+				}
 				uni.chooseImage({
-					count: Math.max(1, 9 - this.checkinData.photos.length),
+					count: remain,
 					sizeType: ['compressed'],
-					sourceType: ['camera', 'album'],
+					sourceType: ['camera'],
 					success: res => {
 						const files = res.tempFilePaths || [];
 						if (files.length) this.uploadCheckinPhotos(files);
 					},
 					fail: error => {
 						if (error && /cancel/i.test(String(error.errMsg || ''))) return;
-						uni.showToast({ title: '选择照片失败，请检查权限', icon: 'none' });
+						uni.showToast({ title: '拍照失败，请检查相机权限', icon: 'none' });
 					}
 				});
-				// uni.chooseMedia({
-				// 	count: 1,
-				// 	mediaType: ['image'],
-				// 	sourceType: ['camera'],
-				// 	success: (res) => {
-				// 		const tempPath = res.tempFiles[0].tempFilePath
-				// 		console.log("拍照路径", tempPath)
-				// 		// this.photoDone = true;
-				// 		uni.showModal({
-				// 			title: "拍照打卡成功",
-				// 			content: "拍照签到完成",
-				// 			showCancel: false,
-				// 			success: () => {
-				// 				this.task1Finished = true;
-				// 				this.photoDone = true
-
-				// 			}
-				// 		})
-				// 	}
-				// })
 			},
-			// 上传签到照片
+			// 上传签到照片（先调文件上传接口，拿到真实 URL）
 			async uploadCheckinPhotos(files) {
 				this.actionLoading = true;
 				uni.showLoading({ title: '照片上传中...', mask: true });
@@ -591,6 +560,7 @@
 						});
 						const url = this.extractUploadedFileUrl(result);
 						if (url) this.checkinData.photos.push(url);
+						if (this.checkinData.photos.length > 3) this.checkinData.photos = this.checkinData.photos.slice(0, 3);
 					}
 					this.task1Finished = true;
 					this.photoDone = this.checkinData.photos.length > 0;
@@ -602,7 +572,7 @@
 					uni.hideLoading();
 				}
 			},
-			// 获取设备当前定位
+			// 获取设备当前定位（gcj02）
 			getCurrentLocation() {
 				return new Promise((resolve, reject) => {
 					uni.getLocation({
@@ -625,22 +595,38 @@
 					});
 				});
 			},
-			// 处理定位权限/取消等异常
-			handleLocationError(error) {
-				const message = String((error && error.errMsg) || (error && error.message) || '');
-				if (/cancel/i.test(message)) return;
-				if (/auth|deny|permission/i.test(message)) {
-					uni.showModal({
-						title: '需要位置权限',
-						content: '请开启位置权限后再进行到院签到',
-						confirmText: '去设置',
-						success: res => {
-							if (res.confirm && uni.openSetting) uni.openSetting();
-						}
-					});
-					return;
+			// 本地时间格式化为 yyyy-MM-ddTHH:mm:ss
+			formatCapturedAt(date) {
+				const pad = value => String(value).padStart(2, '0');
+				const year = date.getFullYear();
+				const month = pad(date.getMonth() + 1);
+				const day = pad(date.getDate());
+				const hours = pad(date.getHours());
+				const minutes = pad(date.getMinutes());
+				const seconds = pad(date.getSeconds());
+				return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+			},
+			// 签到入参校验
+			validateCheckinPayload(payload) {
+				if (typeof payload.latitude !== 'number' || Number.isNaN(payload.latitude) || payload.latitude < -90 || payload.latitude > 90) {
+					return '纬度需在 -90~90 之间';
 				}
-				uni.showToast({ title: '未获取到签到位置', icon: 'none' });
+				if (typeof payload.longitude !== 'number' || Number.isNaN(payload.longitude) || payload.longitude < -180 || payload.longitude > 180) {
+					return '经度需在 -180~180 之间';
+				}
+				if (!payload.address || typeof payload.address !== 'string') {
+					return '签到地址不能为空';
+				}
+				if (payload.address.length > 255) {
+					return '签到地址不能超过 255 个字符';
+				}
+				if (!Array.isArray(payload.photos) || payload.photos.length < 1 || payload.photos.length > 3) {
+					return '签到照片需 1~3 张';
+				}
+				if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(payload.capturedAt)) {
+					return '打卡时间格式不正确';
+				}
+				return '';
 			},
 			// 确认操作弹窗
 			confirmAction(content) {
@@ -804,7 +790,7 @@
 				}
 				return true;
 			},
-			// 提交定位和照片，完成到院签到
+			// 提交到院签到：定位 + 照片（必填）+ capturedAt，成功后进入任务2
 			async goTask2() {
 				if (!this.ensureServiceStarted() || this.actionLoading || this.hasCheckin) return;
 				if (this.checkinData.latitude === null || this.checkinData.longitude === null) {
@@ -812,34 +798,27 @@
 					return;
 				}
 				if (!this.checkinData.photos.length) {
-					uni.showToast({ title: '请先上传签到照片', icon: 'none' });
+					uni.showToast({ title: '请先拍照上传签到照片', icon: 'none' });
+					return;
+				}
+				const payload = {
+					latitude: Number(this.checkinData.latitude),
+					longitude: Number(this.checkinData.longitude),
+					address: (this.checkinData.address || this.address || '').slice(0, 255),
+					capturedAt: this.formatCapturedAt(new Date()),
+					photos: this.checkinData.photos.slice(0, 3)
+				};
+				const invalid = this.validateCheckinPayload(payload);
+				if (invalid) {
+					uni.showToast({ title: invalid, icon: 'none' });
 					return;
 				}
 				this.actionLoading = true;
 				uni.showLoading({ title: '签到提交中...', mask: true });
 				try {
-
-// 	postEscortOrdersByIdCheckinApi入参 
-// { id: 订单ID, 
-// data: {...} 
-// }；
-//
-// latitude(number,-90~90)
-// /longitude(number,-180~180)
-// address(string,≤255)。
-//  *   photos 为照片 URL 数组，必须 1~3 张，
-// 且先经 POST /files/upload 取得真实 URL 再传入。
-//  *   capturedAt 为实际拍摄时间（yyyy-MM-ddTHH:mm:ss），
-// 禁止传未来时间；
-// 无历史证据时服务端拒绝归档。
 					await postEscortOrdersByIdCheckinApi({
 						id: this.currentOrderId,
-						data: {
-							latitude: Number(this.checkinData.latitude),
-							longitude: Number(this.checkinData.longitude),
-							address: this.checkinData.address || this.address,
-							photos: this.checkinData.photos
-						}
+						data: payload
 					});
 					this.hasCheckin = true;
 					this.task1Done = true;

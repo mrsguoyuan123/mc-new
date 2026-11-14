@@ -1,0 +1,128 @@
+﻿<template>
+  <view class="page-order">
+    <!-- 自定义导航栏 -->
+    <view class="top-bar">
+      <view class="status-bar" :style="{ height: ((statusBarHeight || 0) + (menuButton.height || 0)) + 'px' }"></view>
+      <view class="custom-nav">
+        <view class="nav-back" @click="handleBack">
+          <u-icon name="arrow-left" color="#1f2d3d" size="38rpx"></u-icon>
+        </view>
+        <view class="nav-titles">
+          <text class="nav-title">陪诊服务详情</text>
+          <text class="nav-sub">门诊全程跟进 · 专属一对一</text>
+        </view>
+        <view class="nav-right">
+          <text class="nav-right-label">剩余可用权益</text>
+          <text class="nav-right-value">{{ escortCount === null ? '--' : escortCount }} 次</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载态 -->
+    <view v-if="pageLoading" class="state-box">
+      <u-loading-icon mode="circle" color="#2563ff" size="48rpx"></u-loading-icon>
+      <text class="state-text">正在加载预约信息...</text>
+    </view>
+
+    <!-- 无有效预约态 -->
+    <view v-else-if="!booking" class="state-box">
+      <u-icon name="file-text" color="#c0c4cc" size="80rpx"></u-icon>
+      <text class="state-title">{{ pageError || '暂无进行中的陪诊预约' }}</text>
+      <text class="state-desc">您可前往预约页提交新的陪诊预约</text>
+      <button class="state-btn" @click="goApply">去预约</button>
+    </view>
+
+    <template v-else>
+      <scroll-view scroll-y class="page-scroll">
+        <!-- 蓝色预约状态卡片 -->
+        <view class="booking-card">
+          <view class="booking-tag">
+            <u-icon name="checkmark-circle-fill" color="#ffffff" size="30rpx"></u-icon>
+            <text class="booking-tag-text">{{ statusText }}生效中</text>
+          </view>
+          <view class="booking-name">{{ periodName }}</view>
+          <view class="booking-divider"></view>
+          <view class="booking-info-row">
+            <view class="booking-info-item">
+              <u-icon name="calendar" color="#ffffff" size="34rpx"></u-icon>
+              <view class="booking-info-text">
+                <text class="booking-info-label">陪诊日期</text>
+                <text class="booking-info-value">{{ booking.serviceDate || '--' }}</text>
+              </view>
+            </view>
+            <view class="booking-info-item">
+              <u-icon name="clock" color="#ffffff" size="34rpx"></u-icon>
+              <view class="booking-info-text">
+                <text class="booking-info-label">常规陪诊时段</text>
+                <text class="booking-info-value">{{ periodName }} ({{ periodTime }})</text>
+              </view>
+            </view>
+          </view>
+          <view v-if="destination" class="booking-destination">
+            <u-icon name="map-fill" color="#ffffff" size="30rpx"></u-icon>
+            <text class="booking-destination-text">目的地：{{ destination }}</text>
+          </view>
+        </view>
+
+        <!-- 对接驻点 -->
+        <view class="section-title">对接驻点</view>
+        <view class="station-card">
+          <view class="station-head">
+            <image v-if="caregiverAvatar" class="station-avatar" :src="caregiverAvatar" mode="aspectFill"></image>
+            <view v-else class="station-avatar station-avatar-empty">
+              <u-icon name="account" color="#ffffff" size="56rpx"></u-icon>
+            </view>
+            <view class="station-meta">
+              <view class="station-name-line">
+                <text class="station-name">{{ caregiver.name || '专属驻点' }}</text>
+                <view class="station-cert">已实名认证</view>
+              </view>
+              <text class="station-desc">{{ stationDesc }}</text>
+              <view v-if="stationTags.length" class="station-tags">
+                <text v-for="(tag, idx) in stationTags" :key="idx" class="station-tag">{{ tag }}</text>
+              </view>
+            </view>
+            <view class="station-rating">
+              <u-icon name="star-fill" color="#ff8800" size="30rpx"></u-icon>
+              <text class="station-rating-text">{{ formatRating(caregiver.rating) }}</text>
+            </view>
+          </view>
+          <view class="station-btn-row">
+            <view class="station-btn station-btn-primary" @click="handleCall">
+              <u-icon name="phone" color="#ffffff" size="36rpx"></u-icon>
+              <text>电话沟通</text>
+            </view>
+            <view class="station-btn station-btn-plain" @click="handleMeetingPoint">
+              <u-icon name="map" color="#2563ff" size="36rpx"></u-icon>
+              <text>确认集合点</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 就诊当日服务指引 -->
+        <view class="guide-card">
+          <view class="guide-head">
+            <u-icon name="file-text" color="#2563ff" size="36rpx"></u-icon>
+            <text class="guide-title">就诊当日服务指引</text>
+          </view>
+          <view v-for="(item, idx) in guideList" :key="idx" class="guide-item">
+            <text class="guide-index">{{ idx + 1 }}.</text>
+            <text class="guide-content"><text class="guide-keyword">{{ item.keyword }}</text>：{{ item.content }}</text>
+          </view>
+        </view>
+
+        <!-- 取消预约 -->
+        <view class="cancel-card" @click="handleCancel">
+          <u-icon name="reload" color="#606266" size="34rpx"></u-icon>
+          <text class="cancel-text">取消预约 (权益全额返还)</text>
+        </view>
+        <text class="cancel-tip">如需更换驻点或调整预约时间，可取消后重新提交预约</text>
+        <view class="bottom-placeholder"></view>
+      </scroll-view>
+    </template>
+
+    <myTabbar></myTabbar>
+    <u-toast ref="uToast"></u-toast>
+  </view>
+</template>
+

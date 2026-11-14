@@ -18,7 +18,7 @@
 		</view>
 		<view class="page-content page-profile">
 			<view class="radius-15 card-top bg-white card-border card-border-gray u-flex space-between"
-				@click="routeTo('records')">
+				@click="routeTo()">
 				<view class="u-flex">
 					<view class="view-icon bg-orange margin-right-5">
 						<u-icon name="order" color="#ff6900" :bold="true" size="60rpx"></u-icon>
@@ -478,11 +478,8 @@
 				if (firstForm) firstForm.validateField('userInfo.gender')
 			},
 			routeTo(res) {
-				let data = {
-					title: 'hello',
-					id: 1
-				}
-				let routeUrl = `/pages/index/` + res + `?data=` + encodeURIComponent(JSON.stringify(data))
+
+				let routeUrl = `/components/medicalRecord.vue` 
 				this.$safeJump(routeUrl)
 			},
 

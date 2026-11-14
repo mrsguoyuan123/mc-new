@@ -319,6 +319,7 @@
 						<view class="ic ic-alert-orange"></view><text class="highlight-title">突出关注的睡眠困扰维度</text>
 					</view>
 					<text class="highlight-desc">基于您的答题，系统检测到以下 2 个维度对您的术后睡眠造成了主要制约：</text>
+					{{ focusDimensions }}
 					<view v-for="item in focusDimensions" :key="item.name" class="focus-row">
 						<view>
 							<text class="focus-name">{{ item.name }}</text>
@@ -333,6 +334,7 @@
 						<text class="dimension-title">七大维度评分明细</text>
 						<text class="dimension-note">单项最高 3 分，分数越低越优</text>
 					</view>
+					{{ dimensions }}
 					<view v-for="item in dimensions" :key="item.name"
 						:class="['dimension-row', item.key === 'medicine' ? 'is-medicine' : '']">
 						<view class="dimension-label-row"><text>{{ item.name }}</text><text>{{ item.score }} 分</text>
@@ -867,937 +869,1230 @@ export default {
 		this.initPsqiPage()
 	},
 	methods: {
-		tomyGroup(params) {
+    /**
+     * 跳转至医生聊天页，发送睡眠评估健康卡片
+     */
+    tomyGroup(params) {
+        const name = "睡眠管理";
+        const that = this;
+        const data = '已完成睡眠评估'
+        console.log(this.statusState)
+        // 评估已完成，生成健康卡片存入globalData，跳转聊天页
+        if (this.statusState == 'COMPLETED') {
+            const data = {
+                name: "睡眠管理",
+                type: "card",
+                description:this.reportSummary
+            }
+            console.log(this.reportSummary)
+            // ========== 方案一新逻辑 start ==========
+            // 生成唯一key，用于跨页面传递卡片数据（规避url参数过长）
+            const cardKey = 'health_card_' + Date.now()
+            // 把卡片数据挂载到全局globalData
+            getApp().globalData[cardKey] = data
+            // 跳转聊天咨询页，携带cardKey
+            const routeUrl = `/pages/index/consultation?cardKey=${cardKey}`
+            this.$refs.uToast.show({
+                title: '',
+                position: 'top',
+                message: `${name}数据已加密发送至我的私人医生团队,已生成健康卡片同步至聊天窗口`,
+                type: 'success',
+                icon: 'checkmark-circle',
+                complete() {
+                    uni.navigateTo({
+                        url: routeUrl
+                    })
+                },
+            })
+        } else {
+            // 评估未完成，提示先完成评估
+            this.$refs.uToast.show({
+                title: '',
+                position: 'top',
+                message: `请先完成睡眠评估`,
+                type: 'error',
+            })
+        }
+    },
+    /**
+     * 获取PSQI睡眠评估题目接口
+     * @returns {Promise} 接口返回Promise
+     */
+    fetchQuestions() {
+        return getMeScalesPsqiApi()
+    },
+    /**
+     * 加载评估题目
+     * @param {Boolean} showLoading - 是否展示loading
+     * @param {Boolean} isManualRefresh - 是否手动刷新
+     * @returns {Promise}
+     */
+    loadQuestions(showLoading, isManualRefresh) {
+        const loadingEnabled = showLoading !== false
+        // 正在加载中直接返回，防重复请求
+        if (this.questionsLoading) return Promise.resolve(null)
+        this.questionsLoading = true
+        if (loadingEnabled) {
+            uni.showLoading({
+                title: isManualRefresh ? '刷新题目中...' : '加载题目中...',
+                mask: true
+            })
+        }
+        return this.fetchQuestions().then(result => {
+            // 处理接口返回题目数据
+            this.applyQuestionsResponse(result)
+            return result
+        }).catch(error => {
+            this.questionError = 'PSQI题目加载失败'
+            if (!error || !error.isApiError) {
+                uni.showToast({ title: this.questionError, icon: 'none' })
+            }
+            return null
+        }).finally(() => {
+            this.questionsLoading = false
+            this.questionsLoaded = true
+            if (loadingEnabled) uni.hideLoading()
+        })
+    },
+    /**
+     * 解析并填充题目接口返回数据
+     * @param {Object} result 接口返回原始数据
+     */
+    applyQuestionsResponse(result) {
+        const payload = result && result.data && typeof result.data === 'object' ? result.data : result
+        const list = payload && Array.isArray(payload.questions) ? payload.questions : []
+        // 引导文案
+        this.questionGuide = payload && payload.guide ? payload.guide : ''
+        // 时间窗口提示
+        this.questionTimeWindow = payload && payload.timeWindow ? payload.timeWindow : ''
+        // 选项映射，远程选项兜底本地默认选项
+        this.remoteFreqOptions = this.normalizeQuestionOptions(payload && payload.freqOptions, this.frequencyOptions)
+        this.remoteFreq8Options = this.normalizeQuestionOptions(payload && payload.freq8Options, this.frequencyOptions)
+        this.remoteFreq9Options = this.normalizeQuestionOptions(payload && payload.freq9Options, this.energyOptions)
+        this.questionList = list
+        this.questionsLoaded = true
+        this.questionError = list.length ? '' : '暂无PSQI题目'
+    },
+    /**
+     * 标准化题目key，兼容前后端多种字段命名
+     * @param {String|Number} key 原始key
+     * @returns {String} 统一后的key q1/q2/q5a...
+     */
+    normalizeQuestionKey(key) {
+        if (key === undefined || key === null) return ''
+        const text = String(key).trim()
+        // 新旧字段映射
+        const map = {
+            bedTime: 'q1',
+            bedtime: 'q1',
+            q1: 'q1',
+            latencyMinutes: 'q2',
+            latency: 'q2',
+            q2: 'q2',
+            wakeTime: 'q3',
+            waketime: 'q3',
+            q3: 'q3',
+            actualSleepHours: 'q4',
+            duration: 'q4',
+            q4: 'q4',
+            troubleA: 'q5a',
+            a_cantFallAsleep30min: 'q5a',
+            q5a: 'q5a',
+            troubleB: 'q5b',
+            b_wakeNightOrEarly: 'q5b',
+            q5b: 'q5b',
+            troubleC: 'q5c',
+            c_bathroomNight: 'q5c',
+            q5c: 'q5c',
+            troubleD: 'q5d',
+            d_coughOrSnore: 'q5d',
+            q5d: 'q5d',
+            troubleE: 'q5e',
+            e_feelCold: 'q5e',
+            q5e: 'q5e',
+            troubleF: 'q5f',
+            f_feelHot: 'q5f',
+            q5f: 'q5f',
+            troubleG: 'q5g',
+            g_badDreams: 'q5g',
+            q5g: 'q5g',
+            troubleH: 'q5h',
+            h_painDiscomfort: 'q5h',
+            q5h: 'q5h',
+            troubleI: 'q5i',
+            i_breathDifficult: 'q5i',
+            q5i: 'q5i',
+            troubleJ: 'q5j',
+            j_otherReasons: 'q5j',
+            q5j: 'q5j',
+            quality: 'q6',
+            overallQuality: 'q6',
+            q6: 'q6',
+            medicine: 'q7',
+            hypnoticMeds: 'q7',
+            q7: 'q7',
+            daySleepy: 'q8',
+            daytimeSleepiness: 'q8',
+            q8: 'q8',
+            energy: 'q9',
+            daytimeEnthusiasm: 'q9',
+            q9: 'q9'
+        }
+        return map[text] || map[String(text).toLowerCase()] || text.toLowerCase().replace(/^q(?=\d)/, 'q')
+    },
+    /**
+     * 根据标准化key查找远程题目
+     * @param {String} key 标准化key
+     * @returns {Object|null} 题目对象
+     */
+    findRemoteQuestion(key) {
+        return this.questionMap[this.normalizeQuestionKey(key)] || null
+    },
+    /**
+     * 兜底题目，远程无数据时使用本地默认题目
+     * @param {String} key 标准化key
+     * @returns {Object} 默认题目
+     */
+    getFallbackQuestion(key) {
+        const fallbackMap = {
+            q1: { text: '1. 通常晚上上床准备睡觉的时间：', options: [] },
+            q2: { text: '2. 从上床到顺利入睡通常需要：', options: this.latencyOptions },
+            q3: { text: '3. 通常早上起床时间：', options: [] },
+            q4: { text: '4. 每夜通常实际睡眠时间（不包括醒着赖床）：', options: this.durationOptions }
+        }
+        return fallbackMap[key] || { text: '', options: [] }
+    },
+    /**
+     * 剔除题目自带序号，只保留题干
+     * @param {String} text 原始题干
+     * @returns {String} 清理后的题干
+     */
+    stripQuestionNumber(text) {
+        return String(text || '').replace(/^\s*(?:第?[0-9一二三四五六七八九十]+[题.、]?|[0-9]+[a-jA-J]?[\.、]?)\s*/, '')
+    },
+    /**
+     * 获取最终展示的题目文本，优先远程，兜底本地
+     * @param {Object} question 远程题目
+     * @param {String} fallbackText 兜底文本
+     * @returns {String} 展示文本
+     */
+    remoteQuestionText(question, fallbackText) {
+        if (!question) return fallbackText
+        const text = question.label || question.title || question.name || question.content || question.question || ''
+        return text ? this.stripQuestionNumber(text) : fallbackText
+    },
+    /**
+     * 根据题目key匹配对应选项组
+     * @param {String} key 标准化key
+     * @returns {Array} 选项数组
+     */
+    getRemoteOptionsByKey(key) {
+        if (/^q5[a-j]$/.test(key) || key === 'q6' || key === 'q7') return this.remoteFreqOptions
+        if (key === 'q8') return this.remoteFreq8Options
+        if (key === 'q9') return this.remoteFreq9Options
+        return []
+    },
+    /**
+     * 远程选项和本地兜底选项合并
+     * @param {Array} remoteOptions 远程返回选项
+     * @param {Array} fallbackOptions 本地兜底选项
+     * @returns {Array} 合并后的选项
+     */
+    mergeOptions(remoteOptions, fallbackOptions) {
+        if (!Array.isArray(remoteOptions) || !remoteOptions.length) return fallbackOptions || []
+        return remoteOptions.map(option => {
+            const fallback = (fallbackOptions || []).find(item => Number(item.value) === Number(option.value))
+            return Object.assign({}, fallback || {}, option, {
+                value: Number(option.value),
+                label: option.label
+            })
+        })
+    },
+    /**
+     * 对外暴露：获取单个题目（文本+选项）
+     * @param {String} key 原始key
+     * @returns {Object} {key,text,options}
+     */
+    displayQuestion(key) {
+        const normalizedKey = this.normalizeQuestionKey(key)
+        const fallback = this.getFallbackQuestion(normalizedKey)
+        const remote = this.findRemoteQuestion(normalizedKey)
+        const questionOptions = remote && Array.isArray(remote.options) ? remote.options : []
+        const remoteOptions = questionOptions.length ? questionOptions : this.getRemoteOptionsByKey(normalizedKey)
+        return {
+            key: normalizedKey,
+            type: remote && remote.type ? remote.type : '',
+            text: this.remoteQuestionText(remote, fallback.text),
+            options: this.mergeOptions(remoteOptions, fallback.options)
+        }
+    },
+    /**
+     * 合并静态题目配置和远程题目
+     * @param {Object} staticItem 本地静态题目配置
+     * @param {String} key 原始key
+     * @returns {Object} 合并后的题目
+     */
+    mergeRemoteQuestion(staticItem, key) {
+        const normalizedKey = this.normalizeQuestionKey(key)
+        const remote = this.findRemoteQuestion(normalizedKey)
+        const questionOptions = remote && Array.isArray(remote.options) ? remote.options : []
+        const remoteOptions = questionOptions.length ? questionOptions : this.getRemoteOptionsByKey(normalizedKey)
+        return Object.assign({}, staticItem, {
+            questionKey: normalizedKey,
+            title: this.remoteQuestionText(remote, staticItem.title),
+            desc: (remote && (remote.description || remote.desc || remote.remark)) || staticItem.desc,
+            options: this.mergeOptions(remoteOptions, staticItem.options || this.frequencyOptions)
+        })
+    },
+    /**
+     * 根据步骤索引获取板块标题、描述
+     * @param {Number} index 步骤索引
+     * @returns {Object} 板块信息
+     */
+    stepSection(index) {
+        const sections = [{
+            kicker: '第一部分·作息规律',
+            title: '作息信息采集',
+            desc: this.questionGuide || '请回忆您在最近1个月中大多数晚上的习惯作息：'
+        },
+        {
+            kicker: '第二部分·睡眠困扰 (第5题 a-e 项)',
+            title: '夜间身体与生理困扰',
+            desc: '在过去1个月中，您因为下列原因导致睡眠受阻的频率：'
+        },
+        {
+            kicker: '第二部分·睡眠困扰 (第5题 f-j 项)',
+            title: '术后疼痛与身心困扰',
+            desc: '特别是术后恢复期的切口疼痛与呼吸情况：'
+        },
+        {
+            kicker: '第三部分·药物与日间感受 (6-9题)',
+            title: '主观体验与日间机能',
+            desc: '完成以下4题即可生成最终医学睡眠评估报告：'
+        }
+        ]
+        return sections[index]
+    },
+    /**
+     * 标准化选项数组，统一value为数字
+     * @param {Array} options 远程原始选项
+     * @param {Array} fallback 兜底选项
+     * @returns {Array} 标准化选项
+     */
+    normalizeQuestionOptions(options, fallback) {
+        if (!Array.isArray(options) || !options.length) return fallback || []
+        const normalized = options.map((item, index) => ({
+            value: item && item.value !== undefined ? Number(item.value) : index,
+            label: item && item.label ? String(item.label) : `选项${index + 1}`
+        })).filter(item => !Number.isNaN(item.value))
+        return normalized.length ? normalized : (fallback || [])
+    },
+    /**
+     * 获取PSQI提交记录列表
+     * @param {Boolean} showLoading 是否显示loading
+     * @param {Boolean} isManualRefresh 是否手动刷新
+     * @returns {Promise}
+     */
+    fetchSubmissionList(showLoading, isManualRefresh) {
+        const loadingEnabled = showLoading !== false
+        if (this.submissionLoading) return Promise.resolve(null)
+        this.submissionLoading = true
+        this.submissionError = ''
+        if (loadingEnabled) {
+            uni.showLoading({
+                title: isManualRefresh ? '刷新记录中...' : '加载提交记录...',
+                mask: true
+            })
+        }
+        return getMeScalesPsqiSubmissionsApi({
+            page: 1,
+            pageSize: 20
+        }).then(result => {
+            this.applySubmissionResponse(result)
+            return result
+        }).catch(error => {
+            this.submissionError = 'PSQI提交记录加载失败'
+            if (!error || !error.isApiError) {
+                uni.showToast({
+                    title: this.submissionError,
+                    icon: 'none'
+                })
+            }
+            return null
+        }).finally(() => {
+            this.submissionLoading = false
+            this.submissionsLoaded = true
+            if (loadingEnabled) uni.hideLoading()
+        })
+    },
+    /**
+     * 同时刷新题目、提交记录
+     */
+    refreshLatestSubmission() {
+        uni.showLoading({ title: '刷新中...', mask: true })
+        Promise.all([
+            this.loadQuestions(false, true),
+            this.fetchSubmissionList(false, true)
+        ]).then(() => {
+            if (!this.questionError && !this.submissionError) {
+                uni.showToast({ title: '题目和记录已刷新', icon: 'success' })
+            } else if (this.questionError || this.submissionError) {
+                uni.showToast({ title: this.questionError || this.submissionError, icon: 'none' })
+            }
+        }).finally(() => {
+            uni.hideLoading()
+        })
+    },
+    /**
+     * 页面初始化：加载题目、历史记录、评估状态
+     */
+    async initPsqiPage() {
+        this.pageLoading = true
+        uni.showLoading({ title: '加载中...', mask: true })
+        try {
+            const questionPromise = this.loadQuestions(false, false)
+            const submissionPromise = this.fetchSubmissionList(false, false)
+            const statusPromise = getMeScalesPsqiStatusApi().then(function (result) {
+                return { ok: true, value: result }
+            }, function (error) {
+                return { ok: false, reason: error }
+            })
+            const results = await Promise.all([
+                questionPromise,
+                submissionPromise,
+                statusPromise
+            ])
+            const statusState = results[2]
+            const statusResult = statusState.ok ? statusState.value : null
+            this.applyStatus(statusResult)
+            if (results[1]) this.applySubmissionResponse(results[1])
+            if (!statusState.ok && (!statusState.reason || !statusState.reason.isApiError)) {
+                uni.showToast({ title: '评估状态加载失败', icon: 'none' })
+            }
+        } catch (error) {
+            uni.showToast({ title: '评估信息加载失败', icon: 'none' })
+        } finally {
+            this.pageLoading = false
+            uni.hideLoading()
+        }
+    },
+    /**
+     * 兼容多种返回结构，提取列表数组
+     * @param {Object|Array} result 接口原始返回
+     * @returns {Array} 记录数组
+     */
+    extractSubmissionList(result) {
+        if (!result) return []
+        if (Array.isArray(result)) return result
+        if (Array.isArray(result.list)) return result.list
+        if (Array.isArray(result.records)) return result.records
+        if (Array.isArray(result.items)) return result.items
+        if (Array.isArray(result.rows)) return result.rows
+        if (result.data) return this.extractSubmissionList(result.data)
+        return []
+    },
+    /**
+     * 解析json字符串字段，容错
+     * @param {String|Object|Array} value 原始值
+     * @returns {Array|Object} 解析后数据
+     */
+    parseJsonField(value) {
+        if (!value) return []
+        if (Array.isArray(value) || (value && typeof value === 'object')) return value
+        if (typeof value !== 'string') return []
+        try {
+            return JSON.parse(value)
+        } catch (error) {
+            return []
+        }
+    },
+    /**
+     * 判断该记录是否是有效已提交记录
+     * @param {Object} item 单条记录
+     * @returns {Boolean}
+     */
+    isSubmittedRecord(item) {
+        if (!item || typeof item !== 'object') return false
+        if (item.status && item.status !== 'SUBMITTED') return false
+        if (item.valid === 0 || item.valid === false) return false
+        return item.score !== undefined && item.score !== null && item.score !== ''
+    },
+    /**
+     * 标准化单条提交记录，统一字段名
+     * @param {Object} item 原始记录
+     * @returns {Object} 标准化记录
+     */
+    normalizeSubmissionRecord(item) {
+        const dimensionPayload = this.parseJsonField(item.dimensionsJson || item.dimensions)
+        const dimensions = this.normalizeDimensionPayload(dimensionPayload)
+        const focusDimensions = this.normalizeDimensionPayload(
+            this.parseJsonField(item.topConcernDimensionsJson || item.topConcernDimensions || item.topConcernsJson || item.topConcerns)
+        )
+        console.log(111,dimensions)
 
-			const name = "睡眠管理";
+        console.log(focusDimensions)
+        const assessedAt = item.assessedAt || item.submittedAt || item.updateTime || item.createTime
+        return Object.assign({}, item, {
+            totalScore: item.totalScore !== undefined && item.totalScore !== null ? item.totalScore : item.score,
+            levelTitle: item.levelTitle || item.tier || '',
+            interpretation: item.interpretation || item.tierText || item.tier || '本次 PSQI 评估已完成。',
+            dimensions,
+            topConcernDimensions: focusDimensions,
+            assessedAt
+        })
+    },
+    /**
+     * 处理提交记录列表接口返回，过滤、排序、更新最新报告
+     * @param {Object} result 接口返回
+     */
+    applySubmissionResponse(result) {
+        const rawList = this.extractSubmissionList(result)
+        const submittedList = rawList
+            .filter(item => this.isSubmittedRecord(item))
+            .map(item => this.normalizeSubmissionRecord(item))
+            // 按评估时间倒序，最新的在最前面
+            .sort((a, b) => {
+                const timeA = new Date(a.assessedAt || 0).getTime()
+                const timeB = new Date(b.assessedAt || 0).getTime()
+                return timeB - timeA
+            })
+        this.submissionList = submittedList
+        this.submissionTotal = submittedList.length
+        this.submissionError = ''
+        this.submissionsLoaded = true
+        // 取第一条作为最新报告
+        this.applyLatestResult(submittedList[0] || null)
+    },
+    /**
+     * 解析评估状态接口，更新页面状态、草稿、最新结果
+     * @param {Object} result 状态接口返回
+     */
+    applyStatus(result) {
+        if (!result) {
+            this.statusState = 'UNASSESSED'
+            this.applyLatestResult(null)
+            return
+        }
+        this.statusState = result.state || 'UNASSESSED'
+        if (result.progress) {
+            this.assessmentProgress = {
+                completed: result.progress.completed || 0,
+                total: result.progress.total || 18
+            }
+        }
+        if (result.draft) this.applyDraft(result.draft)
+        if (result.latest) this.applyLatestResult(result.latest)
+    },
+    /**
+     * 回填草稿数据（答案、当前步骤）
+     * @param {Object} draft 草稿对象
+     */
+    applyDraft(draft) {
+        if (!draft) return
+        if (draft.answers) this.answers = this.normalizeAnswers(draft.answers)
+        if (draft.step !== undefined && draft.step !== null) {
+            const draftStep = Number(draft.step)
+            if (!Number.isNaN(draftStep)) {
+                this.draftStepIndex = this.mapServerStepToPage(draftStep)
+                this.stepIndex = this.draftStepIndex
+            }
+        }
+    },
+    /**
+     * 后端step映射到页面stepIndex
+     * @param {Number} step 后端步骤
+     * @returns {Number} 页面索引 0/1/2/3
+     */
+    mapServerStepToPage(step) {
+        if (step >= 14) return 3
+        if (step >= 9) return 2
+        if (step >= 4) return 1
+        return 0
+    },
+    /**
+     * 填充最新评估报告数据到页面变量
+     * @param {Object} latest 最新评估结果
+     */
+    applyLatestResult(latest) {
+        if (!latest) {
+            this.latestResult = null
+            this.reportDate = ''
+            this.reportScore = 0
+            this.reportLevel = ''
+            this.reportSummary = '完成评估后，将在这里生成 PSQI 睡眠质量报告。'
+            return
+        }
+        this.latestResult = latest
+        const score = this.pickNumber(latest.score, latest.totalScore, NaN)
+        this.reportScore = Number.isNaN(score) ? 0 : score
+        this.reportLevel = latest.levelTitle || latest.tier || latest.tierText || ''
+        this.reportSummary = latest.interpretation || latest.tierText || '本次 PSQI 评估已完成。'
+        this.reportDate = this.formatDateTime(latest.assessedAt || latest.updateTime || latest.createTime || latest.createdAt || latest.submittedAt)
+        if (Array.isArray(latest.dimensions) && latest.dimensions.length) {
+            this.dimensions = this.normalizeDimensions(latest.dimensions)
+        }
 
-			const that = this;
-			const data = '已完成睡眠评估'
-			console.log(this.statusState)
-			if (this.statusState == 'COMPLETED') {
-				const data = {
-					name: "睡眠管理",
-					type: "card",
-					description:this.reportSummary
-					
-				}
-				console.log(this.reportSummary)
-				// ========== 方案一新逻辑 start ==========
-				const cardKey = 'health_card_' + Date.now()
-				getApp().globalData[cardKey] = data
-				const routeUrl = `/pages/index/consultation?cardKey=${cardKey}`
-				this.$refs.uToast.show({
-					title: '',
-					position: 'top',
-					message: `${name}数据已加密发送至我的私人医生团队,已生成健康卡片同步至聊天窗口`,
-					// 如果不传此type参数，默认为default，也可以手动写上 type: 'default'
-					type: 'success',
-					// 如果不需要图标，请设置为false
-					icon: 'checkmark-circle',
-					complete() {
-						uni.navigateTo({
-							url: routeUrl
-						})
-					},
-				})
-			} else {
-				this.$refs.uToast.show({
-					title: '',
-					position: 'top',
-					message: `请先完成睡眠评估`,
-					// 如果不传此type参数，默认为default，也可以手动写上 type: 'default'
-					type: 'error',
-				})
-			}
+        // this.focusDimensions = this.normalizeFocusDimensions(latest.topConcernDimensions, latest.topConcerns)
+    },
+    /**
+     * 判断结果是否包含有效报告数据
+     * @param {Object} result 评估结果
+     * @returns {Boolean}
+     */
+    hasReportPayload(result) {
+        return !!(result && (
+            result.score !== undefined ||
+            result.totalScore !== undefined ||
+            result.levelTitle ||
+            result.tier ||
+            result.tierText ||
+            (Array.isArray(result.dimensions) && result.dimensions.length)
+        ))
+    },
+    /**
+     * 标准化单条评估结果
+     * @param {Object} result 原始结果
+     * @returns {Object|null}
+     */
+    normalizeSubmissionResult(result) {
+        if (!this.hasReportPayload(result)) return null
+        return Object.assign({}, result, {
+            totalScore: result.totalScore !== undefined ? result.totalScore : result.score,
+            levelTitle: result.levelTitle || result.tier || '',
+            interpretation: result.interpretation || result.tierText || ''
+        })
+    },
+    /**
+     * 标准化答案，兼容后端多种字段名
+     * @param {Object} source 原始答案
+     * @returns {Object} 统一答案对象
+     */
+    normalizeAnswers(source) {
+        const defaults = this.createDefaultAnswers()
+        if (!source || typeof source !== 'object') return defaults
+        const disturbances = source.disturbances || {}
+        const values = {
+            bedTime: source.bedTime || source.q1 || defaults.bedTime,
+            wakeTime: source.wakeTime || source.q3 || defaults.wakeTime,
+            latency: this.parseFrequencyValue(source.latencyMinutes, source.latency, source.q2),
+            duration: this.parseDurationValue(source.actualSleepHours, source.duration, source.q4),
+            troubleA: this.parseFrequencyValue(source.troubleA, source.q5a, disturbances.a_cantFallAsleep30min),
+            troubleB: this.parseFrequencyValue(source.troubleB, source.q5b, disturbances.b_wakeNightOrEarly),
+            troubleC: this.parseFrequencyValue(source.troubleC, source.q5c, disturbances.c_bathroomNight),
+            troubleD: this.parseFrequencyValue(source.troubleD, source.q5d, disturbances.d_coughOrSnore),
+            troubleE: this.parseFrequencyValue(source.troubleE, source.q5e, disturbances.e_feelCold),
+            troubleF: this.parseFrequencyValue(source.troubleF, source.q5f, disturbances.f_feelHot),
+            troubleG: this.parseFrequencyValue(source.troubleG, source.q5g, disturbances.g_badDreams),
+            troubleH: this.parseFrequencyValue(source.troubleH, source.q5h, disturbances.h_painDiscomfort),
+            troubleI: this.parseFrequencyValue(source.troubleI, source.q5i, disturbances.i_breathDifficult),
+            troubleJ: this.parseFrequencyValue(source.troubleJ, source.q5j, disturbances.j_otherReasons),
+            quality: this.parseFrequencyValue(source.quality, source.overallQuality, source.q6),
+            medicine: this.parseFrequencyValue(source.medicine, source.hypnoticMeds, source.q7),
+            daySleepy: this.parseFrequencyValue(source.daySleepy, source.daytimeSleepiness, source.q8),
+            energy: this.parseFrequencyValue(source.energy, source.daytimeEnthusiasm, source.q9)
+        }
+        return Object.assign({}, defaults, values)
+    },
+    /**
+     * 频率选项值解析，多参数兜底取有效数字
+     * @returns {Number|null} 0~3
+     */
+    parseFrequencyValue() {
+        for (let index = 0; index < arguments.length; index += 1) {
+            const value = arguments[index]
+            if (value === undefined || value === null || value === '') continue
+            const numberValue = Number(value)
+            if (!Number.isNaN(numberValue) && numberValue >= 0 && numberValue <= 3) return numberValue
+        }
+        return null
+    },
+    /**
+     * 睡眠时间解析，映射为选项编码 0~3
+     * @returns {Number|null}
+     */
+    parseDurationValue() {
+        for (let index = 0; index < arguments.length; index += 1) {
+            const value = arguments[index]
+            if (value === undefined || value === null || value === '') continue
+            const numberValue = Number(value)
+            if (Number.isNaN(numberValue)) continue
+            if (numberValue > 0 && numberValue < 5) return 0
+            if (numberValue >= 5 && numberValue < 6) return 1
+            if (numberValue >= 6 && numberValue < 7) return 2
+            if (numberValue >= 7) return 3
+        }
+        return null
+    },
+    /**
+     * 构建提交给后端的完整answers payload
+     * @returns {Object}
+     */
+    buildPayloadAnswers() {
+        const answers = this.answers
+        const latencyMinutes = [15, 25, 45, 70]
+        const actualSleepHours = [4, 5.5, 6.5, 7.5]
+        const disturbanceKeys = ['troubleA', 'troubleB', 'troubleC', 'troubleD', 'troubleE', 'troubleF', 'troubleG', 'troubleH', 'troubleI', 'troubleJ']
+        const disturbanceNames = [
+            'a_cantFallAsleep30min',
+            'b_wakeNightOrEarly',
+            'c_bathroomNight',
+            'd_coughOrSnore',
+            'e_feelCold',
+            'f_feelHot',
+            'g_badDreams',
+            'h_painDiscomfort',
+            'i_breathDifficult',
+            'j_otherReasons'
+        ]
+        const disturbances = {}
+        disturbanceKeys.forEach((key, index) => {
+            disturbances[disturbanceNames[index]] = answers[key]
+        })
+        const payload = {
+            bedTime: answers.bedTime,
+            latencyMinutes: answers.latency === null ? null : latencyMinutes[answers.latency],
+            wakeTime: answers.wakeTime,
+            actualSleepHours: answers.duration === null ? null : actualSleepHours[answers.duration],
+            q1: answers.bedTime,
+            q2: answers.latency === null ? null : latencyMinutes[answers.latency],
+            q3: answers.wakeTime,
+            q4: answers.duration === null ? null : actualSleepHours[answers.duration],
+            disturbances: disturbances,
+            overallQuality: answers.quality,
+            hypnoticMeds: answers.medicine,
+            daytimeSleepiness: answers.daySleepy,
+            daytimeEnthusiasm: answers.energy,
+            q6: answers.quality,
+            q7: answers.medicine,
+            q8: answers.daySleepy,
+            q9: answers.energy
+        }
+        disturbanceKeys.forEach((key, index) => {
+            payload[`q5${String.fromCharCode(97 + index)}`] = answers[key]
+        })
+        return {
+            ...payload
+        }
+    },
+    /**
+     * 构建草稿payload，过滤null/undefined空值，精简上传
+     * @returns {Object}
+     */
+    buildDraftAnswers() {
+        const source = this.buildPayloadAnswers()
+        const payload = {}
+        Object.keys(source).forEach(key => {
+            if (key === 'disturbances') {
+                const disturbances = {}
+                Object.keys(source.disturbances).forEach((disturbanceKey, index) => {
+                    if (source.disturbances[disturbanceKey] !== null && source.disturbances[disturbanceKey] !== undefined) {
+                        disturbances[disturbanceKey] = source.disturbances[disturbanceKey]
+                    }
+                })
+                if (Object.keys(disturbances).length) payload.disturbances = disturbances
+                return
+            }
+            if (source[key] !== null && source[key] !== undefined && source[key] !== '') {
+                payload[key] = source[key]
+            }
+        })
+        return payload
+    },
+    /**
+     * 标准化维度数据，后端维度和本地默认维度合并
+     * @param {Array} serverDimensions 后端维度
+     * @returns {Array}
+     */
+    normalizeDimensions(serverDimensions) {
+        const dimensions = this.normalizeDimensionPayload(serverDimensions)
+        const defaults = this.dimensions
+        if (!dimensions.length) return defaults
+        return defaults.map(item => {
+            const serverItem = dimensions.find(dimension => dimension.id === item.key)
+            return serverItem ? Object.assign({}, item, {
+                score: serverItem.score,
+                hot: serverItem.score >= 2
+            }) : item
+        })
+    },
+    /**
+     * 解析维度原始payload，兼容对象/数组多种返回格式
+     * @param {Array|Object} payload
+     * @returns {Array} 标准化维度数组
+     */
+    normalizeDimensionPayload(payload) {
+        const mapping = {
+            quality: 'quality',
+            sleepQuality: 'quality',
+            latency: 'latency',
+            sleepLatency: 'latency',
+            duration: 'duration',
+            sleepDuration: 'duration',
+            efficiency: 'efficiency',
+            sleepEfficiency: 'efficiency',
+            disturbance: 'disturbance',
+            disturbances: 'disturbance',
+            sleepDisturbance: 'disturbance',
+            meds: 'medicine',
+            medicine: 'medicine',
+            hypnoticMeds: 'medicine',
+            daytime: 'daytime',
+            dayDysfunction: 'daytime'
+        }
+        const list = []
+        const pushDimension = (id, score, source) => {
+            if (!id) return
+            const key = mapping[id] || mapping[source] || id
+            const numberScore = Number(score)
+            if (!mapping[key] || Number.isNaN(numberScore)) return
+            list.push({
+                id: key,
+                key,
+                score: Math.max(0, Math.min(3, numberScore)),
+                name: source && source.name ? source.name : ''
+            })
+        }
+        if (Array.isArray(payload)) {
+            payload.forEach(item => {
+                if (!item || typeof item !== 'object') return
+                const id = item.id || item.key || item.dimension || item.name
+                const score = item.score !== undefined ? item.score : item.value
+                pushDimension(id, score, item)
+            })
+            return list
+        }
+        if (payload && typeof payload === 'object') {
+            Object.keys(payload).forEach(key => {
+                const value = payload[key]
+                if (value && typeof value === 'object') {
+                    pushDimension(value.id || value.key || value.dimension || key, value.score !== undefined ? value.score : value.value, value)
+                } else {
+                    pushDimension(key, value)
+                }
+            })
+        }
+        return list
+    },
+    /**
+     * 标准化重点关注维度
+     * @param {Array} serverFocusDimensions 后端重点维度
+     * @param {Array} topConcerns 后端关注列表
+     * @returns {Array}
+     */
+    normalizeFocusDimensions(serverFocusDimensions, topConcerns) {
+        if (Array.isArray(serverFocusDimensions) && serverFocusDimensions.length) {
+            return serverFocusDimensions.map(item => ({
+                name: item.name || this.getDimensionName(item.id),
+                score: Number(item.score) || 0,
+                desc: this.getDimensionDesc(item.id)
+            }))
+        }
+        if (Array.isArray(topConcerns) && topConcerns.length) {
+            return topConcerns.map(name => {
+                const matched = this.dimensions.find(item => item.name === name)
+                return {
+                    name,
+                    score: matched ? matched.score : 1,
+                    desc: this.getDimensionDesc(matched ? matched.key : '')
+                }
+            })
+        }
+        return this.dimensions.filter(item => item.score > 0).slice(0, 2)
+    },
+    /**
+     * 根据维度key获取维度中文名称
+     * @param {String} id
+     * @returns {String}
+     */
+    getDimensionName(id) {
+        const names = {
+            quality: '睡眠质量',
+            latency: '入睡时间',
+            duration: '睡眠时间',
+            efficiency: '睡眠效率',
+            disturbances: '睡眠障碍',
+            meds: '催眠药物',
+            daytime: '日间功能障碍'
+        }
+        return names[id] || '睡眠维度'
+    },
+    /**
+     * 获取维度说明文案
+     * @param {String} id
+     * @returns {String}
+     */
+    getDimensionDesc(id) {
+        const descriptions = {
+            quality: '近期主观睡眠质量需要关注',
+            latency: '入睡耗时影响睡眠恢复',
+            duration: '总睡眠时间可能不足',
+            efficiency: '卧床时间中的有效睡眠占比偏低',
+            disturbances: '夜间易受疼痛、起夜或呼吸问题打断',
+            meds: '存在助眠药物使用情况',
+            daytime: '白天困倦或精力不足'
+        }
+        return descriptions[id] || '建议结合近期作息持续观察'
+    },
+    /**
+     * 多参数依次取第一个有效数字
+     * @returns {Number}
+     */
+    pickNumber() {
+        for (let index = 0; index < arguments.length; index += 1) {
+            const rawValue = arguments[index]
+            if (rawValue !== undefined && rawValue !== null && rawValue !== '') {
+                const value = Number(rawValue)
+                if (!Number.isNaN(value)) return value
+            }
+        }
+        return NaN
+    },
+    /**
+     * 时间格式化：转成 2026年11月12日 00:00
+     * @param {String|Number} value 时间戳/时间字符串
+     * @returns {String}
+     */
+    formatDateTime(value) {
+        if (!value) return ''
+        if (typeof value === 'number') return this.formatDateTime(new Date(value))
+        const normalizedValue = String(value).replace(/-/g, '/').replace('T', ' ')
+        const date = new Date(normalizedValue)
+        if (Number.isNaN(date.getTime())) return String(value)
+        const year = date.getFullYear()
+        const month = this.padTwo(date.getMonth() + 1)
+        const day = this.padTwo(date.getDate())
+        const hour = this.padTwo(date.getHours())
+        const minute = this.padTwo(date.getMinutes())
+        return `${year}年${month}月${day}日 ${hour}:${minute}`
+    },
+    /**
+     * 数字补0，小于10前面加0
+     * @param {Number} value
+     * @returns {String}
+     */
+    padTwo(value) {
+        return value < 10 ? `0${value}` : `${value}`
+    },
+    /**
+     * 创建默认空答案对象
+     * @returns {Object}
+     */
+    createDefaultAnswers() {
+        return {
+            bedTime: '',
+            wakeTime: '',
+            latency: null,
+            duration: null,
+            troubleA: null,
+            troubleB: null,
+            troubleC: null,
+            troubleD: null,
+            troubleE: null,
+            troubleF: null,
+            troubleG: null,
+            troubleH: null,
+            troubleI: null,
+            troubleJ: null,
+            quality: null,
+            medicine: null,
+            daySleepy: null,
+            energy: null
+        }
+    },
+    /**
+     * 切回首页视图
+     */
+    goHome() {
+        this.currentView = 'home'
+    },
+    /**
+     * 跳转报告页，无报告则启动评估
+     */
+    goReport() {
+        if (this.statusState !== 'COMPLETED' || !this.hasReport) {
+            this.startAssessment()
+            return
+        }
+        this.currentView = 'report'
+    },
+    /**
+     * 主按钮点击逻辑：有报告看报告，否则开始评估
+     */
+    handlePrimaryAction() {
+        if (this.statusState === 'COMPLETED' && this.hasReport) {
+            this.goReport()
+            return
+        }
+        this.startAssessment(this.statusState !== 'IN_PROGRESS')
+    },
+    /**
+     * 开始评估
+     * @param {Boolean} resetAnswers 是否清空答案重新开始（false=恢复草稿）
+     */
+    startAssessment(resetAnswers) {
+        if (resetAnswers) {
+            this.answers = this.createDefaultAnswers()
+            this.stepIndex = 0
+            this.draftStepIndex = null
+            this.showSaveConfirm = false
+        } else {
+            this.stepIndex = this.resolveDraftStep()
+        }
+        this.showSaveConfirm = false
+        this.currentView = 'questionnaire'
+    },
+    /**
+     * 解析草稿对应的页面步骤
+     * @returns {Number} stepIndex
+     */
+    resolveDraftStep() {
+        if (this.draftStepIndex !== null) return this.draftStepIndex
+        const completed = Number(this.assessmentProgress.completed) || 0
+        if (completed >= 14) return 3
+        if (completed >= 9) return 2
+        if (completed >= 4) return 1
+        return 0
+    },
+    /**
+     * 上床时间选择回调
+     */
+    onBedTimeChange(event) {
+        this.answers.bedTime = event.detail.value
+    },
+    /**
+     * 起床时间选择回调
+     */
+    onWakeTimeChange(event) {
+        this.answers.wakeTime = event.detail.value
+    },
+    /**
+     * 上一步
+     */
+    prevStep() {
+        if (this.submitting || this.savingDraft) return
+        if (this.stepIndex === 0) {
+            this.currentView = 'home'
+            return
+        }
+        this.stepIndex -= 1
+    },
+    /**
+     * 下一步 / 提交
+     */
+    async nextStep() {
+        if (this.submitting || this.savingDraft) return
+        if (!this.validateStep(this.stepIndex)) return
+        if (this.stepIndex < 3) {
+            this.stepIndex += 1
+            return
+        }
+        // 最后一步直接提交
+        await this.submitAssessment()
+    },
+    /**
+     * 校验当前步骤必填项是否填完
+     * @param {Number} step
+     * @returns {Boolean}
+     */
+    validateStep(step) {
+        const messages = [
+            '请完成本页作息信息',
+            '请完成第5题 a-e 项',
+            '请完成第5题 f-j 项',
+            '请完成睡眠质量、药物和日间状态题目'
+        ]
+        const groups = [
+            ['bedTime', 'latency', 'wakeTime', 'duration'],
+            ['troubleA', 'troubleB', 'troubleC', 'troubleD', 'troubleE'],
+            ['troubleF', 'troubleG', 'troubleH', 'troubleI', 'troubleJ'],
+            ['quality', 'medicine', 'daySleepy', 'energy']
+        ]
+        const currentKeys = groups[step] || []
+        const valid = currentKeys.every(key => this.answers[key] !== '' && this.answers[key] !== null && this.answers[key] !== undefined)
+        if (!valid) {
+            uni.showToast({ title: messages[step] || '请完善题目', icon: 'none' })
+        }
+        return valid
+    },
+    /**
+     * 提交评估问卷
+     */
+    async submitAssessment() {
+        if (!this.validateAllAnswers()) return
+        this.showSaveConfirm = false
+        this.submitting = true
+        this.currentView = 'loading'
+        uni.showLoading({ title: '提交评估中...', mask: true })
+        try {
+            const payload = {
+                answers: this.buildDraftAnswers(),
+                step: this.stepIndex
+            }
+            const result = this.normalizeSubmissionResult(await postMeScalesPsqiSubmissionsApi(payload))
+            if (result && result.valid === false) {
+                this.currentView = 'questionnaire'
+                uni.showToast({ title: result.message || '存在漏答或答案无效', icon: 'none' })
+                return
+            }
+            this.statusState = 'COMPLETED'
+            this.assessmentProgress.completed = this.assessmentProgress.total || 18
+            if (result) this.applyLatestResult(result)
+            await this.refreshStatus(false)
+            this.currentView = 'report'
+            uni.showToast({ title: '评估提交成功', icon: 'success' })
+        } catch (error) {
+            this.currentView = 'questionnaire'
+            if (error && error.isApiError) return
+            uni.showToast({ title: '评估提交失败，请稍后重试', icon: 'none' })
+        } finally {
+            this.submitting = false
+            uni.hideLoading()
+        }
+    },
+    /**
+     * 校验全部步骤
+     * @returns {Boolean}
+     */
+    validateAllAnswers() {
+        return [0, 1, 2, 3].every(step => this.validateStep(step))
+    },
+    /**
+     * 刷新评估状态
+     * @param {Boolean} showLoading
+     */
+    async refreshStatus(showLoading) {
+        try {
+            if (showLoading) uni.showLoading({ title: '刷新中...', mask: true })
+            const status = await getMeScalesPsqiStatusApi()
+            this.applyStatus(status)
+        } catch (error) {
+            if (!error || !error.isApiError) {
+                uni.showToast({ title: '评估状态刷新失败', icon: 'none' })
+            }
+        } finally {
+            if (showLoading) uni.hideLoading()
+        }
+    },
+    /**
+     * 导航返回处理
+     */
+    handleNavBack() {
+        if (this.submitting) return
+        // 在问卷页，返回触发暂存弹窗
+        if (this.currentView === 'questionnaire') {
+            this.saveAndExit()
+            return
+        }
+        if (this.currentView === 'loading') {
+            this.clearLoadingTimer()
+        }
+        this.currentView = 'home'
+    },
+    /**
+     * 暂存草稿并退出问卷
+     */
+    async saveAndExit() {
+        if (this.savingDraft || this.submitting) return
+        this.showSaveConfirm = false
+        this.savingDraft = true
+        uni.showLoading({ title: '暂存中...', mask: true })
+        try {
+            await postMeScalesPsqiDraftApi({
+                answers: this.buildDraftAnswers(),
+                step: this.stepIndex
+            })
+            this.statusState = 'IN_PROGRESS'
+            this.draftStepIndex = this.stepIndex
+            this.assessmentProgress.completed = this.countCompletedAnswers()
+            this.clearLoadingTimer()
+            this.currentView = 'home'
+            uni.showToast({ title: '评估进度已暂存', icon: 'success' })
+        } catch (error) {
+            if (!error || !error.isApiError) {
+                uni.showToast({ title: '暂存失败，请稍后重试', icon: 'none' })
+            }
+        } finally {
+            this.savingDraft = false
+            uni.hideLoading()
+        }
+    },
+    /**
+     * 统计已填写答案数量
+     * @returns {Number}
+     */
+    countCompletedAnswers() {
+        return Object.keys(this.answers).filter(key => this.answers[key] !== '' && this.answers[key] !== null && this.answers[key] !== undefined).length
+    },
+    /**
+     * 清除loading定时器
+     */
+    clearLoadingTimer() {
+        if (this.loadingTimer) {
+            clearTimeout(this.loadingTimer)
+            this.loadingTimer = null
+        }
+    },
+    /**
+     * 打开蓝牙连接睡眠仪弹窗
+     */
+    openBluetooth() {
+        this.showBluetoothModal = true
+        this.bluetoothState = 'searching'
+        this.clearBluetoothTimer()
+        this.bluetoothTimer = setTimeout(() => {
+            this.bluetoothState = 'success'
+            this.bluetoothTimer = null
+        }, 2200)
+    },
+    /**
+     * 关闭蓝牙弹窗
+     */
+    closeBluetooth() {
+        this.clearBluetoothTimer()
+        this.showBluetoothModal = false
+    },
+    /**
+     * 蓝牙开关：已连接则断开，未连接则打开弹窗
+     */
+    toggleBluetooth() {
+        if (this.deviceConnected) {
+            this.disconnectDevice()
+            return
+        }
+        this.openBluetooth()
+    },
+    /**
+     * 断开睡眠仪
+     */
+    disconnectDevice() {
+        this.deviceConnected = false
+        uni.showToast({
+            title: '睡眠仪已断开',
+            icon: 'none'
+        })
+    },
+    /**
+     * 蓝牙流程完成，标记已连接
+     */
+    finishBluetooth() {
+        this.deviceConnected = true
+        this.closeBluetooth()
+        uni.showToast({
+            title: '睡眠仪连接成功',
+            icon: 'success'
+        })
+    },
+    /**
+     * 清除蓝牙定时器
+     */
+    clearBluetoothTimer() {
+        if (this.bluetoothTimer) {
+            clearTimeout(this.bluetoothTimer)
+            this.bluetoothTimer = null
+        }
+    }
+}
 
-		},
-		fetchQuestions() {
-			return getMeScalesPsqiApi()
-		},
-		loadQuestions(showLoading, isManualRefresh) {
-			const loadingEnabled = showLoading !== false
-			if (this.questionsLoading) return Promise.resolve(null)
-			this.questionsLoading = true
-			if (loadingEnabled) {
-				uni.showLoading({
-					title: isManualRefresh ? '刷新题目中...' : '加载题目中...',
-					mask: true
-				})
-			}
-			return this.fetchQuestions().then(result => {
-				this.applyQuestionsResponse(result)
-				return result
-			}).catch(error => {
-				this.questionError = 'PSQI题目加载失败'
-				if (!error || !error.isApiError) {
-					uni.showToast({ title: this.questionError, icon: 'none' })
-				}
-				return null
-			}).finally(() => {
-				this.questionsLoading = false
-				this.questionsLoaded = true
-				if (loadingEnabled) uni.hideLoading()
-			})
-		},
-		applyQuestionsResponse(result) {
-			const payload = result && result.data && typeof result.data === 'object' ? result.data : result
-			const list = payload && Array.isArray(payload.questions) ? payload.questions : []
-			this.questionGuide = payload && payload.guide ? payload.guide : ''
-			this.questionTimeWindow = payload && payload.timeWindow ? payload.timeWindow : ''
-			this.remoteFreqOptions = this.normalizeQuestionOptions(payload && payload.freqOptions, this.frequencyOptions)
-			this.remoteFreq8Options = this.normalizeQuestionOptions(payload && payload.freq8Options, this.frequencyOptions)
-			this.remoteFreq9Options = this.normalizeQuestionOptions(payload && payload.freq9Options, this.energyOptions)
-			this.questionList = list
-			this.questionsLoaded = true
-			this.questionError = list.length ? '' : '暂无PSQI题目'
-		},
-		normalizeQuestionKey(key) {
-			if (key === undefined || key === null) return ''
-			const text = String(key).trim()
-			const map = {
-				bedTime: 'q1',
-				bedtime: 'q1',
-				q1: 'q1',
-				latencyMinutes: 'q2',
-				latency: 'q2',
-				q2: 'q2',
-				wakeTime: 'q3',
-				waketime: 'q3',
-				q3: 'q3',
-				actualSleepHours: 'q4',
-				duration: 'q4',
-				q4: 'q4',
-				troubleA: 'q5a',
-				a_cantFallAsleep30min: 'q5a',
-				q5a: 'q5a',
-				troubleB: 'q5b',
-				b_wakeNightOrEarly: 'q5b',
-				q5b: 'q5b',
-				troubleC: 'q5c',
-				c_bathroomNight: 'q5c',
-				q5c: 'q5c',
-				troubleD: 'q5d',
-				d_coughOrSnore: 'q5d',
-				q5d: 'q5d',
-				troubleE: 'q5e',
-				e_feelCold: 'q5e',
-				q5e: 'q5e',
-				troubleF: 'q5f',
-				f_feelHot: 'q5f',
-				q5f: 'q5f',
-				troubleG: 'q5g',
-				g_badDreams: 'q5g',
-				q5g: 'q5g',
-				troubleH: 'q5h',
-				h_painDiscomfort: 'q5h',
-				q5h: 'q5h',
-				troubleI: 'q5i',
-				i_breathDifficult: 'q5i',
-				q5i: 'q5i',
-				troubleJ: 'q5j',
-				j_otherReasons: 'q5j',
-				q5j: 'q5j',
-				quality: 'q6',
-				overallQuality: 'q6',
-				q6: 'q6',
-				medicine: 'q7',
-				hypnoticMeds: 'q7',
-				q7: 'q7',
-				daySleepy: 'q8',
-				daytimeSleepiness: 'q8',
-				q8: 'q8',
-				energy: 'q9',
-				daytimeEnthusiasm: 'q9',
-				q9: 'q9'
-			}
-			return map[text] || map[String(text).toLowerCase()] || text.toLowerCase().replace(/^q(?=\d)/, 'q')
-		},
-		findRemoteQuestion(key) {
-			return this.questionMap[this.normalizeQuestionKey(key)] || null
-		},
-		getFallbackQuestion(key) {
-			const fallbackMap = {
-				q1: { text: '1. 通常晚上上床准备睡觉的时间：', options: [] },
-				q2: { text: '2. 从上床到顺利入睡通常需要：', options: this.latencyOptions },
-				q3: { text: '3. 通常早上起床时间：', options: [] },
-				q4: { text: '4. 每夜通常实际睡眠时间（不包括醒着赖床）：', options: this.durationOptions }
-			}
-			return fallbackMap[key] || { text: '', options: [] }
-		},
-		stripQuestionNumber(text) {
-			return String(text || '').replace(/^\s*(?:第?[0-9一二三四五六七八九十]+[题.、]?|[0-9]+[a-jA-J]?[\.、]?)\s*/, '')
-		},
-		remoteQuestionText(question, fallbackText) {
-			if (!question) return fallbackText
-			const text = question.label || question.title || question.name || question.content || question.question || ''
-			return text ? this.stripQuestionNumber(text) : fallbackText
-		},
-		getRemoteOptionsByKey(key) {
-			if (/^q5[a-j]$/.test(key) || key === 'q6' || key === 'q7') return this.remoteFreqOptions
-			if (key === 'q8') return this.remoteFreq8Options
-			if (key === 'q9') return this.remoteFreq9Options
-			return []
-		},
-		mergeOptions(remoteOptions, fallbackOptions) {
-			if (!Array.isArray(remoteOptions) || !remoteOptions.length) return fallbackOptions || []
-			return remoteOptions.map(option => {
-				const fallback = (fallbackOptions || []).find(item => Number(item.value) === Number(option.value))
-				return Object.assign({}, fallback || {}, option, {
-					value: Number(option.value),
-					label: option.label
-				})
-			})
-		},
-		displayQuestion(key) {
-			const normalizedKey = this.normalizeQuestionKey(key)
-			const fallback = this.getFallbackQuestion(normalizedKey)
-			const remote = this.findRemoteQuestion(normalizedKey)
-			const questionOptions = remote && Array.isArray(remote.options) ? remote.options : []
-			const remoteOptions = questionOptions.length ? questionOptions : this.getRemoteOptionsByKey(normalizedKey)
-			return {
-				key: normalizedKey,
-				type: remote && remote.type ? remote.type : '',
-				text: this.remoteQuestionText(remote, fallback.text),
-				options: this.mergeOptions(remoteOptions, fallback.options)
-			}
-		},
-		mergeRemoteQuestion(staticItem, key) {
-			const normalizedKey = this.normalizeQuestionKey(key)
-			const remote = this.findRemoteQuestion(normalizedKey)
-			const questionOptions = remote && Array.isArray(remote.options) ? remote.options : []
-			const remoteOptions = questionOptions.length ? questionOptions : this.getRemoteOptionsByKey(normalizedKey)
-			return Object.assign({}, staticItem, {
-				questionKey: normalizedKey,
-				title: this.remoteQuestionText(remote, staticItem.title),
-				desc: (remote && (remote.description || remote.desc || remote.remark)) || staticItem.desc,
-				options: this.mergeOptions(remoteOptions, staticItem.options || this.frequencyOptions)
-			})
-		},
-		stepSection(index) {
-			const sections = [{
-				kicker: '第一部分·作息规律',
-				title: '作息信息采集',
-				desc: this.questionGuide || '请回忆您在最近1个月中大多数晚上的习惯作息：'
-			},
-			{
-				kicker: '第二部分·睡眠困扰 (第5题 a-e 项)',
-				title: '夜间身体与生理困扰',
-				desc: '在过去1个月中，您因为下列原因导致睡眠受阻的频率：'
-			},
-			{
-				kicker: '第二部分·睡眠困扰 (第5题 f-j 项)',
-				title: '术后疼痛与身心困扰',
-				desc: '特别是术后恢复期的切口疼痛与呼吸情况：'
-			},
-			{
-				kicker: '第三部分·药物与日间感受 (6-9题)',
-				title: '主观体验与日间机能',
-				desc: '完成以下4题即可生成最终医学睡眠评估报告：'
-			}
-			]
-			return sections[index]
-		},
-		normalizeQuestionOptions(options, fallback) {
-			if (!Array.isArray(options) || !options.length) return fallback || []
-			const normalized = options.map((item, index) => ({
-				value: item && item.value !== undefined ? Number(item.value) : index,
-				label: item && item.label ? String(item.label) : `选项${index + 1}`
-			})).filter(item => !Number.isNaN(item.value))
-			return normalized.length ? normalized : (fallback || [])
-		},
-		fetchSubmissionList(showLoading, isManualRefresh) {
-			const loadingEnabled = showLoading !== false
-			if (this.submissionLoading) return Promise.resolve(null)
-			this.submissionLoading = true
-			this.submissionError = ''
-			if (loadingEnabled) {
-				uni.showLoading({
-					title: isManualRefresh ? '刷新记录中...' : '加载提交记录...',
-					mask: true
-				})
-			}
-			return getMeScalesPsqiSubmissionsApi({
-				page: 1,
-				pageSize: 20
-			}).then(result => {
-				this.applySubmissionResponse(result)
-				return result
-			}).catch(error => {
-				this.submissionError = 'PSQI提交记录加载失败'
-				if (!error || !error.isApiError) {
-					uni.showToast({
-						title: this.submissionError,
-						icon: 'none'
-					})
-				}
-				return null
-			}).finally(() => {
-				this.submissionLoading = false
-				this.submissionsLoaded = true
-				if (loadingEnabled) uni.hideLoading()
-			})
-		},
-		refreshLatestSubmission() {
-			uni.showLoading({ title: '刷新中...', mask: true })
-			Promise.all([
-				this.loadQuestions(false, true),
-				this.fetchSubmissionList(false, true)
-			]).then(() => {
-				if (!this.questionError && !this.submissionError) {
-					uni.showToast({ title: '题目和记录已刷新', icon: 'success' })
-				} else if (this.questionError || this.submissionError) {
-					uni.showToast({ title: this.questionError || this.submissionError, icon: 'none' })
-				}
-			}).finally(() => {
-				uni.hideLoading()
-			})
-		},
-		async initPsqiPage() {
-			this.pageLoading = true
-			uni.showLoading({ title: '加载中...', mask: true })
-			try {
-				const questionPromise = this.loadQuestions(false, false)
-				const submissionPromise = this.fetchSubmissionList(false, false)
-				const statusPromise = getMeScalesPsqiStatusApi().then(function (result) {
-					return { ok: true, value: result }
-				}, function (error) {
-					return { ok: false, reason: error }
-				})
-				const results = await Promise.all([
-					questionPromise,
-					submissionPromise,
-					statusPromise
-				])
-				const statusState = results[2]
-				const statusResult = statusState.ok ? statusState.value : null
-				this.applyStatus(statusResult)
-				if (results[1]) this.applySubmissionResponse(results[1])
-				if (!statusState.ok && (!statusState.reason || !statusState.reason.isApiError)) {
-					uni.showToast({ title: '评估状态加载失败', icon: 'none' })
-				}
-			} catch (error) {
-				uni.showToast({ title: '评估信息加载失败', icon: 'none' })
-			} finally {
-				this.pageLoading = false
-				uni.hideLoading()
-			}
-		},
-		extractSubmissionList(result) {
-			if (!result) return []
-			if (Array.isArray(result)) return result
-			if (Array.isArray(result.list)) return result.list
-			if (Array.isArray(result.records)) return result.records
-			if (Array.isArray(result.items)) return result.items
-			if (Array.isArray(result.rows)) return result.rows
-			if (result.data) return this.extractSubmissionList(result.data)
-			return []
-		},
-		parseJsonField(value) {
-			if (!value) return []
-			if (Array.isArray(value) || (value && typeof value === 'object')) return value
-			if (typeof value !== 'string') return []
-			try {
-				return JSON.parse(value)
-			} catch (error) {
-				return []
-			}
-		},
-		isSubmittedRecord(item) {
-			if (!item || typeof item !== 'object') return false
-			if (item.status && item.status !== 'SUBMITTED') return false
-			if (item.valid === 0 || item.valid === false) return false
-			return item.score !== undefined && item.score !== null && item.score !== ''
-		},
-		normalizeSubmissionRecord(item) {
-			const dimensionPayload = this.parseJsonField(item.dimensionsJson || item.dimensions)
-			const dimensions = this.normalizeDimensionPayload(dimensionPayload)
-			const focusDimensions = this.normalizeDimensionPayload(
-				this.parseJsonField(item.topConcernDimensionsJson || item.topConcernDimensions || item.topConcernsJson || item.topConcerns)
-			)
-			const assessedAt = item.assessedAt || item.submittedAt || item.updateTime || item.createTime
-			return Object.assign({}, item, {
-				totalScore: item.totalScore !== undefined && item.totalScore !== null ? item.totalScore : item.score,
-				levelTitle: item.levelTitle || item.tier || '',
-				interpretation: item.interpretation || item.tierText || item.tier || '本次 PSQI 评估已完成。',
-				dimensions,
-				topConcernDimensions: focusDimensions,
-				assessedAt
-			})
-		},
-		applySubmissionResponse(result) {
-			const rawList = this.extractSubmissionList(result)
-			const submittedList = rawList
-				.filter(item => this.isSubmittedRecord(item))
-				.map(item => this.normalizeSubmissionRecord(item))
-				.sort((a, b) => {
-					const timeA = new Date(a.assessedAt || 0).getTime()
-					const timeB = new Date(b.assessedAt || 0).getTime()
-					return timeB - timeA
-				})
-			this.submissionList = submittedList
-			this.submissionTotal = submittedList.length
-			this.submissionError = ''
-			this.submissionsLoaded = true
-			this.applyLatestResult(submittedList[0] || null)
-		},
-		applyStatus(result) {
-			if (!result) {
-				this.statusState = 'UNASSESSED'
-				this.applyLatestResult(null)
-				return
-			}
-			this.statusState = result.state || 'UNASSESSED'
-			if (result.progress) {
-				this.assessmentProgress = {
-					completed: result.progress.completed || 0,
-					total: result.progress.total || 18
-				}
-			}
-			if (result.draft) this.applyDraft(result.draft)
-			if (result.latest) this.applyLatestResult(result.latest)
-		},
-		applyDraft(draft) {
-			if (!draft) return
-			if (draft.answers) this.answers = this.normalizeAnswers(draft.answers)
-			if (draft.step !== undefined && draft.step !== null) {
-				const draftStep = Number(draft.step)
-				if (!Number.isNaN(draftStep)) {
-					this.draftStepIndex = this.mapServerStepToPage(draftStep)
-					this.stepIndex = this.draftStepIndex
-				}
-			}
-		},
-		mapServerStepToPage(step) {
-			if (step >= 14) return 3
-			if (step >= 9) return 2
-			if (step >= 4) return 1
-			return 0
-		},
-		applyLatestResult(latest) {
-			if (!latest) {
-				this.latestResult = null
-				this.reportDate = ''
-				this.reportScore = 0
-				this.reportLevel = ''
-				this.reportSummary = '完成评估后，将在这里生成 PSQI 睡眠质量报告。'
-				return
-			}
-			this.latestResult = latest
-			const score = this.pickNumber(latest.score, latest.totalScore, NaN)
-			this.reportScore = Number.isNaN(score) ? 0 : score
-			this.reportLevel = latest.levelTitle || latest.tier || latest.tierText || ''
-			this.reportSummary = latest.interpretation || latest.tierText || '本次 PSQI 评估已完成。'
-			this.reportDate = this.formatDateTime(latest.assessedAt || latest.updateTime || latest.createTime || latest.createdAt || latest.submittedAt)
-			if (Array.isArray(latest.dimensions) && latest.dimensions.length) {
-				this.dimensions = this.normalizeDimensions(latest.dimensions)
-			}
-			this.focusDimensions = this.normalizeFocusDimensions(latest.topConcernDimensions, latest.topConcerns)
-		},
-		hasReportPayload(result) {
-			return !!(result && (
-				result.score !== undefined ||
-				result.totalScore !== undefined ||
-				result.levelTitle ||
-				result.tier ||
-				result.tierText ||
-				(Array.isArray(result.dimensions) && result.dimensions.length)
-			))
-		},
-		normalizeSubmissionResult(result) {
-			if (!this.hasReportPayload(result)) return null
-			return Object.assign({}, result, {
-				totalScore: result.totalScore !== undefined ? result.totalScore : result.score,
-				levelTitle: result.levelTitle || result.tier || '',
-				interpretation: result.interpretation || result.tierText || ''
-			})
-		},
-		normalizeAnswers(source) {
-			const defaults = this.createDefaultAnswers()
-			if (!source || typeof source !== 'object') return defaults
-			const disturbances = source.disturbances || {}
-			const values = {
-				bedTime: source.bedTime || source.q1 || defaults.bedTime,
-				wakeTime: source.wakeTime || source.q3 || defaults.wakeTime,
-				latency: this.parseFrequencyValue(source.latencyMinutes, source.latency, source.q2),
-				duration: this.parseDurationValue(source.actualSleepHours, source.duration, source.q4),
-				troubleA: this.parseFrequencyValue(source.troubleA, source.q5a, disturbances.a_cantFallAsleep30min),
-				troubleB: this.parseFrequencyValue(source.troubleB, source.q5b, disturbances.b_wakeNightOrEarly),
-				troubleC: this.parseFrequencyValue(source.troubleC, source.q5c, disturbances.c_bathroomNight),
-				troubleD: this.parseFrequencyValue(source.troubleD, source.q5d, disturbances.d_coughOrSnore),
-				troubleE: this.parseFrequencyValue(source.troubleE, source.q5e, disturbances.e_feelCold),
-				troubleF: this.parseFrequencyValue(source.troubleF, source.q5f, disturbances.f_feelHot),
-				troubleG: this.parseFrequencyValue(source.troubleG, source.q5g, disturbances.g_badDreams),
-				troubleH: this.parseFrequencyValue(source.troubleH, source.q5h, disturbances.h_painDiscomfort),
-				troubleI: this.parseFrequencyValue(source.troubleI, source.q5i, disturbances.i_breathDifficult),
-				troubleJ: this.parseFrequencyValue(source.troubleJ, source.q5j, disturbances.j_otherReasons),
-				quality: this.parseFrequencyValue(source.quality, source.overallQuality, source.q6),
-				medicine: this.parseFrequencyValue(source.medicine, source.hypnoticMeds, source.q7),
-				daySleepy: this.parseFrequencyValue(source.daySleepy, source.daytimeSleepiness, source.q8),
-				energy: this.parseFrequencyValue(source.energy, source.daytimeEnthusiasm, source.q9)
-			}
-			return Object.assign({}, defaults, values)
-		},
-		parseFrequencyValue() {
-			for (let index = 0; index < arguments.length; index += 1) {
-				const value = arguments[index]
-				if (value === undefined || value === null || value === '') continue
-				const numberValue = Number(value)
-				if (!Number.isNaN(numberValue) && numberValue >= 0 && numberValue <= 3) return numberValue
-			}
-			return null
-		},
-		parseDurationValue() {
-			for (let index = 0; index < arguments.length; index += 1) {
-				const value = arguments[index]
-				if (value === undefined || value === null || value === '') continue
-				const numberValue = Number(value)
-				if (Number.isNaN(numberValue)) continue
-				if (numberValue > 0 && numberValue < 5) return 0
-				if (numberValue >= 5 && numberValue < 6) return 1
-				if (numberValue >= 6 && numberValue < 7) return 2
-				if (numberValue >= 7) return 3
-			}
-			return null
-		},
-		buildPayloadAnswers() {
-			const answers = this.answers
-			const latencyMinutes = [15, 25, 45, 70]
-			const actualSleepHours = [4, 5.5, 6.5, 7.5]
-			const disturbanceKeys = ['troubleA', 'troubleB', 'troubleC', 'troubleD', 'troubleE', 'troubleF', 'troubleG', 'troubleH', 'troubleI', 'troubleJ']
-			const disturbanceNames = [
-				'a_cantFallAsleep30min',
-				'b_wakeNightOrEarly',
-				'c_bathroomNight',
-				'd_coughOrSnore',
-				'e_feelCold',
-				'f_feelHot',
-				'g_badDreams',
-				'h_painDiscomfort',
-				'i_breathDifficult',
-				'j_otherReasons'
-			]
-			const disturbances = {}
-			disturbanceKeys.forEach((key, index) => {
-				disturbances[disturbanceNames[index]] = answers[key]
-			})
-			const payload = {
-				bedTime: answers.bedTime,
-				latencyMinutes: answers.latency === null ? null : latencyMinutes[answers.latency],
-				wakeTime: answers.wakeTime,
-				actualSleepHours: answers.duration === null ? null : actualSleepHours[answers.duration],
-				q1: answers.bedTime,
-				q2: answers.latency === null ? null : latencyMinutes[answers.latency],
-				q3: answers.wakeTime,
-				q4: answers.duration === null ? null : actualSleepHours[answers.duration],
-				disturbances: disturbances,
-				overallQuality: answers.quality,
-				hypnoticMeds: answers.medicine,
-				daytimeSleepiness: answers.daySleepy,
-				daytimeEnthusiasm: answers.energy,
-				q6: answers.quality,
-				q7: answers.medicine,
-				q8: answers.daySleepy,
-				q9: answers.energy
-			}
-			disturbanceKeys.forEach((key, index) => {
-				payload[`q5${String.fromCharCode(97 + index)}`] = answers[key]
-			})
-			return {
-				...payload
-			}
-		},
-		buildDraftAnswers() {
-			const source = this.buildPayloadAnswers()
-			const payload = {}
-			Object.keys(source).forEach(key => {
-				if (key === 'disturbances') {
-					const disturbances = {}
-					Object.keys(source.disturbances).forEach((disturbanceKey, index) => {
-						if (source.disturbances[disturbanceKey] !== null && source.disturbances[disturbanceKey] !== undefined) {
-							disturbances[disturbanceKey] = source.disturbances[disturbanceKey]
-						}
-					})
-					if (Object.keys(disturbances).length) payload.disturbances = disturbances
-					return
-				}
-				if (source[key] !== null && source[key] !== undefined && source[key] !== '') {
-					payload[key] = source[key]
-				}
-			})
-			return payload
-		},
-		normalizeDimensions(serverDimensions) {
-			const dimensions = this.normalizeDimensionPayload(serverDimensions)
-			const defaults = this.dimensions
-			if (!dimensions.length) return defaults
-			return defaults.map(item => {
-				const serverItem = dimensions.find(dimension => dimension.id === item.key)
-				return serverItem ? Object.assign({}, item, {
-					score: serverItem.score,
-					hot: serverItem.score >= 2
-				}) : item
-			})
-		},
-		normalizeDimensionPayload(payload) {
-			const mapping = {
-				quality: 'quality',
-				sleepQuality: 'quality',
-				latency: 'latency',
-				sleepLatency: 'latency',
-				duration: 'duration',
-				sleepDuration: 'duration',
-				efficiency: 'efficiency',
-				sleepEfficiency: 'efficiency',
-				disturbance: 'disturbance',
-				disturbances: 'disturbance',
-				sleepDisturbance: 'disturbance',
-				meds: 'medicine',
-				medicine: 'medicine',
-				hypnoticMeds: 'medicine',
-				daytime: 'daytime',
-				dayDysfunction: 'daytime'
-			}
-			const list = []
-			const pushDimension = (id, score, source) => {
-				if (!id) return
-				const key = mapping[id] || mapping[source] || id
-				const numberScore = Number(score)
-				if (!mapping[key] || Number.isNaN(numberScore)) return
-				list.push({
-					id: key,
-					key,
-					score: Math.max(0, Math.min(3, numberScore)),
-					name: source && source.name ? source.name : ''
-				})
-			}
-			if (Array.isArray(payload)) {
-				payload.forEach(item => {
-					if (!item || typeof item !== 'object') return
-					const id = item.id || item.key || item.dimension || item.name
-					const score = item.score !== undefined ? item.score : item.value
-					pushDimension(id, score, item)
-				})
-				return list
-			}
-			if (payload && typeof payload === 'object') {
-				Object.keys(payload).forEach(key => {
-					const value = payload[key]
-					if (value && typeof value === 'object') {
-						pushDimension(value.id || value.key || value.dimension || key, value.score !== undefined ? value.score : value.value, value)
-					} else {
-						pushDimension(key, value)
-					}
-				})
-			}
-			return list
-		},
-		normalizeFocusDimensions(serverFocusDimensions, topConcerns) {
-			if (Array.isArray(serverFocusDimensions) && serverFocusDimensions.length) {
-				return serverFocusDimensions.map(item => ({
-					name: item.name || this.getDimensionName(item.id),
-					score: Number(item.score) || 0,
-					desc: this.getDimensionDesc(item.id)
-				}))
-			}
-			if (Array.isArray(topConcerns) && topConcerns.length) {
-				return topConcerns.map(name => {
-					const matched = this.dimensions.find(item => item.name === name)
-					return {
-						name,
-						score: matched ? matched.score : 1,
-						desc: this.getDimensionDesc(matched ? matched.key : '')
-					}
-				})
-			}
-			return this.dimensions.filter(item => item.score > 0).slice(0, 2)
-		},
-		getDimensionName(id) {
-			const names = {
-				quality: '睡眠质量',
-				latency: '入睡时间',
-				duration: '睡眠时间',
-				efficiency: '睡眠效率',
-				disturbances: '睡眠障碍',
-				meds: '催眠药物',
-				daytime: '日间功能障碍'
-			}
-			return names[id] || '睡眠维度'
-		},
-		getDimensionDesc(id) {
-			const descriptions = {
-				quality: '近期主观睡眠质量需要关注',
-				latency: '入睡耗时影响睡眠恢复',
-				duration: '总睡眠时间可能不足',
-				efficiency: '卧床时间中的有效睡眠占比偏低',
-				disturbances: '夜间易受疼痛、起夜或呼吸问题打断',
-				meds: '存在助眠药物使用情况',
-				daytime: '白天困倦或精力不足'
-			}
-			return descriptions[id] || '建议结合近期作息持续观察'
-		},
-		pickNumber() {
-			for (let index = 0; index < arguments.length; index += 1) {
-				const rawValue = arguments[index]
-				if (rawValue !== undefined && rawValue !== null && rawValue !== '') {
-					const value = Number(rawValue)
-					if (!Number.isNaN(value)) return value
-				}
-			}
-			return NaN
-		},
-		formatDateTime(value) {
-			if (!value) return ''
-			if (typeof value === 'number') return this.formatDateTime(new Date(value))
-			const normalizedValue = String(value).replace(/-/g, '/').replace('T', ' ')
-			const date = new Date(normalizedValue)
-			if (Number.isNaN(date.getTime())) return String(value)
-			const year = date.getFullYear()
-			const month = this.padTwo(date.getMonth() + 1)
-			const day = this.padTwo(date.getDate())
-			const hour = this.padTwo(date.getHours())
-			const minute = this.padTwo(date.getMinutes())
-			return `${year}年${month}月${day}日 ${hour}:${minute}`
-		},
-		padTwo(value) {
-			return value < 10 ? `0${value}` : `${value}`
-		},
-		createDefaultAnswers() {
-			return {
-				bedTime: '',
-				wakeTime: '',
-				latency: null,
-				duration: null,
-				troubleA: null,
-				troubleB: null,
-				troubleC: null,
-				troubleD: null,
-				troubleE: null,
-				troubleF: null,
-				troubleG: null,
-				troubleH: null,
-				troubleI: null,
-				troubleJ: null,
-				quality: null,
-				medicine: null,
-				daySleepy: null,
-				energy: null
-			}
-		},
-		goHome() {
-			this.currentView = 'home'
-		},
-		goReport() {
-			if (this.statusState !== 'COMPLETED' || !this.hasReport) {
-				this.startAssessment()
-				return
-			}
-			this.currentView = 'report'
-		},
-		handlePrimaryAction() {
-			if (this.statusState === 'COMPLETED' && this.hasReport) {
-				this.goReport()
-				return
-			}
-			this.startAssessment(this.statusState !== 'IN_PROGRESS')
-		},
-		startAssessment(resetAnswers) {
-			if (resetAnswers) {
-				this.answers = this.createDefaultAnswers()
-				this.stepIndex = 0
-				this.draftStepIndex = null
-				this.showSaveConfirm = false
-			} else {
-				this.stepIndex = this.resolveDraftStep()
-			}
-			this.showSaveConfirm = false
-			this.currentView = 'questionnaire'
-		},
-		resolveDraftStep() {
-			if (this.draftStepIndex !== null) return this.draftStepIndex
-			const completed = Number(this.assessmentProgress.completed) || 0
-			if (completed >= 14) return 3
-			if (completed >= 9) return 2
-			if (completed >= 4) return 1
-			return 0
-		},
-		onBedTimeChange(event) {
-			this.answers.bedTime = event.detail.value
-		},
-		onWakeTimeChange(event) {
-			this.answers.wakeTime = event.detail.value
-		},
-		prevStep() {
-			if (this.submitting || this.savingDraft) return
-			if (this.stepIndex === 0) {
-				this.currentView = 'home'
-				return
-			}
-			this.stepIndex -= 1
-		},
-		async nextStep() {
-			if (this.submitting || this.savingDraft) return
-			if (!this.validateStep(this.stepIndex)) return
-			if (this.stepIndex < 3) {
-				this.stepIndex += 1
-				return
-			}
-			await this.submitAssessment()
-		},
-		validateStep(step) {
-			const messages = [
-				'请完成本页作息信息',
-				'请完成第5题 a-e 项',
-				'请完成第5题 f-j 项',
-				'请完成睡眠质量、药物和日间状态题目'
-			]
-			const groups = [
-				['bedTime', 'latency', 'wakeTime', 'duration'],
-				['troubleA', 'troubleB', 'troubleC', 'troubleD', 'troubleE'],
-				['troubleF', 'troubleG', 'troubleH', 'troubleI', 'troubleJ'],
-				['quality', 'medicine', 'daySleepy', 'energy']
-			]
-			const currentKeys = groups[step] || []
-			const valid = currentKeys.every(key => this.answers[key] !== '' && this.answers[key] !== null && this.answers[key] !== undefined)
-			if (!valid) {
-				uni.showToast({ title: messages[step] || '请完善题目', icon: 'none' })
-			}
-			return valid
-		},
-		async submitAssessment() {
-			if (!this.validateAllAnswers()) return
-			this.showSaveConfirm = false
-			this.submitting = true
-			this.currentView = 'loading'
-			uni.showLoading({ title: '提交评估中...', mask: true })
-			try {
-				const payload = {
-					answers: this.buildDraftAnswers(),
-					step: this.stepIndex
-				}
-				const result = this.normalizeSubmissionResult(await postMeScalesPsqiSubmissionsApi(payload))
-				if (result && result.valid === false) {
-					this.currentView = 'questionnaire'
-					uni.showToast({ title: result.message || '存在漏答或答案无效', icon: 'none' })
-					return
-				}
-				this.statusState = 'COMPLETED'
-				this.assessmentProgress.completed = this.assessmentProgress.total || 18
-				if (result) this.applyLatestResult(result)
-				await this.refreshStatus(false)
-				this.currentView = 'report'
-				uni.showToast({ title: '评估提交成功', icon: 'success' })
-			} catch (error) {
-				this.currentView = 'questionnaire'
-				if (error && error.isApiError) return
-				uni.showToast({ title: '评估提交失败，请稍后重试', icon: 'none' })
-			} finally {
-				this.submitting = false
-				uni.hideLoading()
-			}
-		},
-		validateAllAnswers() {
-			return [0, 1, 2, 3].every(step => this.validateStep(step))
-		},
-		async refreshStatus(showLoading) {
-			try {
-				if (showLoading) uni.showLoading({ title: '刷新中...', mask: true })
-				const status = await getMeScalesPsqiStatusApi()
-				this.applyStatus(status)
-			} catch (error) {
-				if (!error || !error.isApiError) {
-					uni.showToast({ title: '评估状态刷新失败', icon: 'none' })
-				}
-			} finally {
-				if (showLoading) uni.hideLoading()
-			}
-		},
-		handleNavBack() {
-			if (this.submitting) return
-			if (this.currentView === 'questionnaire') {
-				this.saveAndExit()
-				return
-			}
-			if (this.currentView === 'loading') {
-				this.clearLoadingTimer()
-			}
-			this.currentView = 'home'
-		},
-		async saveAndExit() {
-			if (this.savingDraft || this.submitting) return
-			this.showSaveConfirm = false
-			this.savingDraft = true
-			uni.showLoading({ title: '暂存中...', mask: true })
-			try {
-				await postMeScalesPsqiDraftApi({
-					answers: this.buildDraftAnswers(),
-					step: this.stepIndex
-				})
-				this.statusState = 'IN_PROGRESS'
-				this.draftStepIndex = this.stepIndex
-				this.assessmentProgress.completed = this.countCompletedAnswers()
-				this.clearLoadingTimer()
-				this.currentView = 'home'
-				uni.showToast({ title: '评估进度已暂存', icon: 'success' })
-			} catch (error) {
-				if (!error || !error.isApiError) {
-					uni.showToast({ title: '暂存失败，请稍后重试', icon: 'none' })
-				}
-			} finally {
-				this.savingDraft = false
-				uni.hideLoading()
-			}
-		},
-		countCompletedAnswers() {
-			return Object.keys(this.answers).filter(key => this.answers[key] !== '' && this.answers[key] !== null && this.answers[key] !== undefined).length
-		},
-		clearLoadingTimer() {
-			if (this.loadingTimer) {
-				clearTimeout(this.loadingTimer)
-				this.loadingTimer = null
-			}
-		},
-		openBluetooth() {
-			this.showBluetoothModal = true
-			this.bluetoothState = 'searching'
-			this.clearBluetoothTimer()
-			this.bluetoothTimer = setTimeout(() => {
-				this.bluetoothState = 'success'
-				this.bluetoothTimer = null
-			}, 2200)
-		},
-		closeBluetooth() {
-			this.clearBluetoothTimer()
-			this.showBluetoothModal = false
-		},
-		toggleBluetooth() {
-			if (this.deviceConnected) {
-				this.disconnectDevice()
-				return
-			}
-			this.openBluetooth()
-		},
-		disconnectDevice() {
-			this.deviceConnected = false
-			uni.showToast({
-				title: '睡眠仪已断开',
-				icon: 'none'
-			})
-		},
-		finishBluetooth() {
-			this.deviceConnected = true
-			this.closeBluetooth()
-			uni.showToast({
-				title: '睡眠仪连接成功',
-				icon: 'success'
-			})
-		},
-		clearBluetoothTimer() {
-			if (this.bluetoothTimer) {
-				clearTimeout(this.bluetoothTimer)
-				this.bluetoothTimer = null
-			}
-		}
-	}
 }
 </script>
 

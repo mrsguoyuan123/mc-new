@@ -1,0 +1,92 @@
+﻿<script>
+  import { mapState } from 'vuex'
+  import myTabbar from '@/components/myTabbar.vue'
+  import {
+    getMeHomeApi,
+    getMeEscortCaregiversApi,
+    getMeEscortBookingsApi,
+    postMeEscortBookingsByIdCancelApi,
+    buildFileAccessUrl
+  } from '@/api/frontApikit.js'
+
+  const PERIOD_NAME_MAP = {
+    MORNING: '上午门诊陪诊',
+    AFTERNOON: '下午门诊/检查',
+    FULLDAY: '全天深度陪诊'
+  }
+  const PERIOD_TIME_MAP = {
+    MORNING: '08:00 - 12:00',
+    AFTERNOON: '13:30 - 17:30',
+    FULLDAY: '08:00 - 17:00'
+  }
+  const STATUS_TEXT_MAP = {
+    WAIT_ACCEPT: '专属陪诊预约',
+    CONFIRMED: '专属陪诊预约',
+    IN_SERVICE: '专属陪诊服务'
+  }
+
+  export default {
+    options: {
+      styleIsolation: 'shared'
+    },
+    components: {
+      myTabbar
+    },
+    data() {
+      return {
+        pageLoading: true,
+        pageError: '',
+        cancelling: false,
+        escortCount: null,
+        booking: null,
+        caregiver: {},
+        guideList: [
+          { keyword: '集合接洽', content: '驻点将在就诊前30分钟在医院正门或门诊大厅导医台等候。' },
+          { keyword: '证件携带', content: '请随身携带用户身份证、医保卡及既往出院小结、手术记录等资料。' },
+          { keyword: '全程陪同', content: '涵盖挂号、排队取号、轮椅借用、辅助问诊、检查陪护、缴费及取药代办。' },
+          { keyword: '就诊小结', content: '就诊结束后驻点将整理专科医嘱及复诊检查清单同步至系统。' }
+        ]
+      }
+    },
+    computed: {
+      ...mapState(['statusBarHeight', 'menuButton']),
+      periodName() {
+        return PERIOD_NAME_MAP[this.booking && this.booking.period] || '门诊陪诊'
+      },
+      periodTime() {
+        return PERIOD_TIME_MAP[this.booking && this.booking.period] || ''
+      },
+      statusText() {
+        return STATUS_TEXT_MAP[this.booking && this.booking.status] || '专属陪诊预约'
+      },
+      caregiverInfo() {
+        return (this.booking && this.booking.caregiverInfo) || {}
+      },
+      caregiverAvatar() {
+        const avatar = this.caregiver.avatar || this.caregiverInfo.avatar || ''
+        return avatar ? buildFileAccessUrl(avatar) : ''
+      },
+      caregiverPhone() {
+        return this.caregiverInfo.phone || this.caregiver.phone || ''
+      },
+      destination() {
+        const hospital = this.caregiverInfo.hospital || ''
+        const department = this.caregiverInfo.department || ''
+        const remark = this.caregiverInfo.remark || this.booking.remark || ''
+        const main = [hospital, department].filter(Boolean).join(' · ')
+        return [main, remark].filter(Boolean).join(' / ')
+      },
+      stationDesc() {
+        if (this.caregiver.desc) return this.caregiver.desc
+        if (this.caregiver.expYears) return `从业${this.caregiver.expYears}年 · 已实名认证`
+        return '资深三甲驻点 · 已实名认证'
+      },
+      stationTags() {
+        const tags = Array.isArray(this.caregiver.tags) ? this.caregiver.tags.slice(0, 3) : []
+        return tags
+      }
+    },
+    created() {
+      this.loadPageData()
+    },
+    methods: {

@@ -63,7 +63,7 @@
 						<view class="state-title">暂无聊天记录</view>
 						<view class="state-text">请输入您要咨询的问题</view>
 					</view>
-					<view v-for="(msg, idx) in chatList" :key="msg.id || idx" class="msg-item" :class="[msg.type]"
+					<view v-for="(msg, idx) in chatList" :key="msg.id" class="msg-item" :class="[msg.type]"
 						@longpress="handleLongPress(msg, idx)">
 						<!-- 长按弹出菜单 -->
 						<!-- <view v-if="showLongMenuIndex === idx" class="longpress-menu">

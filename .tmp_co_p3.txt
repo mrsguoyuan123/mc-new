@@ -1,0 +1,152 @@
+﻿      // 页面初始化：首页聚合(剩余权益/有效预约) + 绑定驻点 + 预约明细(联系方式/医院科室)
+      async loadPageData() {
+        this.pageLoading = true
+        this.pageError = ''
+        uni.showLoading({ title: '加载中...', mask: true })
+        try {
+          const [homeRes, caregiverRes, bookingRes] = await Promise.all([
+            getMeHomeApi().catch(error => { console.warn('获取首页聚合失败', error); return null }),
+            getMeEscortCaregiversApi().catch(error => { console.warn('获取陪诊师列表失败', error); return [] }),
+            getMeEscortBookingsApi().catch(error => { console.warn('获取预约列表失败', error); return [] })
+          ])
+
+          const home = homeRes || {}
+          const escort = home.escort || {}
+          this.escortCount = escort.escortCount !== undefined && escort.escortCount !== null
+            ? escort.escortCount
+            : null
+
+          const caregivers = this.extractList(caregiverRes)
+          // 专属驻点模式：取数组第 0 项为绑定驻点
+          this.caregiver = caregivers[0] || {}
+
+          const bookingList = this.extractList(bookingRes)
+          const activeBooking = this.pickActiveBooking(escort.activeBooking, bookingList)
+          this.booking = activeBooking
+          if (!activeBooking) {
+            this.pageError = '暂无进行中的陪诊预约'
+          }
+        } catch (error) {
+          console.error('陪诊服务详情加载失败', error)
+          this.pageError = (error && error.message) || '加载失败，请稍后重试'
+          uni.showToast({ title: this.pageError, icon: 'none' })
+        } finally {
+          this.pageLoading = false
+          uni.hideLoading()
+        }
+      },
+      // 优先取首页聚合的有效预约，缺失时从预约列表挑最近一条未结束预约
+      pickActiveBooking(homeActive, bookingList) {
+        if (homeActive && homeActive.id) return homeActive
+        const activeStatus = ['WAIT_ACCEPT', 'CONFIRMED', 'IN_SERVICE']
+        const list = bookingList
+          .filter(item => activeStatus.indexOf(item.status) !== -1)
+          .sort((a, b) => {
+            const ta = new Date(String(a.serviceDate || a.createTime || '').replace(/-/g, '/')).getTime() || 0
+            const tb = new Date(String(b.serviceDate || b.createTime || '').replace(/-/g, '/')).getTime() || 0
+            return tb - ta
+          })
+        if (!list.length) return null
+        const latest = list[0]
+        // EscortBookingView 字段映射为 ActiveBooking 结构，统一模板取值
+        return {
+          id: latest.id,
+          status: latest.status,
+          serviceDate: latest.serviceDate,
+          period: latest.period,
+          remark: latest.remark,
+          caregiverInfo: {
+            id: latest.caregiverId,
+            name: latest.caregiverName,
+            avatar: latest.caregiverAvatar,
+            phone: latest.caregiverPhone,
+            hospital: latest.hospital,
+            department: latest.department,
+            remark: latest.remark
+          }
+        }
+      },
+      extractList(data) {
+        if (Array.isArray(data)) return data
+        if (!data) return []
+        if (Array.isArray(data.list)) return data.list
+        if (Array.isArray(data.records)) return data.records
+        if (Array.isArray(data.rows)) return data.rows
+        if (Array.isArray(data.items)) return data.items
+        if (Array.isArray(data.data)) return data.data
+        return []
+      },
+      formatRating(rating) {
+        const num = Number(rating)
+        return Number.isFinite(num) && num > 0 ? num.toFixed(1) : '5.0'
+      },
+      handleCall() {
+        const phone = this.caregiverPhone
+        if (!phone) {
+          uni.showToast({ title: '暂无陪诊师联系电话', icon: 'none' })
+          return
+        }
+        uni.makePhoneCall({
+          phoneNumber: String(phone),
+          fail: error => console.warn('拨号取消或失败', error)
+        })
+      },
+      handleMeetingPoint() {
+        const hospital = this.caregiverInfo.hospital
+        if (!hospital) {
+          uni.showToast({ title: '就诊医院信息待确认，请先电话沟通', icon: 'none' })
+          return
+        }
+        uni.showModal({
+          title: '确认集合点',
+          content: '就诊前30分钟，驻点将在「' + hospital + '」正门或门诊大厅导医台等候，请提前到达并保持电话畅通。',
+          showCancel: false,
+          confirmText: '我知道了',
+          confirmColor: '#2563ff'
+        })
+      },
+      handleCancel() {
+        if (this.cancelling || !this.booking || !this.booking.id) return
+        uni.showModal({
+          title: '取消预约',
+          content: '确认取消当前陪诊预约吗？取消后权益次数将全额返还。',
+          confirmText: '确认取消',
+          cancelText: '再想想',
+          confirmColor: '#f56c6c',
+          success: res => {
+            if (res.confirm) this.confirmCancel()
+          }
+        })
+      },
+      async confirmCancel() {
+        this.cancelling = true
+        uni.showLoading({ title: '取消中...', mask: true })
+        try {
+          await postMeEscortBookingsByIdCancelApi({ id: this.booking.id })
+          uni.showToast({ title: '预约已取消，权益已返还', icon: 'success' })
+          await this.loadPageData()
+        } catch (error) {
+          console.error('取消预约失败', error)
+          if (!error || !error.isApiError) {
+            uni.showToast({ title: (error && error.message) || '取消失败，请稍后重试', icon: 'none' })
+          }
+        } finally {
+          this.cancelling = false
+          uni.hideLoading()
+        }
+      },
+      goApply() {
+        uni.navigateTo({ url: '/pages/index/caregiverApply' })
+      },
+      handleBack() {
+        const pages = getCurrentPages()
+        if (pages.length > 1) {
+          uni.navigateBack({ delta: 1 })
+        } else {
+          uni.reLaunch({ url: '/pages/index/home' })
+        }
+      }
+    }
+  }
+</script>
+
